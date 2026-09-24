@@ -19,6 +19,7 @@ interface DatosSesion {
     codigoGimnasio: string;
   }) => Promise<void>;
   cerrarSesion: () => Promise<void>;
+  actualizarCliente: (parcial: Partial<Cliente>) => void;
 }
 
 const AuthContext = createContext<DatosSesion | null>(null);
@@ -86,9 +87,13 @@ export function SessionProvider({ children }: PropsWithChildren) {
     setCliente(null);
   }
 
+  function actualizarCliente(parcial: Partial<Cliente>) {
+    setCliente((actual) => (actual ? { ...actual, ...parcial } : actual));
+  }
+
   return (
     <AuthContext.Provider
-      value={{ cliente, isLoading, iniciarSesion, registrarse, cerrarSesion: salir }}>
+      value={{ cliente, isLoading, iniciarSesion, registrarse, cerrarSesion: salir, actualizarCliente }}>
       {children}
     </AuthContext.Provider>
   );

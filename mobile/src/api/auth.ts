@@ -7,6 +7,7 @@ export interface Cliente {
   email: string;
   gimnasioId: string;
   gimnasio: string;
+  alturaCm: number | null;
 }
 
 export interface RespuestaAuth {

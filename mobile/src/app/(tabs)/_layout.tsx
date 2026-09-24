@@ -36,6 +36,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="progreso"
+        options={{
+          title: 'Progreso',
+          tabBarIcon: ({ color, size }) => <Ionicons name="trending-up" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
         name="perfil"
         options={{
           title: 'Perfil',

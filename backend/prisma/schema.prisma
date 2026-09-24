@@ -14,6 +14,7 @@ model Gimnasio {
   creadoEn  DateTime @default(now())
 
   clientes  Cliente[]
+  rutinas   Rutina[]
 
   @@map("gimnasios")
 }
@@ -27,14 +28,149 @@ model Cliente {
   email           String
   passwordHash    String
   telefono        String?
+  alturaCm        Float?
   activo          Boolean  @default(true)
   creadoEn        DateTime @default(now())
   actualizadoEn   DateTime @updatedAt
 
-  refreshTokens   RefreshToken[]
+  refreshTokens         RefreshToken[]
+  rutinasAsignadas      ClienteRutina[]
+  sesionesEntrenamiento SesionEntrenamiento[]
+  registrosProgreso     RegistroProgreso[]
+  comidas               Comida[]
+  registrosAgua         RegistroAgua[]
+  metaNutricional       MetaNutricional?
 
   @@unique([gimnasioId, email])
   @@map("clientes")
+}
+
+model Ejercicio {
+  id                String   @id @default(uuid())
+  nombre            String
+  grupoMuscular     String
+  tipoMedida        String   // "repeticiones" | "duracion"
+  patronMovimiento  String   @default("sentadilla") // animación de muñeco a usar: sentadilla | press | remo | curl | salto | abdominal | plancha | pantorrilla
+  descripcion       String?
+  gifUrl            String?
+  caloriasPorMinuto Float?
+  creadoEn          DateTime @default(now())
+
+  enRutinas         RutinaEjercicio[]
+
+  @@map("ejercicios")
+}
+
+model Rutina {
+  id           String   @id @default(uuid())
+  gimnasioId   String
+  gimnasio     Gimnasio @relation(fields: [gimnasioId], references: [id])
+  nombre       String
+  nivel        String   // "principiante" | "intermedio" | "avanzado"
+  objetivo     String   // "fuerza" | "cardio" | "perdida_grasa" | "tren_superior" | "tren_inferior" | "cuerpo_completo"
+  descripcion  String?
+  imagenUrl    String?
+  activa       Boolean  @default(true)
+  creadoEn     DateTime @default(now())
+
+  ejercicios   RutinaEjercicio[]
+  asignaciones ClienteRutina[]
+  sesiones     SesionEntrenamiento[]
+
+  @@map("rutinas")
+}
+
+model RutinaEjercicio {
+  id           String    @id @default(uuid())
+  rutinaId     String
+  rutina       Rutina    @relation(fields: [rutinaId], references: [id], onDelete: Cascade)
+  ejercicioId  String
+  ejercicio    Ejercicio @relation(fields: [ejercicioId], references: [id])
+  orden        Int
+  series       Int?
+  repeticiones Int?
+  duracionSeg  Int?
+  descansoSeg  Int?
+
+  @@map("rutina_ejercicios")
+}
+
+model ClienteRutina {
+  id           String    @id @default(uuid())
+  clienteId    String
+  cliente      Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  rutinaId     String
+  rutina       Rutina    @relation(fields: [rutinaId], references: [id])
+  asignadaPor  String?   // "auto" o id de entrenador/admin
+  fechaInicio  DateTime  @default(now())
+  activa       Boolean   @default(true)
+
+  @@map("cliente_rutinas")
+}
+
+model SesionEntrenamiento {
+  id                String   @id @default(uuid())
+  clienteId         String
+  cliente           Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  rutinaId          String
+  rutina            Rutina   @relation(fields: [rutinaId], references: [id])
+  completadaEn      DateTime @default(now())
+  duracionMin       Int
+  caloriasEstimadas Float
+
+  @@map("sesiones_entrenamiento")
+}
+
+model RegistroProgreso {
+  id               String   @id @default(uuid())
+  clienteId        String
+  cliente          Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  fecha            DateTime @default(now())
+  pesoKg           Float?
+  grasaCorporalPct Float?
+  medidas          Json?    // { pecho, cintura, brazos, piernas, ... }
+  fotoUrl          String?
+  creadoEn         DateTime @default(now())
+
+  @@map("registros_progreso")
+}
+
+model Comida {
+  id          String   @id @default(uuid())
+  clienteId   String
+  cliente     Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  fecha       DateTime @default(now())
+  tipo        String   // "desayuno" | "almuerzo" | "cena" | "snack"
+  nombre      String
+  calorias    Float
+  proteinaG   Float?
+  carbosG     Float?
+  grasaG      Float?
+  creadoEn    DateTime @default(now())
+
+  @@map("comidas")
+}
+
+model MetaNutricional {
+  clienteId         String  @id
+  cliente           Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  caloriasObjetivo  Float
+  proteinaObjetivoG Float?
+  carbosObjetivoG   Float?
+  grasaObjetivoG    Float?
+  aguaObjetivoMl    Int     @default(2000)
+
+  @@map("metas_nutricionales")
+}
+
+model RegistroAgua {
+  id          String   @id @default(uuid())
+  clienteId   String
+  cliente     Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  fecha       DateTime @default(now())
+  cantidadMl  Int
+
+  @@map("registros_agua")
 }
 
 model RefreshToken {

@@ -37,6 +37,7 @@ function RootNavigator() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={!!cliente}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="entrenamiento/[rutinaId]" options={{ presentation: 'fullScreenModal' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={!cliente}>

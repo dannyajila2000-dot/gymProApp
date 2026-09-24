@@ -161,7 +161,14 @@ export class AuthService {
   }
 
   private aPerfilPublico(
-    cliente: { id: string; nombres: string; apellidos: string; email: string; gimnasioId: string },
+    cliente: {
+      id: string
+      nombres: string
+      apellidos: string
+      email: string
+      gimnasioId: string
+      alturaCm?: number | null
+    },
     nombreGimnasio: string,
   ) {
     return {
@@ -171,6 +178,7 @@ export class AuthService {
       email: cliente.email,
       gimnasioId: cliente.gimnasioId,
       gimnasio: nombreGimnasio,
+      alturaCm: cliente.alturaCm ?? null,
     }
   }
 }
