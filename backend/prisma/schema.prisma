@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Gimnasio {
+  id        String   @id @default(uuid())
+  nombre    String
+  codigo    String   @unique
+  activo    Boolean  @default(true)
+  creadoEn  DateTime @default(now())
+
+  clientes  Cliente[]
+
+  @@map("gimnasios")
+}
+
+model Cliente {
+  id              String   @id @default(uuid())
+  gimnasioId      String
+  gimnasio        Gimnasio @relation(fields: [gimnasioId], references: [id])
+  nombres         String
+  apellidos       String
+  email           String
+  passwordHash    String
+  telefono        String?
+  activo          Boolean  @default(true)
+  creadoEn        DateTime @default(now())
+  actualizadoEn   DateTime @updatedAt
+
+  refreshTokens   RefreshToken[]
+
+  @@unique([gimnasioId, email])
+  @@map("clientes")
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  clienteId  String
+  cliente    Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  jti        String   @unique
+  expiraEn   DateTime
+  creadoEn   DateTime @default(now())
+  revocado   Boolean  @default(false)
+
+  @@map("refresh_tokens")
+}
