@@ -38,8 +38,9 @@ export function actualizarMeta(datos: Partial<Omit<MetaNutricional, 'clienteId'>
   });
 }
 
-export function listarComidas(fecha: string) {
-  return solicitar<Comida[]>(`/nutricion/comidas?fecha=${fecha}`, { autenticado: true });
+export function listarComidas(fecha?: string) {
+  const query = fecha ? `?fecha=${fecha}` : '';
+  return solicitar<Comida[]>(`/nutricion/comidas${query}`, { autenticado: true });
 }
 
 export function agregarComida(datos: {
@@ -64,8 +65,9 @@ export function eliminarComida(id: string) {
   });
 }
 
-export function obtenerAgua(fecha: string) {
-  return solicitar<{ registros: RegistroAgua[]; totalMl: number }>(`/nutricion/agua?fecha=${fecha}`, {
+export function obtenerAgua(fecha?: string) {
+  const query = fecha ? `?fecha=${fecha}` : '';
+  return solicitar<{ registros: RegistroAgua[]; totalMl: number }>(`/nutricion/agua${query}`, {
     autenticado: true,
   });
 }

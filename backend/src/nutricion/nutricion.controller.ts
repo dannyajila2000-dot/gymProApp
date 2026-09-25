@@ -6,10 +6,8 @@ import type { ClienteAutenticado } from '../auth/decorators/cliente-actual.decor
 import { ActualizarMetaDto } from './dto/actualizar-meta.dto.js'
 import { AgregarComidaDto } from './dto/agregar-comida.dto.js'
 import { AgregarAguaDto } from './dto/agregar-agua.dto.js'
-
-function fechaDeHoy() {
-  return new Date().toISOString().slice(0, 10)
-}
+import { ConsultarFechaDto } from './dto/consultar-fecha.dto.js'
+import { fechaDeHoyEcuador } from '../common/fecha-ecuador.util.js'
 
 @UseGuards(JwtAuthGuard)
 @Controller('nutricion')
@@ -27,8 +25,8 @@ export class NutricionController {
   }
 
   @Get('comidas')
-  listarComidas(@ClienteActual() cliente: ClienteAutenticado, @Query('fecha') fecha?: string) {
-    return this.nutricionService.listarComidas(cliente.clienteId, fecha ?? fechaDeHoy())
+  listarComidas(@ClienteActual() cliente: ClienteAutenticado, @Query() { fecha }: ConsultarFechaDto) {
+    return this.nutricionService.listarComidas(cliente.clienteId, fecha ?? fechaDeHoyEcuador())
   }
 
   @Post('comidas')
@@ -42,8 +40,8 @@ export class NutricionController {
   }
 
   @Get('agua')
-  agua(@ClienteActual() cliente: ClienteAutenticado, @Query('fecha') fecha?: string) {
-    return this.nutricionService.agua(cliente.clienteId, fecha ?? fechaDeHoy())
+  agua(@ClienteActual() cliente: ClienteAutenticado, @Query() { fecha }: ConsultarFechaDto) {
+    return this.nutricionService.agua(cliente.clienteId, fecha ?? fechaDeHoyEcuador())
   }
 
   @Post('agua')

@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { ErrorApi } from '@/api/client';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 import * as rutinasApi from '@/api/rutinas';
@@ -45,17 +46,21 @@ function Temporizador({
   }, [onTerminar]);
 
   useEffect(() => {
+    let timeoutFinal: ReturnType<typeof setTimeout> | null = null;
     const intervalo = setInterval(() => {
       setRestante((actual) => {
         if (actual <= 1) {
           clearInterval(intervalo);
-          setTimeout(() => onTerminarRef.current(), 300);
+          timeoutFinal = setTimeout(() => onTerminarRef.current(), 300);
           return 0;
         }
         return actual - 1;
       });
     }, 1000);
-    return () => clearInterval(intervalo);
+    return () => {
+      clearInterval(intervalo);
+      if (timeoutFinal) clearTimeout(timeoutFinal);
+    };
   }, []);
 
   return <Text style={[styles.temporizador, { color }]}>{restante}s</Text>;
@@ -66,19 +71,34 @@ export default function Entrenamiento() {
   const { rutinaId } = useLocalSearchParams<{ rutinaId: string }>();
   const [rutina, setRutina] = useState<Rutina | null>(null);
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [pasoActual, setPasoActual] = useState(0);
   const [finalizado, setFinalizado] = useState<{ duracionMin: number; caloriasEstimadas: number } | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [reintentos, setReintentos] = useState(0);
   const inicioRef = useRef<number>(0);
 
   useEffect(() => {
-    rutinasApi.listarRutinas().then((todas) => {
-      const encontrada = todas.find((r) => r.id === rutinaId) ?? null;
-      setRutina(encontrada);
-      setCargando(false);
-      inicioRef.current = Date.now();
-    });
-  }, [rutinaId]);
+    let cancelado = false;
+    rutinasApi
+      .listarRutinas()
+      .then((todas) => {
+        if (cancelado) return;
+        const encontrada = todas.find((r) => r.id === rutinaId) ?? null;
+        setRutina(encontrada);
+        inicioRef.current = Date.now();
+      })
+      .catch((e) => {
+        if (cancelado) return;
+        setError(e instanceof ErrorApi ? e.message : 'No pudimos cargar esta rutina');
+      })
+      .finally(() => {
+        if (!cancelado) setCargando(false);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [rutinaId, reintentos]);
 
   const pasos = useMemo(() => (rutina ? construirPasos(rutina) : []), [rutina]);
   const paso = pasos[pasoActual];
@@ -118,6 +138,26 @@ export default function Entrenamiento() {
     return (
       <View style={[styles.centro, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.tint} size="large" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.centro, { backgroundColor: colors.background, gap: Spacing.two }]}>
+        <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>{error}</Text>
+        <Pressable
+          onPress={() => {
+            setCargando(true);
+            setError(null);
+            setReintentos((n) => n + 1);
+          }}
+          style={{ marginTop: Spacing.one }}>
+          <Text style={{ color: colors.tint, fontWeight: '700' }}>Reintentar</Text>
+        </Pressable>
+        <Pressable onPress={() => router.back()}>
+          <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>Volver</Text>
+        </Pressable>
       </View>
     );
   }

@@ -23,12 +23,12 @@ export class RutinasController {
 
   @Post('asignarme')
   asignarme(@ClienteActual() cliente: ClienteAutenticado, @Body() dto: AsignarRutinaDto) {
-    return this.rutinasService.asignarme(cliente.clienteId, dto.rutinaId)
+    return this.rutinasService.asignarme(cliente.clienteId, cliente.gimnasioId, dto.rutinaId)
   }
 
   @Post('sesiones')
   registrarSesion(@ClienteActual() cliente: ClienteAutenticado, @Body() dto: RegistrarSesionDto) {
-    return this.rutinasService.registrarSesion(cliente.clienteId, dto)
+    return this.rutinasService.registrarSesion(cliente.clienteId, cliente.gimnasioId, dto)
   }
 
   @Get('historial')

@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 
+import { ErrorApi } from '@/api/client';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 import * as nutricionApi from '@/api/nutricion';
@@ -26,13 +27,10 @@ const TIPOS: { valor: Comida['tipo']; etiqueta: string }[] = [
 
 const AGUA_INCREMENTOS = [250, 500];
 
-function hoyIso() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export default function Nutricion() {
   const colors = useTheme();
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [meta, setMeta] = useState<MetaNutricional | null>(null);
   const [comidas, setComidas] = useState<Comida[]>([]);
   const [aguaMl, setAguaMl] = useState(0);
@@ -48,16 +46,21 @@ export default function Nutricion() {
   const [grasa, setGrasa] = useState('');
 
   const cargar = useCallback(async () => {
-    const fecha = hoyIso();
-    const [metaData, comidasData, aguaData] = await Promise.all([
-      nutricionApi.obtenerMeta(),
-      nutricionApi.listarComidas(fecha),
-      nutricionApi.obtenerAgua(fecha),
-    ]);
-    setMeta(metaData);
-    setComidas(comidasData);
-    setAguaMl(aguaData.totalMl);
-    setCargando(false);
+    setError(null);
+    try {
+      const [metaData, comidasData, aguaData] = await Promise.all([
+        nutricionApi.obtenerMeta(),
+        nutricionApi.listarComidas(),
+        nutricionApi.obtenerAgua(),
+      ]);
+      setMeta(metaData);
+      setComidas(comidasData);
+      setAguaMl(aguaData.totalMl);
+    } catch (e) {
+      setError(e instanceof ErrorApi ? e.message : 'No pudimos cargar tu nutrición');
+    } finally {
+      setCargando(false);
+    }
   }, []);
 
   useFocusEffect(
@@ -106,14 +109,31 @@ export default function Nutricion() {
   }
 
   async function eliminar(id: string) {
-    await nutricionApi.eliminarComida(id);
-    setComidas((actual) => actual.filter((c) => c.id !== id));
+    const resultado = await nutricionApi.eliminarComida(id);
+    if (resultado.count > 0) {
+      setComidas((actual) => actual.filter((c) => c.id !== id));
+    } else {
+      await cargar();
+    }
   }
 
-  if (cargando || !meta) {
+  if (cargando) {
     return (
       <View style={[styles.centro, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.tint} size="large" />
+      </View>
+    );
+  }
+
+  if (error || !meta) {
+    return (
+      <View style={[styles.centro, { backgroundColor: colors.background, gap: Spacing.two }]}>
+        <Text style={{ color: colors.textSecondary, textAlign: 'center', paddingHorizontal: Spacing.four }}>
+          {error ?? 'No pudimos cargar tu nutrición'}
+        </Text>
+        <Pressable onPress={cargar} style={[styles.botonAgua, { borderColor: colors.tint }]}>
+          <Text style={{ color: colors.tint, fontWeight: '700' }}>Reintentar</Text>
+        </Pressable>
       </View>
     );
   }

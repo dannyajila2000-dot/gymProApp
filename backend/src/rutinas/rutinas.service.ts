@@ -26,8 +26,10 @@ export class RutinasService {
     return asignacion?.rutina ?? null
   }
 
-  async asignarme(clienteId: string, rutinaId: string) {
-    const rutina = await this.prisma.rutina.findUnique({ where: { id: rutinaId } })
+  async asignarme(clienteId: string, gimnasioId: string, rutinaId: string) {
+    const rutina = await this.prisma.rutina.findFirst({
+      where: { id: rutinaId, gimnasioId, activa: true },
+    })
     if (!rutina) throw new NotFoundException('Rutina no encontrada')
 
     await this.prisma.clienteRutina.updateMany({
@@ -40,10 +42,16 @@ export class RutinasService {
     })
   }
 
-  registrarSesion(
+  async registrarSesion(
     clienteId: string,
+    gimnasioId: string,
     datos: { rutinaId: string; duracionMin: number; caloriasEstimadas: number },
   ) {
+    const rutina = await this.prisma.rutina.findFirst({
+      where: { id: datos.rutinaId, gimnasioId },
+    })
+    if (!rutina) throw new NotFoundException('Rutina no encontrada')
+
     return this.prisma.sesionEntrenamiento.create({
       data: {
         clienteId,

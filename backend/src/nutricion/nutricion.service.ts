@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service.js'
-
-function inicioYFinDelDia(fecha: string) {
-  const inicio = new Date(`${fecha}T00:00:00.000Z`)
-  const fin = new Date(`${fecha}T23:59:59.999Z`)
-  return { inicio, fin }
-}
+import { inicioYFinDelDiaEcuador } from '../common/fecha-ecuador.util.js'
 
 @Injectable()
 export class NutricionService {
@@ -38,7 +33,7 @@ export class NutricionService {
   }
 
   listarComidas(clienteId: string, fecha: string) {
-    const { inicio, fin } = inicioYFinDelDia(fecha)
+    const { inicio, fin } = inicioYFinDelDiaEcuador(fecha)
     return this.prisma.comida.findMany({
       where: { clienteId, fecha: { gte: inicio, lte: fin } },
       orderBy: { fecha: 'asc' },
@@ -64,7 +59,7 @@ export class NutricionService {
   }
 
   async agua(clienteId: string, fecha: string) {
-    const { inicio, fin } = inicioYFinDelDia(fecha)
+    const { inicio, fin } = inicioYFinDelDiaEcuador(fecha)
     const registros = await this.prisma.registroAgua.findMany({
       where: { clienteId, fecha: { gte: inicio, lte: fin } },
       orderBy: { fecha: 'asc' },

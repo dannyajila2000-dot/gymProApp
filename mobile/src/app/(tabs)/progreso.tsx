@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { ErrorApi } from '@/api/client';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 import { useSesion } from '@/context/auth-context';
@@ -25,6 +26,7 @@ export default function Progreso() {
   const colors = useTheme();
   const { cliente, actualizarCliente } = useSesion();
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [registros, setRegistros] = useState<RegistroProgreso[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -34,9 +36,15 @@ export default function Progreso() {
   const [grasaCorporalPct, setGrasaCorporalPct] = useState('');
 
   const cargar = useCallback(async () => {
-    const datos = await progresoApi.listarProgreso();
-    setRegistros(datos);
-    setCargando(false);
+    setError(null);
+    try {
+      const datos = await progresoApi.listarProgreso();
+      setRegistros(datos);
+    } catch (e) {
+      setError(e instanceof ErrorApi ? e.message : 'No pudimos cargar tu progreso');
+    } finally {
+      setCargando(false);
+    }
   }, []);
 
   useFocusEffect(
@@ -71,6 +79,19 @@ export default function Progreso() {
     return (
       <View style={[styles.centro, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.tint} size="large" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.centro, { backgroundColor: colors.background, gap: Spacing.two }]}>
+        <Text style={{ color: colors.textSecondary, textAlign: 'center', paddingHorizontal: Spacing.four }}>
+          {error}
+        </Text>
+        <Pressable onPress={cargar} style={{ borderWidth: 1.5, borderColor: colors.tint, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 14 }}>
+          <Text style={{ color: colors.tint, fontWeight: '700' }}>Reintentar</Text>
+        </Pressable>
       </View>
     );
   }
