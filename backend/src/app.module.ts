@@ -8,6 +8,7 @@ import { RutinasModule } from './rutinas/rutinas.module.js';
 import { ProgresoModule } from './progreso/progreso.module.js';
 import { NutricionModule } from './nutricion/nutricion.module.js';
 import { ClientesModule } from './clientes/clientes.module.js';
+import { RecordatoriosModule } from './recordatorios/recordatorios.module.js';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ClientesModule } from './clientes/clientes.module.js';
     ProgresoModule,
     NutricionModule,
     ClientesModule,
+    RecordatoriosModule,
   ],
   controllers: [AppController],
   providers: [AppService],

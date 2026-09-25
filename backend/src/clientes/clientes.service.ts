@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service.js'
 import { RutinasService } from '../rutinas/rutinas.service.js'
 import { OnboardingDto } from './dto/onboarding.dto.js'
+import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto.js'
 
 const UMBRAL_KG = 1
 // Rangos de grasa corporal aproximados y unisex: no pedimos sexo/edad en el
@@ -41,13 +42,19 @@ export class ClientesService {
           nivelActividad: dto.nivelActividad,
           pesoObjetivoKg: dto.pesoObjetivoKg,
           restriccionFisica: dto.restriccionFisica,
-          horaRecordatorio: dto.horaRecordatorio ?? null,
           onboardingCompletado: true,
         },
       }),
       this.prisma.registroProgreso.create({
         data: { clienteId, pesoKg: dto.pesoActualKg },
       }),
+      ...(dto.horaRecordatorio
+        ? [
+            this.prisma.recordatorio.create({
+              data: { clienteId, hora: dto.horaRecordatorio, diasSemana: [0, 1, 2, 3, 4, 5, 6] },
+            }),
+          ]
+        : []),
     ])
 
     const rutinaAsignada = await this.rutinasService.asignarMejorParaCliente(
@@ -99,5 +106,21 @@ export class ClientesService {
         ? { id: rutinaAsignada.id, nombre: rutinaAsignada.nombre }
         : null,
     }
+  }
+
+  actualizarPerfil(clienteId: string, dto: ActualizarPerfilDto) {
+    return this.prisma.cliente.update({
+      where: { id: clienteId },
+      data: {
+        nombres: dto.nombres,
+        apellidos: dto.apellidos,
+        telefono: dto.telefono,
+        fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : undefined,
+        unidadPeso: dto.unidadPeso,
+        unidadAltura: dto.unidadAltura,
+        restriccionFisica: dto.restriccionFisica,
+        preferenciaEntrenador: dto.preferenciaEntrenador,
+      },
+    })
   }
 }

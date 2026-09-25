@@ -1,4 +1,16 @@
 import { solicitar } from './client';
+import type { Cliente } from './auth';
+
+export interface DatosPerfil {
+  nombres?: string;
+  apellidos?: string;
+  telefono?: string;
+  fechaNacimiento?: string;
+  unidadPeso?: 'kg' | 'lb';
+  unidadAltura?: 'cm' | 'in';
+  restriccionFisica?: 'ninguna' | 'impacto_bajo' | 'sin_saltos';
+  preferenciaEntrenador?: 'animacion' | 'video';
+}
 
 export interface DatosOnboarding {
   nivelFitness: 'principiante' | 'intermedio' | 'avanzado';
@@ -27,5 +39,13 @@ export function recalcularRutina() {
   return solicitar<ResultadoOnboarding>('/clientes/recalcular-rutina', {
     metodo: 'POST',
     autenticado: true,
+  });
+}
+
+export function actualizarPerfil(datos: DatosPerfil) {
+  return solicitar<Cliente>('/clientes/perfil', {
+    metodo: 'PATCH',
+    autenticado: true,
+    cuerpo: datos,
   });
 }

@@ -6,6 +6,27 @@ import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 
+const OPCIONES = [
+  {
+    ruta: '/ajustes/perfil' as const,
+    icono: 'person-outline' as const,
+    titulo: 'Mi perfil',
+    descripcion: 'Datos personales, unidades y contraseña',
+  },
+  {
+    ruta: '/ajustes/entrenamiento' as const,
+    icono: 'barbell-outline' as const,
+    titulo: 'Ajustes de entrenamiento',
+    descripcion: 'Restricción física y entrenador',
+  },
+  {
+    ruta: '/ajustes/recordatorios' as const,
+    icono: 'notifications-outline' as const,
+    titulo: 'Recordatorios',
+    descripcion: 'Avisos para hacer ejercicio',
+  },
+];
+
 export default function Perfil() {
   const colors = useTheme();
   const { cliente, cerrarSesion } = useSesion();
@@ -32,9 +53,23 @@ export default function Perfil() {
         <Fila etiqueta="Gimnasio" valor={cliente?.gimnasio ?? '—'} />
       </View>
 
-      <Pressable
-        onPress={salir}
-        style={[styles.botonSalir, { borderColor: colors.danger }]}>
+      <View style={styles.menu}>
+        {OPCIONES.map((op) => (
+          <Pressable
+            key={op.ruta}
+            onPress={() => router.push(op.ruta)}
+            style={[styles.filaMenu, { borderColor: colors.border }]}>
+            <Ionicons name={op.icono} size={22} color={colors.text} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>{op.titulo}</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>{op.descripcion}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+          </Pressable>
+        ))}
+      </View>
+
+      <Pressable onPress={salir} style={[styles.botonSalir, { borderColor: colors.danger }]}>
         <Ionicons name="log-out-outline" size={18} color={colors.danger} />
         <Text style={[styles.botonSalirTexto, { color: colors.danger }]}>Cerrar sesión</Text>
       </Pressable>
@@ -85,6 +120,19 @@ const styles = StyleSheet.create({
   fila: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  menu: {
+    width: '100%',
+    marginTop: Spacing.four,
+    gap: Spacing.two,
+  },
+  filaMenu: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: Spacing.three,
   },
   botonSalir: {
     flexDirection: 'row',

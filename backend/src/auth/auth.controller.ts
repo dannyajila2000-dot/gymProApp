@@ -3,6 +3,7 @@ import { AuthService } from './auth.service.js'
 import { RegistroDto } from './dto/registro.dto.js'
 import { LoginDto } from './dto/login.dto.js'
 import { RefreshDto } from './dto/refresh.dto.js'
+import { CambiarPasswordDto } from './dto/cambiar-password.dto.js'
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js'
 import { ClienteActual } from './decorators/cliente-actual.decorator.js'
 import type { ClienteAutenticado } from './decorators/cliente-actual.decorator.js'
@@ -38,5 +39,12 @@ export class AuthController {
   @Get('yo')
   yo(@ClienteActual() cliente: ClienteAutenticado) {
     return this.authService.perfil(cliente.clienteId)
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('cambiar-password')
+  @HttpCode(200)
+  cambiarPassword(@ClienteActual() cliente: ClienteAutenticado, @Body() dto: CambiarPasswordDto) {
+    return this.authService.cambiarPassword(cliente.clienteId, dto.passwordActual, dto.passwordNueva)
   }
 }

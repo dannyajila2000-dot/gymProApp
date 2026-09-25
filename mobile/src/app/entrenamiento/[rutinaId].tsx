@@ -6,6 +6,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 
 import { ErrorApi } from '@/api/client';
 import { useTheme } from '@/hooks/use-theme';
+import { useSesion } from '@/context/auth-context';
 import { Spacing } from '@/constants/theme';
 import * as rutinasApi from '@/api/rutinas';
 import type { Rutina, RutinaEjercicio } from '@/api/rutinas';
@@ -68,6 +69,7 @@ function Temporizador({
 
 export default function Entrenamiento() {
   const colors = useTheme();
+  const { cliente } = useSesion();
   const { rutinaId } = useLocalSearchParams<{ rutinaId: string }>();
   const [rutina, setRutina] = useState<Rutina | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -229,7 +231,7 @@ export default function Entrenamiento() {
           </Text>
 
           <View style={[styles.fotoContenedor, { backgroundColor: colors.backgroundElement }]}>
-            {paso.item.ejercicio.gifUrl ? (
+            {cliente?.preferenciaEntrenador !== 'animacion' && paso.item.ejercicio.gifUrl ? (
               <Image source={{ uri: paso.item.ejercicio.gifUrl }} style={styles.foto} contentFit="cover" />
             ) : (
               <MunecoEjercicio patron={paso.item.ejercicio.patronMovimiento} color={colors.tint} size={140} />

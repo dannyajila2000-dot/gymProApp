@@ -160,6 +160,18 @@ export class AuthService {
     return this.aPerfilPublico(cliente, cliente.gimnasio.nombre)
   }
 
+  async cambiarPassword(clienteId: string, passwordActual: string, passwordNueva: string) {
+    const cliente = await this.prisma.cliente.findUnique({ where: { id: clienteId } })
+    if (!cliente) throw new BadRequestException('Cliente no encontrado')
+
+    const claveValida = await bcrypt.compare(passwordActual, cliente.passwordHash)
+    if (!claveValida) throw new UnauthorizedException('Tu contraseña actual no es correcta')
+
+    const passwordHash = await bcrypt.hash(passwordNueva, RONDAS_BCRYPT)
+    await this.prisma.cliente.update({ where: { id: clienteId }, data: { passwordHash } })
+    return { ok: true }
+  }
+
   private aPerfilPublico(
     cliente: {
       id: string
@@ -167,7 +179,13 @@ export class AuthService {
       apellidos: string
       email: string
       gimnasioId: string
+      telefono?: string | null
       alturaCm?: number | null
+      fechaNacimiento?: Date | null
+      unidadPeso?: string
+      unidadAltura?: string
+      restriccionFisica?: string | null
+      preferenciaEntrenador?: string
       onboardingCompletado?: boolean
     },
     nombreGimnasio: string,
@@ -179,7 +197,13 @@ export class AuthService {
       email: cliente.email,
       gimnasioId: cliente.gimnasioId,
       gimnasio: nombreGimnasio,
+      telefono: cliente.telefono ?? null,
       alturaCm: cliente.alturaCm ?? null,
+      fechaNacimiento: cliente.fechaNacimiento ? cliente.fechaNacimiento.toISOString().slice(0, 10) : null,
+      unidadPeso: cliente.unidadPeso ?? 'kg',
+      unidadAltura: cliente.unidadAltura ?? 'cm',
+      restriccionFisica: cliente.restriccionFisica ?? null,
+      preferenciaEntrenador: cliente.preferenciaEntrenador ?? 'animacion',
       onboardingCompletado: cliente.onboardingCompletado ?? false,
     }
   }

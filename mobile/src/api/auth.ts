@@ -7,7 +7,13 @@ export interface Cliente {
   email: string;
   gimnasioId: string;
   gimnasio: string;
+  telefono: string | null;
   alturaCm: number | null;
+  fechaNacimiento: string | null;
+  unidadPeso: 'kg' | 'lb';
+  unidadAltura: 'cm' | 'in';
+  restriccionFisica: 'ninguna' | 'impacto_bajo' | 'sin_saltos' | null;
+  preferenciaEntrenador: 'animacion' | 'video';
   onboardingCompletado: boolean;
 }
 
@@ -47,4 +53,12 @@ export function cerrarSesion(refreshToken: string) {
 
 export function obtenerPerfil() {
   return solicitar<Cliente>('/auth/yo', { autenticado: true });
+}
+
+export function cambiarPassword(datos: { passwordActual: string; passwordNueva: string }) {
+  return solicitar<{ ok: boolean }>('/auth/cambiar-password', {
+    metodo: 'POST',
+    autenticado: true,
+    cuerpo: datos,
+  });
 }

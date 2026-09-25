@@ -33,7 +33,10 @@ model Cliente {
   nivelActividad  Int?     // 0-3 (sedentario -> muy activo)
   pesoObjetivoKg  Float?
   restriccionFisica String? // "ninguna" | "impacto_bajo" | "sin_saltos"
-  horaRecordatorio  String? // "HH:mm", null si no quiere recordatorio
+  fechaNacimiento   DateTime?
+  unidadPeso        String   @default("kg") // "kg" | "lb"
+  unidadAltura      String   @default("cm") // "cm" | "in"
+  preferenciaEntrenador String @default("animacion") // "animacion" | "video"
   onboardingCompletado Boolean @default(false)
   activo          Boolean  @default(true)
   creadoEn        DateTime @default(now())
@@ -46,6 +49,7 @@ model Cliente {
   comidas               Comida[]
   registrosAgua         RegistroAgua[]
   metaNutricional       MetaNutricional?
+  recordatorios         Recordatorio[]
 
   @@unique([gimnasioId, email])
   @@map("clientes")
@@ -179,6 +183,18 @@ model RegistroAgua {
   cantidadMl  Int
 
   @@map("registros_agua")
+}
+
+model Recordatorio {
+  id         String   @id @default(uuid())
+  clienteId  String
+  cliente    Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  hora       String   // "HH:mm"
+  diasSemana Int[]    // 0=domingo ... 6=sábado
+  activo     Boolean  @default(true)
+  creadoEn   DateTime @default(now())
+
+  @@map("recordatorios")
 }
 
 model RefreshToken {
