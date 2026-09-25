@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 
 import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
@@ -60,7 +60,10 @@ export default function Perfil() {
   const iniciales = `${cliente?.nombres?.[0] ?? ''}${cliente?.apellidos?.[0] ?? ''}`.toUpperCase();
 
   return (
-    <View style={[styles.contenedor, { backgroundColor: colors.background }]}>
+    <ScrollView
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={styles.contenedor}
+      showsVerticalScrollIndicator={false}>
       <View style={[styles.avatar, { backgroundColor: colors.tint }]}>
         <Text style={[styles.avatarTexto, { color: colors.tintForeground }]}>{iniciales}</Text>
       </View>
@@ -117,7 +120,7 @@ export default function Perfil() {
         <Ionicons name="log-out-outline" size={18} color={colors.danger} />
         <Text style={[styles.botonSalirTexto, { color: colors.danger }]}>Cerrar sesión</Text>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -133,10 +136,10 @@ function Fila({ etiqueta, valor }: { etiqueta: string; valor: string }) {
 
 const styles = StyleSheet.create({
   contenedor: {
-    flex: 1,
     alignItems: 'center',
     padding: Spacing.four,
     paddingTop: Spacing.six,
+    paddingBottom: Spacing.six,
     gap: Spacing.one,
   },
   avatar: {

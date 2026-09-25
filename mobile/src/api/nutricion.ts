@@ -7,6 +7,10 @@ export interface MetaNutricional {
   carbosObjetivoG: number | null;
   grasaObjetivoG: number | null;
   aguaObjetivoMl: number;
+  aguaAlarmaActiva: boolean;
+  aguaAlarmaCadaHoras: number | null;
+  aguaVentanaInicio: string | null;
+  aguaVentanaFin: string | null;
 }
 
 export interface Comida {

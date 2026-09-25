@@ -53,8 +53,11 @@ model Cliente {
   comidas               Comida[]
   registrosAgua         RegistroAgua[]
   metaNutricional       MetaNutricional?
+  metaSeguimiento       MetaSeguimiento?
   feedback              Feedback[]
   recordatorios         Recordatorio[]
+  registrosPasos        RegistroPasos[]
+  actividadesLibres     ActividadLibre[]
 
   @@unique([gimnasioId, email])
   @@map("clientes")
@@ -169,13 +172,17 @@ model Comida {
 }
 
 model MetaNutricional {
-  clienteId         String  @id
-  cliente           Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
-  caloriasObjetivo  Float
-  proteinaObjetivoG Float?
-  carbosObjetivoG   Float?
-  grasaObjetivoG    Float?
-  aguaObjetivoMl    Int     @default(2000)
+  clienteId          String  @id
+  cliente            Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  caloriasObjetivo   Float
+  proteinaObjetivoG  Float?
+  carbosObjetivoG    Float?
+  grasaObjetivoG     Float?
+  aguaObjetivoMl     Int     @default(2000)
+  aguaAlarmaActiva   Boolean @default(false)
+  aguaAlarmaCadaHoras Int?
+  aguaVentanaInicio  String? // "HH:mm"
+  aguaVentanaFin     String? // "HH:mm"
 
   @@map("metas_nutricionales")
 }
@@ -188,6 +195,41 @@ model RegistroAgua {
   cantidadMl  Int
 
   @@map("registros_agua")
+}
+
+model MetaSeguimiento {
+  clienteId              String  @id
+  cliente                Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  caloriasQuemarObjetivo Int     @default(400)
+  duracionObjetivoMin    Int     @default(30)
+  pasosObjetivo          Int     @default(8000)
+  pasosActivo            Boolean @default(false)
+
+  @@map("metas_seguimiento")
+}
+
+model RegistroPasos {
+  id        String   @id @default(uuid())
+  clienteId String
+  cliente   Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  fecha     DateTime @default(now())
+  cantidad  Int
+
+  @@map("registros_pasos")
+}
+
+model ActividadLibre {
+  id                String   @id @default(uuid())
+  clienteId         String
+  cliente           Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  nombre             String
+  duracionMin        Int
+  distanciaM         Float?
+  caloriasEstimadas  Float
+  fecha              DateTime @default(now())
+  creadoEn           DateTime @default(now())
+
+  @@map("actividades_libres")
 }
 
 model Recordatorio {

@@ -23,11 +23,20 @@ export class NutricionService {
       carbosObjetivoG?: number
       grasaObjetivoG?: number
       aguaObjetivoMl?: number
+      aguaAlarmaActiva?: boolean
+      aguaAlarmaCadaHoras?: number
+      aguaVentanaInicio?: string
+      aguaVentanaFin?: string
     },
   ) {
     return this.prisma.metaNutricional.upsert({
       where: { clienteId },
-      create: { clienteId, caloriasObjetivo: 2000, aguaObjetivoMl: 2000, ...datos },
+      create: {
+        ...datos,
+        clienteId,
+        caloriasObjetivo: datos.caloriasObjetivo ?? 2000,
+        aguaObjetivoMl: datos.aguaObjetivoMl ?? 2000,
+      },
       update: datos,
     })
   }

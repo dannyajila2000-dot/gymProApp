@@ -181,6 +181,7 @@ export class AuthService {
       gimnasioId: string
       telefono?: string | null
       alturaCm?: number | null
+      pesoObjetivoKg?: number | null
       fechaNacimiento?: Date | null
       unidadPeso?: string
       unidadAltura?: string
@@ -204,6 +205,7 @@ export class AuthService {
       gimnasioCodigo: gimnasio.codigo,
       telefono: cliente.telefono ?? null,
       alturaCm: cliente.alturaCm ?? null,
+      pesoObjetivoKg: cliente.pesoObjetivoKg ?? null,
       fechaNacimiento: cliente.fechaNacimiento ? cliente.fechaNacimiento.toISOString().slice(0, 10) : null,
       unidadPeso: cliente.unidadPeso ?? 'kg',
       unidadAltura: cliente.unidadAltura ?? 'cm',

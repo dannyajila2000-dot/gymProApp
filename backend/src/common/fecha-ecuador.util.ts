@@ -11,3 +11,12 @@ export function inicioYFinDelDiaEcuador(fecha: string) {
   const fin = new Date(inicio.getTime() + 24 * 60 * 60 * 1000 - 1)
   return { inicio, fin }
 }
+
+/** Semana domingo→sábado que contiene `fecha`, en hora local de Ecuador. */
+export function inicioYFinDeLaSemanaEcuador(fecha: string) {
+  const { inicio: inicioDelDia } = inicioYFinDelDiaEcuador(fecha)
+  const diaSemanaLocal = new Date(inicioDelDia.getTime() - OFFSET_MINUTOS_ECUADOR * 60 * 1000).getUTCDay()
+  const inicio = new Date(inicioDelDia.getTime() - diaSemanaLocal * 24 * 60 * 60 * 1000)
+  const fin = new Date(inicio.getTime() + 7 * 24 * 60 * 60 * 1000 - 1)
+  return { inicio, fin }
+}

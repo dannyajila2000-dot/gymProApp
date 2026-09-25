@@ -18,6 +18,10 @@ export const Colors = {
     tintForeground: '#ffffff',
     border: '#E3E1DC',
     danger: '#B3402E',
+    info: '#2F6FED',
+    infoForeground: '#ffffff',
+    success: '#1FA971',
+    warning: '#D9A62E',
   },
   dark: {
     text: '#ffffff',
@@ -29,6 +33,10 @@ export const Colors = {
     tintForeground: '#1A0D08',
     border: '#2E3135',
     danger: '#FF6B54',
+    info: '#5C93FF',
+    infoForeground: '#08142E',
+    success: '#3FCB93',
+    warning: '#F0C155',
   },
 } as const;
 

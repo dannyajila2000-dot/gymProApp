@@ -1,9 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
   ActivityIndicator,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,6 +19,19 @@ import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 import * as nutricionApi from '@/api/nutricion';
 import type { Comida, MetaNutricional } from '@/api/nutricion';
+
+const OPCIONES_CADA_HORAS = [1, 2, 3, 4, 6, 8];
+
+function horaAFecha(hora: string | null) {
+  const [h, m] = (hora ?? '09:00').split(':').map(Number);
+  const fecha = new Date();
+  fecha.setHours(h, m, 0, 0);
+  return fecha;
+}
+
+function fechaAHora(fecha: Date) {
+  return `${String(fecha.getHours()).padStart(2, '0')}:${String(fecha.getMinutes()).padStart(2, '0')}`;
+}
 
 const TIPOS: { valor: Comida['tipo']; etiqueta: string }[] = [
   { valor: 'desayuno', etiqueta: 'Desayuno' },
@@ -37,6 +52,9 @@ export default function Nutricion() {
   const [modalVisible, setModalVisible] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [agregandoAgua, setAgregandoAgua] = useState(false);
+  const [modalAlarma, setModalAlarma] = useState(false);
+  const [mostrarPickerInicio, setMostrarPickerInicio] = useState(false);
+  const [mostrarPickerFin, setMostrarPickerFin] = useState(false);
 
   const [tipo, setTipo] = useState<Comida['tipo']>('desayuno');
   const [nombre, setNombre] = useState('');
@@ -170,9 +188,14 @@ export default function Nutricion() {
             <Ionicons name="water" size={20} color={colors.tint} />
             <Text style={{ color: colors.text, fontWeight: '700' }}>Agua</Text>
           </View>
-          <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
-            {aguaMl} / {meta.aguaObjetivoMl} ml
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
+              {aguaMl} / {meta.aguaObjetivoMl} ml
+            </Text>
+            <Pressable onPress={() => setModalAlarma(true)}>
+              <Ionicons name="settings-outline" size={18} color={colors.textSecondary} />
+            </Pressable>
+          </View>
         </View>
         <View style={[styles.barraFondo, { backgroundColor: colors.border }]}>
           <View style={[styles.barraRelleno, { backgroundColor: colors.tint, width: `${progresoAgua * 100}%` }]} />
@@ -314,6 +337,107 @@ export default function Nutricion() {
           </View>
         </View>
       </Modal>
+
+      <Modal visible={modalAlarma} animationType="slide" transparent onRequestClose={() => setModalAlarma(false)}>
+        <View style={styles.modalFondo}>
+          <View style={[styles.modalContenido, { backgroundColor: colors.background }]}>
+            <View style={styles.filaEntreItems}>
+              <Text style={[styles.seccionTitulo, { color: colors.text }]}>Recordatorio de agua</Text>
+              <Pressable onPress={() => setModalAlarma(false)}>
+                <Ionicons name="close" size={24} color={colors.text} />
+              </Pressable>
+            </View>
+
+            <Pressable
+              onPress={async () => {
+                const nuevoValor = !meta.aguaAlarmaActiva;
+                const actualizado = await nutricionApi.actualizarMeta({ aguaAlarmaActiva: nuevoValor });
+                setMeta(actualizado);
+              }}
+              style={[styles.filaEntreItems, { paddingVertical: Spacing.two }]}>
+              <Text style={{ color: colors.text, fontWeight: '600' }}>Activar recordatorio</Text>
+              <View
+                style={[
+                  styles.interruptor,
+                  { backgroundColor: meta.aguaAlarmaActiva ? colors.tint : colors.backgroundSelected },
+                ]}>
+                <View
+                  style={[
+                    styles.interruptorBola,
+                    { alignSelf: meta.aguaAlarmaActiva ? 'flex-end' : 'flex-start' },
+                  ]}
+                />
+              </View>
+            </Pressable>
+
+            {meta.aguaAlarmaActiva && (
+              <>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: Spacing.two }}>
+                  Cada cuántas horas
+                </Text>
+                <View style={styles.filaTipos}>
+                  {OPCIONES_CADA_HORAS.map((h) => (
+                    <Pressable
+                      key={h}
+                      onPress={async () => {
+                        const actualizado = await nutricionApi.actualizarMeta({ aguaAlarmaCadaHoras: h });
+                        setMeta(actualizado);
+                      }}
+                      style={[
+                        styles.chipTipo,
+                        {
+                          backgroundColor: meta.aguaAlarmaCadaHoras === h ? colors.tint : colors.backgroundElement,
+                          borderColor: colors.tint,
+                        },
+                      ]}>
+                      <Text style={{ color: meta.aguaAlarmaCadaHoras === h ? colors.tintForeground : colors.text, fontSize: 13 }}>
+                        {h}h
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+
+                <View style={[styles.filaEntreItems, { marginTop: Spacing.three }]}>
+                  <Pressable onPress={() => setMostrarPickerInicio(true)} style={{ flex: 1 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Desde</Text>
+                    <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>
+                      {meta.aguaVentanaInicio ?? '08:00'}
+                    </Text>
+                  </Pressable>
+                  <Pressable onPress={() => setMostrarPickerFin(true)} style={{ flex: 1 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Hasta</Text>
+                    <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>
+                      {meta.aguaVentanaFin ?? '22:00'}
+                    </Text>
+                  </Pressable>
+                </View>
+                {mostrarPickerInicio && (
+                  <DateTimePicker
+                    value={horaAFecha(meta.aguaVentanaInicio)}
+                    mode="time"
+                    display="spinner"
+                    onChange={async (_evento, fecha) => {
+                      setMostrarPickerInicio(Platform.OS === 'ios');
+                      if (fecha) setMeta(await nutricionApi.actualizarMeta({ aguaVentanaInicio: fechaAHora(fecha) }));
+                    }}
+                  />
+                )}
+                {mostrarPickerFin && (
+                  <DateTimePicker
+                    value={horaAFecha(meta.aguaVentanaFin)}
+                    mode="time"
+                    display="spinner"
+                    onChange={async (_evento, fecha) => {
+                      setMostrarPickerFin(Platform.OS === 'ios');
+                      if (fecha) setMeta(await nutricionApi.actualizarMeta({ aguaVentanaFin: fechaAHora(fecha) }));
+                    }}
+                  />
+                )}
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -347,6 +471,8 @@ const styles = StyleSheet.create({
   },
   filaTipos: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.two },
   chipTipo: { borderWidth: 1.5, borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14 },
+  interruptor: { width: 46, height: 26, borderRadius: 13, padding: 3, justifyContent: 'center' },
+  interruptorBola: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#ffffff' },
   input: {
     borderWidth: 1,
     borderRadius: 12,

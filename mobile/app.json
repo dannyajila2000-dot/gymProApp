@@ -35,7 +35,14 @@
       ],
       "expo-secure-store",
       "@react-native-community/datetimepicker",
-      "expo-audio"
+      "expo-audio",
+      "expo-notifications",
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Permite el acceso al contador de pasos para registrar tu actividad diaria."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
