@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { ErrorApi } from '@/api/client';
 import * as clientesApi from '@/api/clientes';
@@ -36,6 +36,8 @@ export default function AjustesEntrenamiento() {
 
   const [restriccionFisica, setRestriccionFisica] = useState(cliente?.restriccionFisica ?? 'ninguna');
   const [preferenciaEntrenador, setPreferenciaEntrenador] = useState(cliente?.preferenciaEntrenador ?? 'animacion');
+  const [guiaDeVozActiva, setGuiaDeVozActiva] = useState(cliente?.guiaDeVozActiva ?? true);
+  const [cuentaAtrasSeg, setCuentaAtrasSeg] = useState(cliente?.cuentaAtrasSeg ?? 5);
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<{ texto: string; esError: boolean } | null>(null);
 
@@ -43,7 +45,12 @@ export default function AjustesEntrenamiento() {
     setGuardando(true);
     setMensaje(null);
     try {
-      const actualizado = await clientesApi.actualizarPerfil({ restriccionFisica, preferenciaEntrenador });
+      const actualizado = await clientesApi.actualizarPerfil({
+        restriccionFisica,
+        preferenciaEntrenador,
+        guiaDeVozActiva,
+        cuentaAtrasSeg,
+      });
       actualizarCliente(actualizado);
       setMensaje({ texto: 'Ajustes guardados', esError: false });
     } catch (e) {
@@ -100,6 +107,39 @@ export default function AjustesEntrenamiento() {
         </Pressable>
       </View>
 
+      <Text style={[styles.tituloSeccion, { color: colors.text }]}>Voz y cuenta atrás</Text>
+      <View style={[styles.filaAjuste, { backgroundColor: colors.backgroundElement }]}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.text, fontWeight: '700' }}>Guía de voz</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>
+            Anuncia cada ejercicio y el descanso en voz alta
+          </Text>
+        </View>
+        <Switch value={guiaDeVozActiva} onValueChange={setGuiaDeVozActiva} trackColor={{ true: colors.tint }} />
+      </View>
+
+      <View style={[styles.filaAjuste, { backgroundColor: colors.backgroundElement }]}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.text, fontWeight: '700' }}>Cuenta atrás antes de empezar</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>Antes de que empiece el entrenamiento</Text>
+        </View>
+        <View style={styles.stepper}>
+          <Pressable
+            onPress={() => setCuentaAtrasSeg((s) => Math.max(0, s - 5))}
+            style={[styles.stepperBoton, { backgroundColor: colors.background }]}>
+            <Text style={{ color: colors.text, fontWeight: '700' }}>-5s</Text>
+          </Pressable>
+          <Text style={{ color: colors.text, fontWeight: '800', fontSize: 18, minWidth: 40, textAlign: 'center' }}>
+            {cuentaAtrasSeg}s
+          </Text>
+          <Pressable
+            onPress={() => setCuentaAtrasSeg((s) => Math.min(15, s + 5))}
+            style={[styles.stepperBoton, { backgroundColor: colors.background }]}>
+            <Text style={{ color: colors.text, fontWeight: '700' }}>+5s</Text>
+          </Pressable>
+        </View>
+      </View>
+
       {mensaje && (
         <Text style={{ color: mensaje.esError ? colors.danger : colors.tint, fontSize: 13 }}>{mensaje.texto}</Text>
       )}
@@ -136,5 +176,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Spacing.two,
+  },
+  filaAjuste: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  stepperBoton: {
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
   },
 });

@@ -120,6 +120,8 @@ export class ClientesService {
         unidadAltura: dto.unidadAltura,
         restriccionFisica: dto.restriccionFisica,
         preferenciaEntrenador: dto.preferenciaEntrenador,
+        guiaDeVozActiva: dto.guiaDeVozActiva,
+        cuentaAtrasSeg: dto.cuentaAtrasSeg,
       },
     })
   }

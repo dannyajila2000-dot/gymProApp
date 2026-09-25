@@ -186,6 +186,8 @@ export class AuthService {
       unidadAltura?: string
       restriccionFisica?: string | null
       preferenciaEntrenador?: string
+      guiaDeVozActiva?: boolean
+      cuentaAtrasSeg?: number
       onboardingCompletado?: boolean
     },
     nombreGimnasio: string,
@@ -202,6 +204,8 @@ export class AuthService {
       fechaNacimiento: cliente.fechaNacimiento ? cliente.fechaNacimiento.toISOString().slice(0, 10) : null,
       unidadPeso: cliente.unidadPeso ?? 'kg',
       unidadAltura: cliente.unidadAltura ?? 'cm',
+      guiaDeVozActiva: cliente.guiaDeVozActiva ?? true,
+      cuentaAtrasSeg: cliente.cuentaAtrasSeg ?? 5,
       restriccionFisica: cliente.restriccionFisica ?? null,
       preferenciaEntrenador: cliente.preferenciaEntrenador ?? 'animacion',
       onboardingCompletado: cliente.onboardingCompletado ?? false,

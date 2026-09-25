@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
+import * as Speech from 'expo-speech';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -71,6 +72,9 @@ export default function Entrenamiento() {
   const colors = useTheme();
   const { cliente } = useSesion();
   const { rutinaId } = useLocalSearchParams<{ rutinaId: string }>();
+  const guiaDeVozActiva = cliente?.guiaDeVozActiva !== false;
+  const cuentaAtrasSeg = cliente?.cuentaAtrasSeg ?? 5;
+
   const [rutina, setRutina] = useState<Rutina | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +82,7 @@ export default function Entrenamiento() {
   const [finalizado, setFinalizado] = useState<{ duracionMin: number; caloriasEstimadas: number } | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [reintentos, setReintentos] = useState(0);
+  const [enPreparacion, setEnPreparacion] = useState(cuentaAtrasSeg > 0);
   const inicioRef = useRef<number>(0);
 
   useEffect(() => {
@@ -103,6 +108,30 @@ export default function Entrenamiento() {
 
   const pasos = useMemo(() => (rutina ? construirPasos(rutina) : []), [rutina]);
   const paso = pasos[pasoActual];
+
+  useEffect(() => {
+    if (rutina && enPreparacion && guiaDeVozActiva && cuentaAtrasSeg > 0) {
+      Speech.speak('Prepárate', { language: 'es' });
+    }
+    // Solo debe anunciarse una vez, cuando la rutina termina de cargar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!rutina]);
+
+  useEffect(() => {
+    if (enPreparacion || !guiaDeVozActiva || !paso) return;
+    Speech.stop();
+    const texto = paso.tipo === 'descanso' ? 'Descanso' : paso.item.ejercicio.nombre;
+    Speech.speak(texto, { language: 'es' });
+    return () => {
+      Speech.stop();
+    };
+    // Solo debe anunciar cuando cambia el paso, no en cada render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pasoActual, enPreparacion]);
+
+  useEffect(() => {
+    if (finalizado && guiaDeVozActiva) Speech.speak('¡Entrenamiento completado!', { language: 'es' });
+  }, [finalizado, guiaDeVozActiva]);
 
   async function avanzar() {
     if (pasoActual + 1 >= pasos.length) {
@@ -195,6 +224,26 @@ export default function Entrenamiento() {
           onPress={() => router.replace('/(tabs)/rutina')}>
           <Text style={[styles.botonPrincipalTexto, { color: colors.tintForeground }]}>Volver a rutina</Text>
         </Pressable>
+      </View>
+    );
+  }
+
+  if (enPreparacion) {
+    const primerPaso = pasos[0];
+    const nombrePrimerEjercicio = primerPaso?.tipo === 'ejercicio' ? primerPaso.item.ejercicio.nombre : '';
+    return (
+      <View style={[styles.centro, { backgroundColor: colors.background, gap: Spacing.two }]}>
+        <Text style={[styles.etiquetaFase, { color: colors.tint }]}>PREPÁRATE</Text>
+        <Temporizador
+          duracion={cuentaAtrasSeg}
+          color={colors.text}
+          onTerminar={() => setEnPreparacion(false)}
+        />
+        {!!nombrePrimerEjercicio && (
+          <Text style={{ color: colors.textSecondary, marginTop: Spacing.two }}>
+            Primero: {nombrePrimerEjercicio}
+          </Text>
+        )}
       </View>
     );
   }

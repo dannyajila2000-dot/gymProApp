@@ -10,6 +10,8 @@ export interface DatosPerfil {
   unidadAltura?: 'cm' | 'in';
   restriccionFisica?: 'ninguna' | 'impacto_bajo' | 'sin_saltos';
   preferenciaEntrenador?: 'animacion' | 'video';
+  guiaDeVozActiva?: boolean;
+  cuentaAtrasSeg?: number;
 }
 
 export interface DatosOnboarding {

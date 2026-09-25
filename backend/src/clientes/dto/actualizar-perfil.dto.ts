@@ -1,4 +1,4 @@
-import { IsDateString, IsIn, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator'
+import { IsBoolean, IsDateString, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator'
 
 const REGEX_NOMBRE_PERSONA = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/
 
@@ -40,4 +40,14 @@ export class ActualizarPerfilDto {
   @IsOptional()
   @IsIn(['animacion', 'video'])
   preferenciaEntrenador?: string
+
+  @IsOptional()
+  @IsBoolean()
+  guiaDeVozActiva?: boolean
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(15)
+  cuentaAtrasSeg?: number
 }

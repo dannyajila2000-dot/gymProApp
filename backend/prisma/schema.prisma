@@ -37,6 +37,8 @@ model Cliente {
   unidadPeso        String   @default("kg") // "kg" | "lb"
   unidadAltura      String   @default("cm") // "cm" | "in"
   preferenciaEntrenador String @default("animacion") // "animacion" | "video"
+  guiaDeVozActiva Boolean @default(true)
+  cuentaAtrasSeg  Int     @default(5)
   onboardingCompletado Boolean @default(false)
   activo          Boolean  @default(true)
   creadoEn        DateTime @default(now())

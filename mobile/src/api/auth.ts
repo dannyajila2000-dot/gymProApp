@@ -14,6 +14,8 @@ export interface Cliente {
   unidadAltura: 'cm' | 'in';
   restriccionFisica: 'ninguna' | 'impacto_bajo' | 'sin_saltos' | null;
   preferenciaEntrenador: 'animacion' | 'video';
+  guiaDeVozActiva: boolean;
+  cuentaAtrasSeg: number;
   onboardingCompletado: boolean;
 }
 
