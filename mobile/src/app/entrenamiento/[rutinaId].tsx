@@ -81,11 +81,10 @@ export default function Entrenamiento() {
   useEffect(() => {
     let cancelado = false;
     rutinasApi
-      .listarRutinas()
-      .then((todas) => {
+      .obtenerMiRutina()
+      .then((mia) => {
         if (cancelado) return;
-        const encontrada = todas.find((r) => r.id === rutinaId) ?? null;
-        setRutina(encontrada);
+        setRutina(mia && mia.id === rutinaId ? mia : null);
         inicioRef.current = Date.now();
       })
       .catch((e) => {

@@ -10,12 +10,26 @@ const EJERCICIOS = [
   { nombre: 'Flexiones de pecho', grupoMuscular: 'Pecho', tipoMedida: 'repeticiones', caloriasPorMinuto: 7 },
   { nombre: 'Plancha abdominal', grupoMuscular: 'Core', tipoMedida: 'duracion', caloriasPorMinuto: 5 },
   { nombre: 'Zancadas', grupoMuscular: 'Piernas', tipoMedida: 'repeticiones', caloriasPorMinuto: 8 },
-  { nombre: 'Burpees', grupoMuscular: 'Cuerpo completo', tipoMedida: 'repeticiones', caloriasPorMinuto: 12 },
+  {
+    nombre: 'Burpees',
+    grupoMuscular: 'Cuerpo completo',
+    tipoMedida: 'repeticiones',
+    caloriasPorMinuto: 12,
+    esAltoImpacto: true,
+    requiereSaltos: true,
+  },
   { nombre: 'Mountain climbers', grupoMuscular: 'Core', tipoMedida: 'duracion', caloriasPorMinuto: 10 },
   { nombre: 'Remo con mancuerna', grupoMuscular: 'Espalda', tipoMedida: 'repeticiones', caloriasPorMinuto: 7 },
   { nombre: 'Press militar', grupoMuscular: 'Hombros', tipoMedida: 'repeticiones', caloriasPorMinuto: 6 },
   { nombre: 'Puente de glúteo', grupoMuscular: 'Piernas', tipoMedida: 'repeticiones', caloriasPorMinuto: 5 },
-  { nombre: 'Jumping jacks', grupoMuscular: 'Cardio', tipoMedida: 'duracion', caloriasPorMinuto: 9 },
+  {
+    nombre: 'Jumping jacks',
+    grupoMuscular: 'Cardio',
+    tipoMedida: 'duracion',
+    caloriasPorMinuto: 9,
+    esAltoImpacto: true,
+    requiereSaltos: true,
+  },
 ]
 
 async function main() {

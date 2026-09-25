@@ -9,18 +9,18 @@ import { Spacing } from '@/constants/theme';
 import { useSesion } from '@/context/auth-context';
 import * as progresoApi from '@/api/progreso';
 import type { RegistroProgreso } from '@/api/progreso';
+import * as clientesApi from '@/api/clientes';
+import { calcularImc, categoriaImc } from '@/lib/imc';
 
-function calcularImc(pesoKg: number, alturaCm: number) {
-  const alturaM = alturaCm / 100;
-  return pesoKg / (alturaM * alturaM);
-}
-
-function categoriaImc(imc: number) {
-  if (imc < 18.5) return 'Bajo peso';
-  if (imc < 25) return 'Peso saludable';
-  if (imc < 30) return 'Sobre el rango saludable';
-  return 'Requiere atención';
-}
+const OBJETIVO_LABEL: Record<string, string> = {
+  perdida_grasa: 'pérdida de grasa',
+  fuerza: 'fuerza',
+  cuerpo_completo: 'cuerpo completo',
+  tren_superior: 'tren superior',
+  tren_inferior: 'tren inferior',
+  cardio: 'cardio',
+  core: 'core',
+};
 
 export default function Progreso() {
   const colors = useTheme();
@@ -34,6 +34,9 @@ export default function Progreso() {
   const [alturaCm, setAlturaCm] = useState('');
   const [pesoKg, setPesoKg] = useState('');
   const [grasaCorporalPct, setGrasaCorporalPct] = useState('');
+
+  const [recalculando, setRecalculando] = useState(false);
+  const [mensajeRecalculo, setMensajeRecalculo] = useState<{ texto: string; esError: boolean } | null>(null);
 
   const cargar = useCallback(async () => {
     setError(null);
@@ -72,6 +75,28 @@ export default function Progreso() {
       await cargar();
     } finally {
       setGuardando(false);
+    }
+  }
+
+  async function recalcular() {
+    setRecalculando(true);
+    setMensajeRecalculo(null);
+    try {
+      const resultado = await clientesApi.recalcularRutina();
+      const objetivo = OBJETIVO_LABEL[resultado.objetivoCalculado] ?? resultado.objetivoCalculado;
+      setMensajeRecalculo({
+        texto: resultado.rutinaAsignada
+          ? `Nuevo objetivo: ${objetivo}. Te asignamos "${resultado.rutinaAsignada.nombre}".`
+          : `Nuevo objetivo: ${objetivo}. Tu gimnasio aún no tiene una rutina que combine bien, avísale a tu entrenador.`,
+        esError: false,
+      });
+    } catch (e) {
+      setMensajeRecalculo({
+        texto: e instanceof ErrorApi ? e.message : 'No pudimos recalcular tu rutina',
+        esError: true,
+      });
+    } finally {
+      setRecalculando(false);
     }
   }
 
@@ -142,6 +167,34 @@ export default function Progreso() {
           </Text>
         )}
       </View>
+
+      {ultimo?.pesoKg && (
+        <View style={styles.recalculoZona}>
+          <Pressable
+            onPress={recalcular}
+            disabled={recalculando}
+            style={[styles.botonRecalcular, { borderColor: colors.tint, opacity: recalculando ? 0.6 : 1 }]}>
+            {recalculando ? (
+              <ActivityIndicator color={colors.tint} size="small" />
+            ) : (
+              <>
+                <Ionicons name="refresh" size={16} color={colors.tint} />
+                <Text style={{ color: colors.tint, fontWeight: '700' }}>Recalcular mi rutina</Text>
+              </>
+            )}
+          </Pressable>
+          {mensajeRecalculo && (
+            <Text
+              style={{
+                color: mensajeRecalculo.esError ? colors.danger : colors.textSecondary,
+                fontSize: 13,
+                marginTop: Spacing.one,
+              }}>
+              {mensajeRecalculo.texto}
+            </Text>
+          )}
+        </View>
+      )}
 
       <Text style={[styles.seccionTitulo, { color: colors.text }]}>Historial</Text>
       <View style={{ gap: Spacing.two }}>
@@ -227,6 +280,16 @@ const styles = StyleSheet.create({
   tarjeta: { flex: 1, borderRadius: 16, padding: Spacing.three, gap: 2 },
   valor: { fontSize: 22, fontWeight: '800' },
   seccionTitulo: { fontSize: 18, fontWeight: '800', marginTop: Spacing.two },
+  recalculoZona: { alignItems: 'center' },
+  botonRecalcular: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    borderWidth: 1.5,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.four,
+  },
   filaHistorial: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, paddingVertical: Spacing.two },
   modalFondo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   modalContenido: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.four, gap: Spacing.two },

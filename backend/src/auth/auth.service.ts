@@ -168,6 +168,7 @@ export class AuthService {
       email: string
       gimnasioId: string
       alturaCm?: number | null
+      onboardingCompletado?: boolean
     },
     nombreGimnasio: string,
   ) {
@@ -179,6 +180,7 @@ export class AuthService {
       gimnasioId: cliente.gimnasioId,
       gimnasio: nombreGimnasio,
       alturaCm: cliente.alturaCm ?? null,
+      onboardingCompletado: cliente.onboardingCompletado ?? false,
     }
   }
 }

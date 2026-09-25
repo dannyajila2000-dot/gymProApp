@@ -8,6 +8,7 @@ export interface Cliente {
   gimnasioId: string;
   gimnasio: string;
   alturaCm: number | null;
+  onboardingCompletado: boolean;
 }
 
 export interface RespuestaAuth {

@@ -29,6 +29,12 @@ model Cliente {
   passwordHash    String
   telefono        String?
   alturaCm        Float?
+  nivelFitness    String?  // "principiante" | "intermedio" | "avanzado"
+  nivelActividad  Int?     // 0-3 (sedentario -> muy activo)
+  pesoObjetivoKg  Float?
+  restriccionFisica String? // "ninguna" | "impacto_bajo" | "sin_saltos"
+  horaRecordatorio  String? // "HH:mm", null si no quiere recordatorio
+  onboardingCompletado Boolean @default(false)
   activo          Boolean  @default(true)
   creadoEn        DateTime @default(now())
   actualizadoEn   DateTime @updatedAt
@@ -54,6 +60,8 @@ model Ejercicio {
   descripcion       String?
   gifUrl            String?
   caloriasPorMinuto Float?
+  esAltoImpacto     Boolean  @default(false)
+  requiereSaltos    Boolean  @default(false)
   creadoEn          DateTime @default(now())
 
   enRutinas         RutinaEjercicio[]

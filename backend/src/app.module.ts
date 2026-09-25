@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { RutinasModule } from './rutinas/rutinas.module.js';
 import { ProgresoModule } from './progreso/progreso.module.js';
 import { NutricionModule } from './nutricion/nutricion.module.js';
+import { ClientesModule } from './clientes/clientes.module.js';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { NutricionModule } from './nutricion/nutricion.module.js';
     RutinasModule,
     ProgresoModule,
     NutricionModule,
+    ClientesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

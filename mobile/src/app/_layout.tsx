@@ -35,9 +35,13 @@ function RootNavigator() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={!!cliente}>
+      <Stack.Protected guard={!!cliente && cliente.onboardingCompletado}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="entrenamiento/[rutinaId]" options={{ presentation: 'fullScreenModal' }} />
+      </Stack.Protected>
+
+      <Stack.Protected guard={!!cliente && !cliente.onboardingCompletado}>
+        <Stack.Screen name="onboarding" />
       </Stack.Protected>
 
       <Stack.Protected guard={!cliente}>
