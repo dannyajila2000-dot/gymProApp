@@ -9,6 +9,7 @@ import { ProgresoModule } from './progreso/progreso.module.js';
 import { NutricionModule } from './nutricion/nutricion.module.js';
 import { ClientesModule } from './clientes/clientes.module.js';
 import { RecordatoriosModule } from './recordatorios/recordatorios.module.js';
+import { FeedbackModule } from './feedback/feedback.module.js';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { RecordatoriosModule } from './recordatorios/recordatorios.module.js';
     NutricionModule,
     ClientesModule,
     RecordatoriosModule,
+    FeedbackModule,
   ],
   controllers: [AppController],
   providers: [AppService],

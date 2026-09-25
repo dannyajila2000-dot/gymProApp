@@ -86,7 +86,7 @@ export class AuthService {
     })
 
     const tokens = await this.emitirTokens(cliente)
-    return { cliente: this.aPerfilPublico(cliente, gimnasio.nombre), ...tokens }
+    return { cliente: this.aPerfilPublico(cliente, gimnasio), ...tokens }
   }
 
   async login(dto: LoginDto) {
@@ -105,7 +105,7 @@ export class AuthService {
     }
 
     const tokens = await this.emitirTokens(cliente)
-    return { cliente: this.aPerfilPublico(cliente, gimnasio.nombre), ...tokens }
+    return { cliente: this.aPerfilPublico(cliente, gimnasio), ...tokens }
   }
 
   async refrescar(refreshToken: string) {
@@ -157,7 +157,7 @@ export class AuthService {
       include: { gimnasio: true },
     })
     if (!cliente) throw new BadRequestException('Cliente no encontrado')
-    return this.aPerfilPublico(cliente, cliente.gimnasio.nombre)
+    return this.aPerfilPublico(cliente, cliente.gimnasio)
   }
 
   async cambiarPassword(clienteId: string, passwordActual: string, passwordNueva: string) {
@@ -192,7 +192,7 @@ export class AuthService {
       bajarVolumenConVoz?: boolean
       onboardingCompletado?: boolean
     },
-    nombreGimnasio: string,
+    gimnasio: { nombre: string; codigo: string },
   ) {
     return {
       id: cliente.id,
@@ -200,7 +200,8 @@ export class AuthService {
       apellidos: cliente.apellidos,
       email: cliente.email,
       gimnasioId: cliente.gimnasioId,
-      gimnasio: nombreGimnasio,
+      gimnasio: gimnasio.nombre,
+      gimnasioCodigo: gimnasio.codigo,
       telefono: cliente.telefono ?? null,
       alturaCm: cliente.alturaCm ?? null,
       fechaNacimiento: cliente.fechaNacimiento ? cliente.fechaNacimiento.toISOString().slice(0, 10) : null,

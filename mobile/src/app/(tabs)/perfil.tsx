@@ -1,12 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
 
 import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 
-const OPCIONES = [
+const OPCIONES_CUENTA = [
   {
     ruta: '/ajustes/perfil' as const,
     icono: 'person-outline' as const,
@@ -17,13 +17,28 @@ const OPCIONES = [
     ruta: '/ajustes/entrenamiento' as const,
     icono: 'barbell-outline' as const,
     titulo: 'Ajustes de entrenamiento',
-    descripcion: 'Restricción física y entrenador',
+    descripcion: 'Restricción física, entrenador y música',
   },
   {
     ruta: '/ajustes/recordatorios' as const,
     icono: 'notifications-outline' as const,
     titulo: 'Recordatorios',
     descripcion: 'Avisos para hacer ejercicio',
+  },
+];
+
+const OPCIONES_AYUDA = [
+  {
+    ruta: '/ajustes/preguntas-frecuentes' as const,
+    icono: 'help-circle-outline' as const,
+    titulo: 'Preguntas frecuentes',
+    descripcion: 'Dudas comunes sobre la app',
+  },
+  {
+    ruta: '/ajustes/feedback' as const,
+    icono: 'chatbubble-ellipses-outline' as const,
+    titulo: 'Enviar comentarios',
+    descripcion: 'Cuéntanos cómo mejorar',
   },
 ];
 
@@ -34,6 +49,12 @@ export default function Perfil() {
   async function salir() {
     await cerrarSesion();
     router.replace('/(auth)/login');
+  }
+
+  function compartir() {
+    Share.share({
+      message: `Entreno con ${cliente?.gimnasio ?? 'mi gimnasio'} usando esta app. Si también eres miembro, descárgala y regístrate con el código: ${cliente?.gimnasioCodigo ?? ''}`,
+    }).catch(() => {});
   }
 
   const iniciales = `${cliente?.nombres?.[0] ?? ''}${cliente?.apellidos?.[0] ?? ''}`.toUpperCase();
@@ -54,7 +75,7 @@ export default function Perfil() {
       </View>
 
       <View style={styles.menu}>
-        {OPCIONES.map((op) => (
+        {OPCIONES_CUENTA.map((op) => (
           <Pressable
             key={op.ruta}
             onPress={() => router.push(op.ruta)}
@@ -67,6 +88,29 @@ export default function Perfil() {
             <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
           </Pressable>
         ))}
+      </View>
+
+      <View style={styles.menu}>
+        {OPCIONES_AYUDA.map((op) => (
+          <Pressable
+            key={op.ruta}
+            onPress={() => router.push(op.ruta)}
+            style={[styles.filaMenu, { borderColor: colors.border }]}>
+            <Ionicons name={op.icono} size={22} color={colors.text} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>{op.titulo}</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>{op.descripcion}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+          </Pressable>
+        ))}
+        <Pressable onPress={compartir} style={[styles.filaMenu, { borderColor: colors.border }]}>
+          <Ionicons name="share-social-outline" size={22} color={colors.text} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>Compartir la app</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>Invita a alguien de tu gimnasio</Text>
+          </View>
+        </Pressable>
       </View>
 
       <Pressable onPress={salir} style={[styles.botonSalir, { borderColor: colors.danger }]}>

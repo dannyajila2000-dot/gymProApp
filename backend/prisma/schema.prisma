@@ -53,6 +53,7 @@ model Cliente {
   comidas               Comida[]
   registrosAgua         RegistroAgua[]
   metaNutricional       MetaNutricional?
+  feedback              Feedback[]
   recordatorios         Recordatorio[]
 
   @@unique([gimnasioId, email])
@@ -199,6 +200,17 @@ model Recordatorio {
   creadoEn   DateTime @default(now())
 
   @@map("recordatorios")
+}
+
+model Feedback {
+  id         String   @id @default(uuid())
+  clienteId  String
+  cliente    Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  categoria  String   // "muy_dificil" | "demasiado_facil" | "errores" | "sugerencia" | "otro"
+  mensaje    String?
+  creadoEn   DateTime @default(now())
+
+  @@map("feedback")
 }
 
 model RefreshToken {

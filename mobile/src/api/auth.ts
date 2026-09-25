@@ -7,6 +7,7 @@ export interface Cliente {
   email: string;
   gimnasioId: string;
   gimnasio: string;
+  gimnasioCodigo: string;
   telefono: string | null;
   alturaCm: number | null;
   fechaNacimiento: string | null;
