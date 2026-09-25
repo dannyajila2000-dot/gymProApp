@@ -17,7 +17,11 @@ import {
 import { ErrorApi } from '@/api/client';
 import * as recordatoriosApi from '@/api/recordatorios';
 import type { Recordatorio } from '@/api/recordatorios';
-import { pedirPermisoNotificaciones, sincronizarNotificaciones } from '@/lib/notificaciones';
+import {
+  notificacionesDisponibles,
+  pedirPermisoNotificaciones,
+  sincronizarNotificaciones,
+} from '@/lib/notificaciones';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 
@@ -76,8 +80,8 @@ export default function Recordatorios() {
     if (diasSeleccionados.length === 0) return;
     setGuardando(true);
     try {
-      const permitido = await pedirPermisoNotificaciones();
-      if (!permitido) {
+      const permiso = await pedirPermisoNotificaciones();
+      if (permiso === 'denegado') {
         setError('Necesitamos permiso de notificaciones para poder recordarte');
         return;
       }
@@ -122,6 +126,13 @@ export default function Recordatorios() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={styles.contenedor}>
         {error && <Text style={{ color: colors.danger, fontSize: 13 }}>{error}</Text>}
+
+        {!notificacionesDisponibles && (
+          <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>
+            Las alarmas locales no funcionan en Expo Go en Android. Se guardarán igual, pero solo sonarán en una
+            versión instalada (development build) de la app.
+          </Text>
+        )}
 
         {recordatorios.map((recordatorio) => (
           <View key={recordatorio.id} style={[styles.tarjeta, { backgroundColor: colors.backgroundElement }]}>
