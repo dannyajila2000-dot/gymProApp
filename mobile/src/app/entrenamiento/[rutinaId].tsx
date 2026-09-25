@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import * as Speech from 'expo-speech';
+import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -12,6 +13,7 @@ import { Spacing } from '@/constants/theme';
 import * as rutinasApi from '@/api/rutinas';
 import type { Rutina, RutinaEjercicio } from '@/api/rutinas';
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
+import { obtenerPistaGuardada } from '@/lib/musica';
 
 type Paso =
   | { tipo: 'ejercicio'; item: RutinaEjercicio; serie: number; totalSeries: number }
@@ -74,6 +76,11 @@ export default function Entrenamiento() {
   const { rutinaId } = useLocalSearchParams<{ rutinaId: string }>();
   const guiaDeVozActiva = cliente?.guiaDeVozActiva !== false;
   const cuentaAtrasSeg = cliente?.cuentaAtrasSeg ?? 5;
+  const volumenMusica = cliente?.volumenMusica ?? 0.5;
+  const bajarVolumenConVoz = cliente?.bajarVolumenConVoz !== false;
+
+  const [pistaUri, setPistaUri] = useState<string | null>(null);
+  const musica = useAudioPlayer(pistaUri ? { uri: pistaUri } : null);
 
   const [rutina, setRutina] = useState<Rutina | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -110,8 +117,55 @@ export default function Entrenamiento() {
   const paso = pasos[pasoActual];
 
   useEffect(() => {
+    setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'duckOthers' }).catch(() => {});
+    obtenerPistaGuardada().then((pista) => setPistaUri(pista?.uri ?? null));
+  }, []);
+
+  useEffect(() => {
+    if (!pistaUri) return;
+    // expo-audio expone un objeto mutable a propósito: así se controla el player.
+    // eslint-disable-next-line react-hooks/immutability
+    musica.loop = true;
+    musica.volume = volumenMusica;
+    if (!finalizado) musica.play();
+    return () => {
+      musica.pause();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pistaUri]);
+
+  useEffect(() => {
+    if (!pistaUri) return;
+    if (finalizado) musica.pause();
+  }, [finalizado, pistaUri, musica]);
+
+  useEffect(() => {
+    if (!pistaUri) return;
+    // eslint-disable-next-line react-hooks/immutability
+    musica.volume = volumenMusica;
+  }, [volumenMusica, pistaUri, musica]);
+
+  function opcionesVoz() {
+    return {
+      language: 'es',
+      onStart: () => {
+        if (pistaUri && bajarVolumenConVoz) musica.volume = Math.min(volumenMusica, 0.15);
+      },
+      onDone: () => {
+        if (pistaUri && bajarVolumenConVoz) musica.volume = volumenMusica;
+      },
+      onStopped: () => {
+        if (pistaUri && bajarVolumenConVoz) musica.volume = volumenMusica;
+      },
+      onError: () => {
+        if (pistaUri && bajarVolumenConVoz) musica.volume = volumenMusica;
+      },
+    };
+  }
+
+  useEffect(() => {
     if (rutina && enPreparacion && guiaDeVozActiva && cuentaAtrasSeg > 0) {
-      Speech.speak('Prepárate', { language: 'es' });
+      Speech.speak('Prepárate', opcionesVoz());
     }
     // Solo debe anunciarse una vez, cuando la rutina termina de cargar.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -121,7 +175,7 @@ export default function Entrenamiento() {
     if (enPreparacion || !guiaDeVozActiva || !paso) return;
     Speech.stop();
     const texto = paso.tipo === 'descanso' ? 'Descanso' : paso.item.ejercicio.nombre;
-    Speech.speak(texto, { language: 'es' });
+    Speech.speak(texto, opcionesVoz());
     return () => {
       Speech.stop();
     };
@@ -130,7 +184,9 @@ export default function Entrenamiento() {
   }, [pasoActual, enPreparacion]);
 
   useEffect(() => {
-    if (finalizado && guiaDeVozActiva) Speech.speak('¡Entrenamiento completado!', { language: 'es' });
+    if (finalizado && guiaDeVozActiva) Speech.speak('¡Entrenamiento completado!', opcionesVoz());
+    // opcionesVoz se recrea en cada render; no debe disparar este efecto.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finalizado, guiaDeVozActiva]);
 
   async function avanzar() {

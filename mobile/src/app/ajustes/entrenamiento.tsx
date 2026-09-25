@@ -1,4 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import Slider from '@react-native-community/slider';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
@@ -38,6 +40,8 @@ export default function AjustesEntrenamiento() {
   const [preferenciaEntrenador, setPreferenciaEntrenador] = useState(cliente?.preferenciaEntrenador ?? 'animacion');
   const [guiaDeVozActiva, setGuiaDeVozActiva] = useState(cliente?.guiaDeVozActiva ?? true);
   const [cuentaAtrasSeg, setCuentaAtrasSeg] = useState(cliente?.cuentaAtrasSeg ?? 5);
+  const [volumenMusica, setVolumenMusica] = useState(cliente?.volumenMusica ?? 0.5);
+  const [bajarVolumenConVoz, setBajarVolumenConVoz] = useState(cliente?.bajarVolumenConVoz ?? true);
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<{ texto: string; esError: boolean } | null>(null);
 
@@ -50,6 +54,8 @@ export default function AjustesEntrenamiento() {
         preferenciaEntrenador,
         guiaDeVozActiva,
         cuentaAtrasSeg,
+        volumenMusica,
+        bajarVolumenConVoz,
       });
       actualizarCliente(actualizado);
       setMensaje({ texto: 'Ajustes guardados', esError: false });
@@ -105,6 +111,41 @@ export default function AjustesEntrenamiento() {
           <Ionicons name="videocam" size={40} color={colors.tint} />
           <Text style={{ color: colors.text, fontWeight: '700', marginTop: Spacing.one }}>Video</Text>
         </Pressable>
+      </View>
+
+      <Text style={[styles.tituloSeccion, { color: colors.text }]}>Música</Text>
+      <Pressable
+        onPress={() => router.push('/ajustes/musica')}
+        style={[styles.filaAjuste, { backgroundColor: colors.backgroundElement }]}>
+        <Ionicons name="musical-notes-outline" size={20} color={colors.text} />
+        <Text style={{ color: colors.text, fontWeight: '700', flex: 1 }}>Elegir música</Text>
+        <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+      </Pressable>
+
+      <View style={[styles.filaAjuste, { backgroundColor: colors.backgroundElement }]}>
+        <Ionicons name="volume-low" size={18} color={colors.textSecondary} />
+        <Slider
+          value={volumenMusica}
+          minimumValue={0}
+          maximumValue={1}
+          step={0.05}
+          minimumTrackTintColor={colors.tint}
+          maximumTrackTintColor={colors.border}
+          thumbTintColor={colors.tint}
+          onValueChange={setVolumenMusica}
+          style={{ flex: 1 }}
+        />
+        <Ionicons name="volume-high" size={18} color={colors.textSecondary} />
+      </View>
+
+      <View style={[styles.filaAjuste, { backgroundColor: colors.backgroundElement }]}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.text, fontWeight: '700' }}>Bajar volumen con la voz</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>
+            Baja la música mientras el entrenador habla
+          </Text>
+        </View>
+        <Switch value={bajarVolumenConVoz} onValueChange={setBajarVolumenConVoz} trackColor={{ true: colors.tint }} />
       </View>
 
       <Text style={[styles.tituloSeccion, { color: colors.text }]}>Voz y cuenta atrás</Text>

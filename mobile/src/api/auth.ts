@@ -16,6 +16,8 @@ export interface Cliente {
   preferenciaEntrenador: 'animacion' | 'video';
   guiaDeVozActiva: boolean;
   cuentaAtrasSeg: number;
+  volumenMusica: number;
+  bajarVolumenConVoz: boolean;
   onboardingCompletado: boolean;
 }
 

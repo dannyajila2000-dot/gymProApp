@@ -16,6 +16,7 @@ export default function AjustesLayout() {
       <Stack.Screen name="perfil" options={{ title: 'Mi perfil' }} />
       <Stack.Screen name="entrenamiento" options={{ title: 'Ajustes de entrenamiento' }} />
       <Stack.Screen name="recordatorios" options={{ title: 'Recordatorios' }} />
+      <Stack.Screen name="musica" options={{ title: 'Música' }} />
     </Stack>
   );
 }

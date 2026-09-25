@@ -12,6 +12,8 @@ export interface DatosPerfil {
   preferenciaEntrenador?: 'animacion' | 'video';
   guiaDeVozActiva?: boolean;
   cuentaAtrasSeg?: number;
+  volumenMusica?: number;
+  bajarVolumenConVoz?: boolean;
 }
 
 export interface DatosOnboarding {

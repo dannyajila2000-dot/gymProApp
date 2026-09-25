@@ -1,4 +1,4 @@
-import { IsBoolean, IsDateString, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator'
+import { IsBoolean, IsDateString, IsIn, IsInt, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator'
 
 const REGEX_NOMBRE_PERSONA = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/
 
@@ -50,4 +50,14 @@ export class ActualizarPerfilDto {
   @Min(0)
   @Max(15)
   cuentaAtrasSeg?: number
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  volumenMusica?: number
+
+  @IsOptional()
+  @IsBoolean()
+  bajarVolumenConVoz?: boolean
 }

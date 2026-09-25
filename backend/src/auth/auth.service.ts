@@ -188,6 +188,8 @@ export class AuthService {
       preferenciaEntrenador?: string
       guiaDeVozActiva?: boolean
       cuentaAtrasSeg?: number
+      volumenMusica?: number
+      bajarVolumenConVoz?: boolean
       onboardingCompletado?: boolean
     },
     nombreGimnasio: string,
@@ -206,6 +208,8 @@ export class AuthService {
       unidadAltura: cliente.unidadAltura ?? 'cm',
       guiaDeVozActiva: cliente.guiaDeVozActiva ?? true,
       cuentaAtrasSeg: cliente.cuentaAtrasSeg ?? 5,
+      volumenMusica: cliente.volumenMusica ?? 0.5,
+      bajarVolumenConVoz: cliente.bajarVolumenConVoz ?? true,
       restriccionFisica: cliente.restriccionFisica ?? null,
       preferenciaEntrenador: cliente.preferenciaEntrenador ?? 'animacion',
       onboardingCompletado: cliente.onboardingCompletado ?? false,

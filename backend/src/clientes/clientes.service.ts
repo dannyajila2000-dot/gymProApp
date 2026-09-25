@@ -122,6 +122,8 @@ export class ClientesService {
         preferenciaEntrenador: dto.preferenciaEntrenador,
         guiaDeVozActiva: dto.guiaDeVozActiva,
         cuentaAtrasSeg: dto.cuentaAtrasSeg,
+        volumenMusica: dto.volumenMusica,
+        bajarVolumenConVoz: dto.bajarVolumenConVoz,
       },
     })
   }

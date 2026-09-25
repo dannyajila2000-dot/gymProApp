@@ -39,6 +39,8 @@ model Cliente {
   preferenciaEntrenador String @default("animacion") // "animacion" | "video"
   guiaDeVozActiva Boolean @default(true)
   cuentaAtrasSeg  Int     @default(5)
+  volumenMusica   Float   @default(0.5)
+  bajarVolumenConVoz Boolean @default(true)
   onboardingCompletado Boolean @default(false)
   activo          Boolean  @default(true)
   creadoEn        DateTime @default(now())
