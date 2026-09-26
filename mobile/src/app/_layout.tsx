@@ -38,6 +38,7 @@ function RootNavigator() {
       <Stack.Protected guard={!!cliente && cliente.onboardingCompletado}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="entrenamiento/[rutinaId]" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="rutinas/[rutinaId]" />
         <Stack.Screen name="ajustes" />
       </Stack.Protected>
 

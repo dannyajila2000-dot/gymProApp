@@ -8,21 +8,14 @@ import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 import * as rutinasApi from '@/api/rutinas';
 import type { Rutina as RutinaModelo, SesionEntrenamiento } from '@/api/rutinas';
+import { OBJETIVO_LABEL } from '@/constants/objetivos';
+import { duracionEstimadaMin } from '@/lib/rutina-utils';
 
 const NIVEL_LABEL: Record<string, string> = {
   principiante: 'Principiante',
   intermedio: 'Intermedio',
   avanzado: 'Avanzado',
 };
-
-function duracionEstimadaMin(rutina: RutinaModelo) {
-  const segundos = rutina.ejercicios.reduce((suma, item) => {
-    const trabajo = item.duracionSeg ?? (item.repeticiones ?? 10) * 3;
-    const series = item.series ?? 1;
-    return suma + trabajo * series + (item.descansoSeg ?? 20) * series;
-  }, 0);
-  return Math.max(1, Math.round(segundos / 60));
-}
 
 export default function Rutina() {
   const colors = useTheme();
@@ -32,6 +25,8 @@ export default function Rutina() {
   const [disponibles, setDisponibles] = useState<RutinaModelo[]>([]);
   const [historial, setHistorial] = useState<SesionEntrenamiento[]>([]);
   const [asignando, setAsignando] = useState<string | null>(null);
+  const [filtroObjetivo, setFiltroObjetivo] = useState<string | null>(null);
+  const [filtroNivel, setFiltroNivel] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     try {
@@ -74,6 +69,11 @@ export default function Rutina() {
   }
 
   const otrasRutinas = disponibles.filter((r) => r.id !== miRutina?.id);
+  const objetivosDisponibles = [...new Set(otrasRutinas.map((r) => r.objetivo))];
+  const nivelesDisponibles = [...new Set(otrasRutinas.map((r) => r.nivel))];
+  const rutinasFiltradas = otrasRutinas.filter(
+    (r) => (!filtroObjetivo || r.objetivo === filtroObjetivo) && (!filtroNivel || r.nivel === filtroNivel),
+  );
 
   return (
     <ScrollView
@@ -130,9 +130,54 @@ export default function Rutina() {
       <Text style={[styles.seccionTitulo, { color: colors.text }]}>
         {miRutina ? 'Otras rutinas' : 'Elige tu rutina'}
       </Text>
+
+      {otrasRutinas.length > 0 && (
+        <>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filaChips}>
+            <ChipFiltro
+              activo={filtroObjetivo === null}
+              texto="Todos"
+              onPress={() => setFiltroObjetivo(null)}
+              colors={colors}
+            />
+            {objetivosDisponibles.map((objetivo) => (
+              <ChipFiltro
+                key={objetivo}
+                activo={filtroObjetivo === objetivo}
+                texto={OBJETIVO_LABEL[objetivo] ?? objetivo}
+                onPress={() => setFiltroObjetivo((actual) => (actual === objetivo ? null : objetivo))}
+                colors={colors}
+              />
+            ))}
+          </ScrollView>
+          {nivelesDisponibles.length > 1 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filaChips}>
+              <ChipFiltro
+                activo={filtroNivel === null}
+                texto="Todos los niveles"
+                onPress={() => setFiltroNivel(null)}
+                colors={colors}
+              />
+              {nivelesDisponibles.map((nivel) => (
+                <ChipFiltro
+                  key={nivel}
+                  activo={filtroNivel === nivel}
+                  texto={NIVEL_LABEL[nivel] ?? nivel}
+                  onPress={() => setFiltroNivel((actual) => (actual === nivel ? null : nivel))}
+                  colors={colors}
+                />
+              ))}
+            </ScrollView>
+          )}
+        </>
+      )}
+
       <View style={{ gap: Spacing.two }}>
-        {otrasRutinas.map((rutina) => (
-          <View key={rutina.id} style={[styles.tarjetaRutina, { backgroundColor: colors.backgroundElement }]}>
+        {rutinasFiltradas.map((rutina) => (
+          <Pressable
+            key={rutina.id}
+            onPress={() => router.push({ pathname: '/rutinas/[rutinaId]', params: { rutinaId: rutina.id } })}
+            style={[styles.tarjetaRutina, { backgroundColor: colors.backgroundElement }]}>
             {rutina.ejercicios[0]?.ejercicio.gifUrl && (
               <Image
                 source={{ uri: rutina.ejercicios[0].ejercicio.gifUrl }}
@@ -159,10 +204,13 @@ export default function Rutina() {
                 <Text style={[styles.botonElegirTexto, { color: colors.tint }]}>Elegir</Text>
               )}
             </Pressable>
-          </View>
+          </Pressable>
         ))}
         {otrasRutinas.length === 0 && (
           <Text style={{ color: colors.textSecondary }}>No hay más rutinas disponibles por ahora.</Text>
+        )}
+        {otrasRutinas.length > 0 && rutinasFiltradas.length === 0 && (
+          <Text style={{ color: colors.textSecondary }}>Ninguna rutina combina con este filtro.</Text>
         )}
       </View>
 
@@ -195,6 +243,31 @@ export default function Rutina() {
         Fotos y catálogo de ejercicios cortesía de wger.de (CC BY-SA)
       </Text>
     </ScrollView>
+  );
+}
+
+function ChipFiltro({
+  activo,
+  texto,
+  onPress,
+  colors,
+}: {
+  activo: boolean;
+  texto: string;
+  onPress: () => void;
+  colors: ReturnType<typeof useTheme>;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.chip,
+        { backgroundColor: activo ? colors.tint : colors.backgroundElement, borderColor: colors.border },
+      ]}>
+      <Text style={{ color: activo ? colors.tintForeground : colors.textSecondary, fontSize: 13, fontWeight: '700' }}>
+        {texto}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -277,6 +350,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     marginTop: Spacing.two,
+  },
+  filaChips: {
+    flexDirection: 'row',
+    gap: Spacing.one,
+    paddingBottom: 4,
+  },
+  chip: {
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderWidth: 1,
   },
   tarjetaRutina: {
     flexDirection: 'row',

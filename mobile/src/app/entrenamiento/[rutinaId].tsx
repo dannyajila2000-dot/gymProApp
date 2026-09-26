@@ -15,6 +15,7 @@ import type { Rutina, RutinaEjercicio } from '@/api/rutinas';
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
 import { DetalleEjercicioModal } from '@/components/entrenamiento/detalle-ejercicio-modal';
 import { obtenerPistaGuardada } from '@/lib/musica';
+import { caloriasEstimadas } from '@/lib/rutina-utils';
 
 type Paso =
   | { tipo: 'ejercicio'; item: RutinaEjercicio; serie: number; totalSeries: number }
@@ -236,23 +237,18 @@ export default function Entrenamiento() {
   async function finalizar() {
     if (!rutina) return;
     const duracionMin = Math.max(1, Math.round((Date.now() - inicioRef.current) / 60000));
-    const caloriasEstimadas = rutina.ejercicios.reduce((suma, item) => {
-      const minutos = item.duracionSeg
-        ? (item.duracionSeg * (item.series ?? 1)) / 60
-        : ((item.repeticiones ?? 10) * (item.series ?? 1) * 3) / 60;
-      return suma + minutos * (item.ejercicio.caloriasPorMinuto ?? 6);
-    }, 0);
+    const calorias = caloriasEstimadas(rutina);
 
     setGuardando(true);
     try {
       await rutinasApi.registrarSesion({
         rutinaId: rutina.id,
         duracionMin,
-        caloriasEstimadas: Math.round(caloriasEstimadas),
+        caloriasEstimadas: calorias,
       });
     } finally {
       setGuardando(false);
-      setFinalizado({ duracionMin, caloriasEstimadas: Math.round(caloriasEstimadas) });
+      setFinalizado({ duracionMin, caloriasEstimadas: calorias });
     }
   }
 
