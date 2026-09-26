@@ -58,6 +58,7 @@ model Cliente {
   recordatorios         Recordatorio[]
   registrosPasos        RegistroPasos[]
   actividadesLibres     ActividadLibre[]
+  sustituciones         SustitucionEjercicio[]
 
   @@unique([gimnasioId, email])
   @@map("clientes")
@@ -77,6 +78,7 @@ model Ejercicio {
   creadoEn          DateTime @default(now())
 
   enRutinas         RutinaEjercicio[]
+  sustitutoEn       SustitucionEjercicio[]
 
   @@map("ejercicios")
 }
@@ -112,7 +114,23 @@ model RutinaEjercicio {
   duracionSeg  Int?
   descansoSeg  Int?
 
+  sustituciones SustitucionEjercicio[]
+
   @@map("rutina_ejercicios")
+}
+
+model SustitucionEjercicio {
+  id                 String          @id @default(uuid())
+  clienteId          String
+  cliente            Cliente         @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  rutinaEjercicioId  String
+  rutinaEjercicio    RutinaEjercicio @relation(fields: [rutinaEjercicioId], references: [id], onDelete: Cascade)
+  ejercicioId        String
+  ejercicioSustituto Ejercicio       @relation(fields: [ejercicioId], references: [id])
+  creadoEn           DateTime        @default(now())
+
+  @@unique([clienteId, rutinaEjercicioId])
+  @@map("sustituciones_ejercicio")
 }
 
 model ClienteRutina {

@@ -8,6 +8,7 @@ import { ErrorApi } from '@/api/client';
 import * as rutinasApi from '@/api/rutinas';
 import type { Rutina } from '@/api/rutinas';
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
+import { SustituirEjercicioModal } from '@/components/entrenamiento/sustituir-ejercicio-modal';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 import { OBJETIVO_LABEL } from '@/constants/objetivos';
@@ -29,13 +30,14 @@ export default function DetalleRutina() {
   const [miRutinaId, setMiRutinaId] = useState<string | null>(null);
   const [descripcionExpandida, setDescripcionExpandida] = useState(false);
   const [asignando, setAsignando] = useState(false);
+  const [sustituirItem, setSustituirItem] = useState<{ id: string; nombre: string } | null>(null);
 
   const cargar = useCallback(async () => {
     setError(null);
     try {
       const [rutinas, mia] = await Promise.all([rutinasApi.listarRutinas(), rutinasApi.obtenerMiRutina()]);
-      setRutina(rutinas.find((r) => r.id === rutinaId) ?? null);
       setMiRutinaId(mia?.id ?? null);
+      setRutina(mia?.id === rutinaId ? mia : (rutinas.find((r) => r.id === rutinaId) ?? null));
     } catch (e) {
       setError(e instanceof ErrorApi ? e.message : 'No pudimos cargar esta rutina');
     } finally {
@@ -154,6 +156,13 @@ export default function DetalleRutina() {
                     {item.duracionSeg ? `${item.duracionSeg}s` : `${item.repeticiones ?? 10} reps`}
                   </Text>
                 </View>
+                {esMiRutina && (
+                  <Pressable
+                    onPress={() => setSustituirItem({ id: item.id, nombre: item.ejercicio.nombre })}
+                    hitSlop={8}>
+                    <Ionicons name="swap-horizontal-outline" size={20} color={colors.textSecondary} />
+                  </Pressable>
+                )}
               </View>
             ))}
           </View>
@@ -174,6 +183,16 @@ export default function DetalleRutina() {
           )}
         </Pressable>
       </View>
+
+      {sustituirItem && (
+        <SustituirEjercicioModal
+          visible
+          onCerrar={() => setSustituirItem(null)}
+          rutinaEjercicioId={sustituirItem.id}
+          nombreActual={sustituirItem.nombre}
+          onSustituido={cargar}
+        />
+      )}
     </View>
   );
 }

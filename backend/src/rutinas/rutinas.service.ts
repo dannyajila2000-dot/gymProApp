@@ -37,7 +37,14 @@ export class RutinasService {
       }),
     ])
     if (!asignacion) return null
-    return this.personalizar(asignacion.rutina, cliente)
+
+    const sustituciones = await this.prisma.sustitucionEjercicio.findMany({
+      where: { clienteId, rutinaEjercicio: { rutinaId: asignacion.rutinaId } },
+      include: { ejercicioSustituto: true },
+    })
+    const mapaSustituciones = new Map(sustituciones.map((s) => [s.rutinaEjercicioId, s.ejercicioSustituto]))
+
+    return this.personalizar(asignacion.rutina, cliente, mapaSustituciones)
   }
 
   /**
@@ -46,8 +53,12 @@ export class RutinasService {
    * - Escala series/descanso según su nivel de fitness.
    * No modifica la plantilla original en la base de datos.
    */
-  private async personalizar(rutina: RutinaConEjercicios, cliente: PerfilCliente | null) {
-    if (!cliente?.nivelFitness && !cliente?.restriccionFisica) return rutina
+  private async personalizar(
+    rutina: RutinaConEjercicios,
+    cliente: PerfilCliente | null,
+    sustituciones: Map<string, RutinaEjercicioConEjercicio['ejercicio']> = new Map(),
+  ) {
+    if (!cliente?.nivelFitness && !cliente?.restriccionFisica && sustituciones.size === 0) return rutina
 
     const restriccion = cliente?.restriccionFisica ?? null
     const idsEnRutina = new Set(rutina.ejercicios.map((re) => re.ejercicioId))
@@ -75,7 +86,10 @@ export class RutinasService {
     const ejerciciosPersonalizados = rutina.ejercicios
       .map((re) => {
         let itemFinal: RutinaEjercicioConEjercicio = re
-        if (this.esInseguro(re.ejercicio, restriccion)) {
+        const sustituto = sustituciones.get(re.id)
+        if (sustituto && !this.esInseguro(sustituto, restriccion)) {
+          itemFinal = { ...re, ejercicio: sustituto, ejercicioId: sustituto.id }
+        } else if (this.esInseguro(itemFinal.ejercicio, restriccion)) {
           const alternativa = alternativaPorGrupo.get(re.ejercicio.grupoMuscular)
           if (!alternativa) return null
           itemFinal = { ...re, ejercicio: alternativa, ejercicioId: alternativa.id }
@@ -181,5 +195,46 @@ export class RutinasService {
       orderBy: { completadaEn: 'desc' },
       take: 60,
     })
+  }
+
+  async alternativasParaEjercicio(clienteId: string, gimnasioId: string, rutinaEjercicioId: string) {
+    const rutinaEjercicio = await this.prisma.rutinaEjercicio.findFirst({
+      where: { id: rutinaEjercicioId, rutina: { gimnasioId } },
+      include: { ejercicio: true },
+    })
+    if (!rutinaEjercicio) throw new NotFoundException('Ejercicio no encontrado')
+
+    const cliente = await this.prisma.cliente.findUnique({
+      where: { id: clienteId },
+      select: { restriccionFisica: true },
+    })
+    const restriccion = cliente?.restriccionFisica ?? null
+
+    return this.prisma.ejercicio.findMany({
+      where: {
+        grupoMuscular: rutinaEjercicio.ejercicio.grupoMuscular,
+        id: { not: rutinaEjercicio.ejercicioId },
+        ...(restriccion === 'impacto_bajo' ? { esAltoImpacto: false } : {}),
+        ...(restriccion === 'sin_saltos' ? { requiereSaltos: false } : {}),
+      },
+      orderBy: { nombre: 'asc' },
+    })
+  }
+
+  async sustituirEjercicio(clienteId: string, gimnasioId: string, rutinaEjercicioId: string, ejercicioId: string) {
+    const rutinaEjercicio = await this.prisma.rutinaEjercicio.findFirst({
+      where: { id: rutinaEjercicioId, rutina: { gimnasioId } },
+    })
+    if (!rutinaEjercicio) throw new NotFoundException('Ejercicio no encontrado')
+
+    return this.prisma.sustitucionEjercicio.upsert({
+      where: { clienteId_rutinaEjercicioId: { clienteId, rutinaEjercicioId } },
+      create: { clienteId, rutinaEjercicioId, ejercicioId },
+      update: { ejercicioId },
+    })
+  }
+
+  async quitarSustitucion(clienteId: string, rutinaEjercicioId: string) {
+    await this.prisma.sustitucionEjercicio.deleteMany({ where: { clienteId, rutinaEjercicioId } })
   }
 }

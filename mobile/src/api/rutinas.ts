@@ -77,3 +77,22 @@ export function registrarSesion(datos: { rutinaId: string; duracionMin: number; 
 export function obtenerHistorial() {
   return solicitar<SesionEntrenamiento[]>('/rutinas/historial', { autenticado: true });
 }
+
+export function listarAlternativas(rutinaEjercicioId: string) {
+  return solicitar<Ejercicio[]>(`/rutinas/ejercicios/${rutinaEjercicioId}/alternativas`, { autenticado: true });
+}
+
+export function sustituirEjercicio(rutinaEjercicioId: string, ejercicioId: string) {
+  return solicitar(`/rutinas/ejercicios/${rutinaEjercicioId}/sustituir`, {
+    metodo: 'POST',
+    autenticado: true,
+    cuerpo: { ejercicioId },
+  });
+}
+
+export function quitarSustitucion(rutinaEjercicioId: string) {
+  return solicitar(`/rutinas/ejercicios/${rutinaEjercicioId}/sustituir`, {
+    metodo: 'DELETE',
+    autenticado: true,
+  });
+}
