@@ -4,7 +4,7 @@ import * as Speech from 'expo-speech';
 import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ErrorApi } from '@/api/client';
 import { useTheme } from '@/hooks/use-theme';
@@ -13,6 +13,7 @@ import { Spacing } from '@/constants/theme';
 import * as rutinasApi from '@/api/rutinas';
 import type { Rutina, RutinaEjercicio } from '@/api/rutinas';
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
+import { DetalleEjercicioModal } from '@/components/entrenamiento/detalle-ejercicio-modal';
 import { obtenerPistaGuardada } from '@/lib/musica';
 
 type Paso =
@@ -37,10 +38,12 @@ function Temporizador({
   duracion,
   color,
   onTerminar,
+  pausado = false,
 }: {
   duracion: number;
   color: string;
   onTerminar: () => void;
+  pausado?: boolean;
 }) {
   const [restante, setRestante] = useState(duracion);
   const onTerminarRef = useRef(onTerminar);
@@ -50,6 +53,7 @@ function Temporizador({
   }, [onTerminar]);
 
   useEffect(() => {
+    if (pausado) return;
     let timeoutFinal: ReturnType<typeof setTimeout> | null = null;
     const intervalo = setInterval(() => {
       setRestante((actual) => {
@@ -65,7 +69,7 @@ function Temporizador({
       clearInterval(intervalo);
       if (timeoutFinal) clearTimeout(timeoutFinal);
     };
-  }, []);
+  }, [pausado]);
 
   return <Text style={[styles.temporizador, { color }]}>{restante}s</Text>;
 }
@@ -90,6 +94,8 @@ export default function Entrenamiento() {
   const [guardando, setGuardando] = useState(false);
   const [reintentos, setReintentos] = useState(0);
   const [enPreparacion, setEnPreparacion] = useState(cuentaAtrasSeg > 0);
+  const [pausado, setPausado] = useState(false);
+  const [modalDetalle, setModalDetalle] = useState(false);
   const inicioRef = useRef<number>(0);
 
   useEffect(() => {
@@ -190,10 +196,40 @@ export default function Entrenamiento() {
   }, [finalizado, guiaDeVozActiva]);
 
   async function avanzar() {
+    setPausado(false);
     if (pasoActual + 1 >= pasos.length) {
       await finalizar();
     } else {
       setPasoActual((i) => i + 1);
+    }
+  }
+
+  function retroceder() {
+    if (pasoActual === 0) return;
+    setPausado(false);
+    setPasoActual((i) => i - 1);
+  }
+
+  function alternarPausa() {
+    setPausado((actual) => {
+      const nuevo = !actual;
+      if (pistaUri) {
+        if (nuevo) musica.pause();
+        else musica.play();
+      }
+      if (nuevo) Speech.stop();
+      return nuevo;
+    });
+  }
+
+  function saltar() {
+    if (paso?.tipo === 'ejercicio' && !duracionPaso) {
+      Alert.alert('¿Saltar este ejercicio?', 'No se marcará como completado.', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Saltar', style: 'destructive', onPress: () => avanzar() },
+      ]);
+    } else {
+      avanzar();
     }
   }
 
@@ -327,7 +363,13 @@ export default function Entrenamiento() {
       {paso.tipo === 'descanso' ? (
         <View style={styles.centroFlex}>
           <Text style={[styles.etiquetaFase, { color: colors.tint }]}>DESCANSO</Text>
-          <Temporizador key={pasoActual} duracion={paso.duracionSeg} color={colors.text} onTerminar={avanzar} />
+          <Temporizador
+            key={pasoActual}
+            duracion={paso.duracionSeg}
+            color={colors.text}
+            onTerminar={avanzar}
+            pausado={pausado}
+          />
         </View>
       ) : (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.centroScroll} showsVerticalScrollIndicator={false}>
@@ -346,7 +388,12 @@ export default function Entrenamiento() {
             </View>
           </View>
 
-          <Text style={[styles.nombreEjercicio, { color: colors.text }]}>{paso.item.ejercicio.nombre}</Text>
+          <View style={styles.filaNombre}>
+            <Text style={[styles.nombreEjercicio, { color: colors.text }]}>{paso.item.ejercicio.nombre}</Text>
+            <Pressable onPress={() => setModalDetalle(true)} hitSlop={8}>
+              <Ionicons name="information-circle-outline" size={22} color={colors.textSecondary} />
+            </Pressable>
+          </View>
           <Text style={{ color: colors.textSecondary, marginBottom: Spacing.two }}>
             {paso.item.ejercicio.grupoMuscular}
           </Text>
@@ -357,7 +404,13 @@ export default function Entrenamiento() {
           )}
 
           {duracionPaso ? (
-            <Temporizador key={pasoActual} duracion={duracionPaso} color={colors.text} onTerminar={avanzar} />
+            <Temporizador
+              key={pasoActual}
+              duracion={duracionPaso}
+              color={colors.text}
+              onTerminar={avanzar}
+              pausado={pausado}
+            />
           ) : (
             <Text style={[styles.repeticiones, { color: colors.text }]}>{paso.item.repeticiones} reps</Text>
           )}
@@ -365,6 +418,13 @@ export default function Entrenamiento() {
       )}
 
       <View style={{ gap: Spacing.two }}>
+        {!!duracionPaso && (
+          <Pressable style={[styles.botonPrincipal, { backgroundColor: colors.tint }]} onPress={alternarPausa}>
+            <Text style={[styles.botonPrincipalTexto, { color: colors.tintForeground }]}>
+              {pausado ? '▶ Reanudar' : '⏸ Pausa'}
+            </Text>
+          </Pressable>
+        )}
         {paso.tipo === 'ejercicio' && !duracionPaso && (
           <Pressable
             style={[styles.botonPrincipal, { backgroundColor: colors.tint }]}
@@ -375,12 +435,27 @@ export default function Entrenamiento() {
             </Text>
           </Pressable>
         )}
-        {!!duracionPaso && (
-          <Pressable style={[styles.botonSecundario, { borderColor: colors.border }]} onPress={avanzar}>
+
+        <View style={styles.filaNav}>
+          <Pressable onPress={retroceder} disabled={pasoActual === 0} hitSlop={8}>
+            <Text style={{ color: colors.textSecondary, fontWeight: '700', opacity: pasoActual === 0 ? 0.35 : 1 }}>
+              Anterior
+            </Text>
+          </Pressable>
+          <Pressable onPress={saltar} hitSlop={8}>
             <Text style={{ color: colors.textSecondary, fontWeight: '700' }}>Saltar</Text>
           </Pressable>
-        )}
+        </View>
       </View>
+
+      {paso.tipo === 'ejercicio' && (
+        <DetalleEjercicioModal
+          visible={modalDetalle}
+          onCerrar={() => setModalDetalle(false)}
+          ejercicio={paso.item.ejercicio}
+          mostrarVideo={cliente?.preferenciaEntrenador !== 'animacion'}
+        />
+      )}
     </View>
   );
 }
@@ -457,10 +532,21 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: Spacing.two,
   },
+  filaNombre: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+  },
   nombreEjercicio: {
     fontSize: 28,
     fontWeight: '800',
     textAlign: 'center',
+  },
+  filaNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.two,
+    paddingTop: Spacing.one,
   },
   temporizador: {
     fontSize: 56,
@@ -479,12 +565,6 @@ const styles = StyleSheet.create({
   botonPrincipalTexto: {
     fontSize: 16,
     fontWeight: '800',
-  },
-  botonSecundario: {
-    borderWidth: 1.5,
-    borderRadius: 16,
-    paddingVertical: 14,
-    alignItems: 'center',
   },
   tituloFinal: {
     fontSize: 22,
