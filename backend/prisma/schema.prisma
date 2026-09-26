@@ -59,6 +59,7 @@ model Cliente {
   registrosPasos        RegistroPasos[]
   actividadesLibres     ActividadLibre[]
   sustituciones         SustitucionEjercicio[]
+  rutinasCreadas        Rutina[]
 
   @@unique([gimnasioId, email])
   @@map("clientes")
@@ -84,16 +85,18 @@ model Ejercicio {
 }
 
 model Rutina {
-  id           String   @id @default(uuid())
-  gimnasioId   String
-  gimnasio     Gimnasio @relation(fields: [gimnasioId], references: [id])
-  nombre       String
-  nivel        String   // "principiante" | "intermedio" | "avanzado"
-  objetivo     String   // "fuerza" | "cardio" | "perdida_grasa" | "tren_superior" | "tren_inferior" | "cuerpo_completo"
-  descripcion  String?
-  imagenUrl    String?
-  activa       Boolean  @default(true)
-  creadoEn     DateTime @default(now())
+  id                 String   @id @default(uuid())
+  gimnasioId         String
+  gimnasio           Gimnasio @relation(fields: [gimnasioId], references: [id])
+  nombre             String
+  nivel              String   // "principiante" | "intermedio" | "avanzado"
+  objetivo           String   // "fuerza" | "cardio" | "perdida_grasa" | "tren_superior" | "tren_inferior" | "cuerpo_completo"
+  descripcion        String?
+  imagenUrl          String?
+  activa             Boolean  @default(true)
+  creadoEn           DateTime @default(now())
+  creadaPorClienteId String?  // null = plantilla del gimnasio; si tiene valor, es una rutina personal de ese cliente
+  creadaPorCliente   Cliente? @relation(fields: [creadaPorClienteId], references: [id], onDelete: Cascade)
 
   ejercicios   RutinaEjercicio[]
   asignaciones ClienteRutina[]

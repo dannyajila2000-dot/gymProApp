@@ -14,7 +14,7 @@ export class RutinasService {
 
   listarDisponibles(gimnasioId: string) {
     return this.prisma.rutina.findMany({
-      where: { gimnasioId, activa: true },
+      where: { gimnasioId, activa: true, creadaPorClienteId: null },
       include: { ejercicios: { include: { ejercicio: true }, orderBy: { orden: 'asc' } } },
       orderBy: { creadoEn: 'desc' },
     })
@@ -122,7 +122,12 @@ export class RutinasService {
 
   async asignarme(clienteId: string, gimnasioId: string, rutinaId: string) {
     const rutina = await this.prisma.rutina.findFirst({
-      where: { id: rutinaId, gimnasioId, activa: true },
+      where: {
+        id: rutinaId,
+        gimnasioId,
+        activa: true,
+        OR: [{ creadaPorClienteId: null }, { creadaPorClienteId: clienteId }],
+      },
     })
     if (!rutina) throw new NotFoundException('Rutina no encontrada')
 
@@ -152,9 +157,9 @@ export class RutinasService {
     objetivo: string,
   ) {
     const candidatas = [
-      { gimnasioId, activa: true, nivel, objetivo },
-      { gimnasioId, activa: true, nivel },
-      { gimnasioId, activa: true },
+      { gimnasioId, activa: true, creadaPorClienteId: null, nivel, objetivo },
+      { gimnasioId, activa: true, creadaPorClienteId: null, nivel },
+      { gimnasioId, activa: true, creadaPorClienteId: null },
     ]
 
     let rutina = null
@@ -236,5 +241,121 @@ export class RutinasService {
 
   async quitarSustitucion(clienteId: string, rutinaEjercicioId: string) {
     await this.prisma.sustitucionEjercicio.deleteMany({ where: { clienteId, rutinaEjercicioId } })
+  }
+
+  catalogoEjercicios(grupoMuscular?: string, busqueda?: string) {
+    return this.prisma.ejercicio.findMany({
+      where: {
+        ...(grupoMuscular ? { grupoMuscular } : {}),
+        ...(busqueda ? { nombre: { contains: busqueda, mode: 'insensitive' } } : {}),
+      },
+      orderBy: { nombre: 'asc' },
+      take: 100,
+    })
+  }
+
+  misRutinasPersonales(clienteId: string) {
+    return this.prisma.rutina.findMany({
+      where: { creadaPorClienteId: clienteId },
+      include: { ejercicios: { include: { ejercicio: true }, orderBy: { orden: 'asc' } } },
+      orderBy: { creadoEn: 'desc' },
+    })
+  }
+
+  crearRutinaPersonal(
+    clienteId: string,
+    gimnasioId: string,
+    datos: { nombre: string; nivel?: string; objetivo?: string },
+  ) {
+    return this.prisma.rutina.create({
+      data: {
+        gimnasioId,
+        creadaPorClienteId: clienteId,
+        nombre: datos.nombre,
+        nivel: datos.nivel ?? 'intermedio',
+        objetivo: datos.objetivo ?? 'cuerpo_completo',
+      },
+      include: { ejercicios: { include: { ejercicio: true }, orderBy: { orden: 'asc' } } },
+    })
+  }
+
+  private async obtenerRutinaPropia(clienteId: string, rutinaId: string) {
+    const rutina = await this.prisma.rutina.findFirst({ where: { id: rutinaId, creadaPorClienteId: clienteId } })
+    if (!rutina) throw new NotFoundException('Rutina no encontrada')
+    return rutina
+  }
+
+  async actualizarRutinaPersonal(
+    clienteId: string,
+    rutinaId: string,
+    datos: { nombre?: string; nivel?: string; objetivo?: string },
+  ) {
+    await this.obtenerRutinaPropia(clienteId, rutinaId)
+    return this.prisma.rutina.update({
+      where: { id: rutinaId },
+      data: datos,
+      include: { ejercicios: { include: { ejercicio: true }, orderBy: { orden: 'asc' } } },
+    })
+  }
+
+  async eliminarRutinaPersonal(clienteId: string, rutinaId: string) {
+    await this.obtenerRutinaPropia(clienteId, rutinaId)
+    await this.prisma.rutina.delete({ where: { id: rutinaId } })
+  }
+
+  async agregarEjercicioARutinaPersonal(
+    clienteId: string,
+    rutinaId: string,
+    datos: { ejercicioId: string; series?: number; repeticiones?: number; duracionSeg?: number; descansoSeg?: number },
+  ) {
+    await this.obtenerRutinaPropia(clienteId, rutinaId)
+    const ultimo = await this.prisma.rutinaEjercicio.findFirst({
+      where: { rutinaId },
+      orderBy: { orden: 'desc' },
+    })
+    return this.prisma.rutinaEjercicio.create({
+      data: { rutinaId, orden: (ultimo?.orden ?? 0) + 1, ...datos },
+      include: { ejercicio: true },
+    })
+  }
+
+  private async obtenerEjercicioDeRutinaPropia(clienteId: string, rutinaId: string, rutinaEjercicioId: string) {
+    await this.obtenerRutinaPropia(clienteId, rutinaId)
+    const item = await this.prisma.rutinaEjercicio.findFirst({ where: { id: rutinaEjercicioId, rutinaId } })
+    if (!item) throw new NotFoundException('Ejercicio no encontrado en esta rutina')
+    return item
+  }
+
+  async actualizarEjercicioDeRutinaPersonal(
+    clienteId: string,
+    rutinaId: string,
+    rutinaEjercicioId: string,
+    datos: { series?: number; repeticiones?: number; duracionSeg?: number; descansoSeg?: number },
+  ) {
+    await this.obtenerEjercicioDeRutinaPropia(clienteId, rutinaId, rutinaEjercicioId)
+    return this.prisma.rutinaEjercicio.update({ where: { id: rutinaEjercicioId }, data: datos, include: { ejercicio: true } })
+  }
+
+  async eliminarEjercicioDeRutinaPersonal(clienteId: string, rutinaId: string, rutinaEjercicioId: string) {
+    await this.obtenerEjercicioDeRutinaPropia(clienteId, rutinaId, rutinaEjercicioId)
+    await this.prisma.rutinaEjercicio.delete({ where: { id: rutinaEjercicioId } })
+  }
+
+  async moverEjercicioDeRutinaPersonal(
+    clienteId: string,
+    rutinaId: string,
+    rutinaEjercicioId: string,
+    direccion: 'arriba' | 'abajo',
+  ) {
+    const actual = await this.obtenerEjercicioDeRutinaPropia(clienteId, rutinaId, rutinaEjercicioId)
+    const vecino = await this.prisma.rutinaEjercicio.findFirst({
+      where: { rutinaId, orden: direccion === 'arriba' ? { lt: actual.orden } : { gt: actual.orden } },
+      orderBy: { orden: direccion === 'arriba' ? 'desc' : 'asc' },
+    })
+    if (!vecino) return
+    await this.prisma.$transaction([
+      this.prisma.rutinaEjercicio.update({ where: { id: actual.id }, data: { orden: vecino.orden } }),
+      this.prisma.rutinaEjercicio.update({ where: { id: vecino.id }, data: { orden: actual.orden } }),
+    ])
   }
 }
