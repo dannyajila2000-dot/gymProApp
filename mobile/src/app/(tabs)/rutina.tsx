@@ -23,6 +23,7 @@ export default function Rutina() {
   const [refrescando, setRefrescando] = useState(false);
   const [miRutina, setMiRutina] = useState<RutinaModelo | null>(null);
   const [disponibles, setDisponibles] = useState<RutinaModelo[]>([]);
+  const [propias, setPropias] = useState<RutinaModelo[]>([]);
   const [historial, setHistorial] = useState<SesionEntrenamiento[]>([]);
   const [asignando, setAsignando] = useState<string | null>(null);
   const [filtroObjetivo, setFiltroObjetivo] = useState<string | null>(null);
@@ -30,13 +31,15 @@ export default function Rutina() {
 
   const cargar = useCallback(async () => {
     try {
-      const [mia, todas, hist] = await Promise.all([
+      const [mia, todas, mias, hist] = await Promise.all([
         rutinasApi.obtenerMiRutina(),
         rutinasApi.listarRutinas(),
+        rutinasApi.misRutinasPersonales(),
         rutinasApi.obtenerHistorial(),
       ]);
       setMiRutina(mia);
       setDisponibles(todas);
+      setPropias(mias);
       setHistorial(hist.slice(0, 5));
     } finally {
       setCargando(false);
@@ -214,6 +217,30 @@ export default function Rutina() {
         )}
       </View>
 
+      <Text style={[styles.seccionTitulo, { color: colors.text }]}>Diseña tu propio entrenamiento</Text>
+      <Pressable
+        onPress={() => router.push('/rutinas/nueva')}
+        style={[styles.tarjetaCrear, { backgroundColor: colors.backgroundElement, borderColor: colors.tint }]}>
+        <Ionicons name="add-circle-outline" size={22} color={colors.tint} />
+        <Text style={{ color: colors.tint, fontWeight: '700' }}>Crear una rutina nueva</Text>
+      </Pressable>
+      {propias.length > 0 && (
+        <View style={{ gap: Spacing.two }}>
+          {propias.map((rutina) => (
+            <Pressable
+              key={rutina.id}
+              onPress={() => router.push({ pathname: '/rutinas/mias/[rutinaId]', params: { rutinaId: rutina.id } })}
+              style={[styles.tarjetaRutina, { backgroundColor: colors.backgroundElement }]}>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={[styles.tarjetaRutinaNombre, { color: colors.text }]}>{rutina.nombre}</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{rutina.ejercicios.length} ejercicios</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </Pressable>
+          ))}
+        </View>
+      )}
+
       {historial.length > 0 && (
         <>
           <Text style={[styles.seccionTitulo, { color: colors.text }]}>Historial reciente</Text>
@@ -368,6 +395,16 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: Spacing.three,
     gap: Spacing.two,
+  },
+  tarjetaCrear: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.one,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    paddingVertical: Spacing.three,
   },
   miniaturaFoto: {
     width: 48,

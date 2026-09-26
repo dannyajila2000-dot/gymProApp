@@ -39,6 +39,8 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="entrenamiento/[rutinaId]" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="rutinas/[rutinaId]" />
+        <Stack.Screen name="rutinas/nueva" />
+        <Stack.Screen name="rutinas/mias/[rutinaId]" />
         <Stack.Screen name="ajustes" />
       </Stack.Protected>
 
