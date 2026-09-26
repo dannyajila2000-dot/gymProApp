@@ -20,6 +20,7 @@ export interface Cliente {
   cuentaAtrasSeg: number;
   volumenMusica: number;
   bajarVolumenConVoz: boolean;
+  diasEntrenamientoSemana: number[];
   onboardingCompletado: boolean;
 }
 

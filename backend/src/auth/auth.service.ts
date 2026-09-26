@@ -191,6 +191,7 @@ export class AuthService {
       cuentaAtrasSeg?: number
       volumenMusica?: number
       bajarVolumenConVoz?: boolean
+      diasEntrenamientoSemana?: number[]
       onboardingCompletado?: boolean
     },
     gimnasio: { nombre: string; codigo: string },
@@ -213,6 +214,7 @@ export class AuthService {
       cuentaAtrasSeg: cliente.cuentaAtrasSeg ?? 5,
       volumenMusica: cliente.volumenMusica ?? 0.5,
       bajarVolumenConVoz: cliente.bajarVolumenConVoz ?? true,
+      diasEntrenamientoSemana: cliente.diasEntrenamientoSemana ?? [],
       restriccionFisica: cliente.restriccionFisica ?? null,
       preferenciaEntrenador: cliente.preferenciaEntrenador ?? 'animacion',
       onboardingCompletado: cliente.onboardingCompletado ?? false,

@@ -10,6 +10,7 @@ import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 import { TarjetaOpcion } from '@/components/onboarding/tarjeta-opcion';
+import { DIAS_CORTOS } from '@/constants/dias';
 
 const RESTRICCIONES = [
   {
@@ -42,8 +43,15 @@ export default function AjustesEntrenamiento() {
   const [cuentaAtrasSeg, setCuentaAtrasSeg] = useState(cliente?.cuentaAtrasSeg ?? 5);
   const [volumenMusica, setVolumenMusica] = useState(cliente?.volumenMusica ?? 0.5);
   const [bajarVolumenConVoz, setBajarVolumenConVoz] = useState(cliente?.bajarVolumenConVoz ?? true);
+  const [diasEntrenamientoSemana, setDiasEntrenamientoSemana] = useState(cliente?.diasEntrenamientoSemana ?? []);
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<{ texto: string; esError: boolean } | null>(null);
+
+  function alternarDia(dia: number) {
+    setDiasEntrenamientoSemana((actual) =>
+      actual.includes(dia) ? actual.filter((d) => d !== dia) : [...actual, dia].sort(),
+    );
+  }
 
   async function guardar() {
     setGuardando(true);
@@ -56,6 +64,7 @@ export default function AjustesEntrenamiento() {
         cuentaAtrasSeg,
         volumenMusica,
         bajarVolumenConVoz,
+        diasEntrenamientoSemana,
       });
       actualizarCliente(actualizado);
       setMensaje({ texto: 'Ajustes guardados', esError: false });
@@ -84,6 +93,32 @@ export default function AjustesEntrenamiento() {
           onPress={() => setRestriccionFisica(op.valor)}
         />
       ))}
+
+      <Text style={[styles.tituloSeccion, { color: colors.text }]}>Días de entrenamiento</Text>
+      <Text style={{ color: colors.textSecondary, fontSize: 12.5, marginBottom: 4 }}>
+        Elige qué días entrenas. El resto los marcamos como descanso en tu Inicio.
+      </Text>
+      <View style={styles.filaDias}>
+        {DIAS_CORTOS.map((letra, indice) => (
+          <Pressable
+            key={indice}
+            onPress={() => alternarDia(indice)}
+            style={[
+              styles.diaCirculo,
+              {
+                backgroundColor: diasEntrenamientoSemana.includes(indice) ? colors.tint : colors.backgroundElement,
+              },
+            ]}>
+            <Text
+              style={{
+                color: diasEntrenamientoSemana.includes(indice) ? colors.tintForeground : colors.textSecondary,
+                fontWeight: '700',
+              }}>
+              {letra}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
 
       <Text style={[styles.tituloSeccion, { color: colors.text }]}>Entrenador</Text>
       <View style={styles.filaEntrenador}>
@@ -204,6 +239,14 @@ const styles = StyleSheet.create({
   tituloSeccion: { fontSize: 16, fontWeight: '800', marginTop: Spacing.two },
   aviso: { borderRadius: 16, padding: Spacing.three, marginBottom: Spacing.one },
   filaEntrenador: { flexDirection: 'row', gap: Spacing.two },
+  filaDias: { flexDirection: 'row', justifyContent: 'space-between' },
+  diaCirculo: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   tarjetaEntrenador: {
     flex: 1,
     borderWidth: 1.5,

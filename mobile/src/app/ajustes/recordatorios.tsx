@@ -24,9 +24,7 @@ import {
 } from '@/lib/notificaciones';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
-
-const DIAS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
-const DIAS_NOMBRE = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+import { DIAS_CORTOS, DIAS_NOMBRE } from '@/constants/dias';
 
 function etiquetaDias(dias: number[]) {
   if (dias.length === 7) return 'Todos los días';
@@ -198,7 +196,7 @@ export default function Recordatorios() {
 
             <Text style={[styles.etiqueta, { color: colors.textSecondary }]}>Repetir</Text>
             <View style={styles.filaDias}>
-              {DIAS.map((letra, indice) => (
+              {DIAS_CORTOS.map((letra, indice) => (
                 <Pressable
                   key={indice}
                   onPress={() => alternarDia(indice)}

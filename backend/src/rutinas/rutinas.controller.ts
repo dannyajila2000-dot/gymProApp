@@ -43,6 +43,11 @@ export class RutinasController {
     return this.rutinasService.historial(cliente.clienteId)
   }
 
+  @Get('plan-semana')
+  planSemana(@ClienteActual() cliente: ClienteAutenticado) {
+    return this.rutinasService.planSemana(cliente.clienteId)
+  }
+
   @Get('ejercicios/:rutinaEjercicioId/alternativas')
   alternativas(
     @ClienteActual() cliente: ClienteAutenticado,

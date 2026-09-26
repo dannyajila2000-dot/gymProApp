@@ -14,6 +14,7 @@ export interface DatosPerfil {
   cuentaAtrasSeg?: number;
   volumenMusica?: number;
   bajarVolumenConVoz?: boolean;
+  diasEntrenamientoSemana?: number[];
 }
 
 export interface DatosOnboarding {

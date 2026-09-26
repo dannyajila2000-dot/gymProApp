@@ -78,6 +78,18 @@ export function obtenerHistorial() {
   return solicitar<SesionEntrenamiento[]>('/rutinas/historial', { autenticado: true });
 }
 
+export interface DiaPlan {
+  fecha: string;
+  diaSemana: number;
+  esDiaEntrenamiento: boolean;
+  completado: boolean;
+  esHoy: boolean;
+}
+
+export function obtenerPlanSemana() {
+  return solicitar<DiaPlan[]>('/rutinas/plan-semana', { autenticado: true });
+}
+
 export function listarAlternativas(rutinaEjercicioId: string) {
   return solicitar<Ejercicio[]>(`/rutinas/ejercicios/${rutinaEjercicioId}/alternativas`, { autenticado: true });
 }

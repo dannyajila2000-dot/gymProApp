@@ -1,6 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
 import { PrismaService } from '../prisma/prisma.service.js'
+import {
+  fechaDeHoyEcuador,
+  fechaEcuadorDeFecha,
+  inicioYFinDeLaSemanaEcuador,
+} from '../common/fecha-ecuador.util.js'
 
 type RutinaConEjercicios = Prisma.RutinaGetPayload<{
   include: { ejercicios: { include: { ejercicio: true } } }
@@ -339,6 +344,38 @@ export class RutinasService {
   async eliminarEjercicioDeRutinaPersonal(clienteId: string, rutinaId: string, rutinaEjercicioId: string) {
     await this.obtenerEjercicioDeRutinaPropia(clienteId, rutinaId, rutinaEjercicioId)
     await this.prisma.rutinaEjercicio.delete({ where: { id: rutinaEjercicioId } })
+  }
+
+  async planSemana(clienteId: string) {
+    const cliente = await this.prisma.cliente.findUnique({
+      where: { id: clienteId },
+      select: { diasEntrenamientoSemana: true },
+    })
+    const diasEntrenamiento = cliente?.diasEntrenamientoSemana?.length
+      ? new Set(cliente.diasEntrenamientoSemana)
+      : null // sin preferencia configurada: todos los días son de entrenamiento
+
+    const hoy = fechaDeHoyEcuador()
+    const { inicio } = inicioYFinDeLaSemanaEcuador(hoy)
+
+    const sesiones = await this.prisma.sesionEntrenamiento.findMany({
+      where: { clienteId, completadaEn: { gte: inicio, lte: new Date(inicio.getTime() + 7 * 24 * 60 * 60 * 1000 - 1) } },
+      select: { completadaEn: true },
+    })
+    const diasCompletados = new Set(sesiones.map((s) => fechaEcuadorDeFecha(s.completadaEn)))
+
+    const dias = []
+    for (let diaSemana = 0; diaSemana < 7; diaSemana++) {
+      const fecha = fechaEcuadorDeFecha(new Date(inicio.getTime() + diaSemana * 24 * 60 * 60 * 1000))
+      dias.push({
+        fecha,
+        diaSemana,
+        esDiaEntrenamiento: diasEntrenamiento ? diasEntrenamiento.has(diaSemana) : true,
+        completado: diasCompletados.has(fecha),
+        esHoy: fecha === hoy,
+      })
+    }
+    return dias
   }
 
   async moverEjercicioDeRutinaPersonal(

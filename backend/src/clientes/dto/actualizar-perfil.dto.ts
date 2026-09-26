@@ -1,4 +1,19 @@
-import { IsBoolean, IsDateString, IsIn, IsInt, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator'
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsIn,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator'
 
 const REGEX_NOMBRE_PERSONA = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/
 
@@ -60,4 +75,12 @@ export class ActualizarPerfilDto {
   @IsOptional()
   @IsBoolean()
   bajarVolumenConVoz?: boolean
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(7)
+  @IsInt({ each: true })
+  @Min(0, { each: true })
+  @Max(6, { each: true })
+  diasEntrenamientoSemana?: number[]
 }

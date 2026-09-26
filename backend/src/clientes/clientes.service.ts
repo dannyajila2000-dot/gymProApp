@@ -124,6 +124,7 @@ export class ClientesService {
         cuentaAtrasSeg: dto.cuentaAtrasSeg,
         volumenMusica: dto.volumenMusica,
         bajarVolumenConVoz: dto.bajarVolumenConVoz,
+        diasEntrenamientoSemana: dto.diasEntrenamientoSemana,
       },
     })
   }
