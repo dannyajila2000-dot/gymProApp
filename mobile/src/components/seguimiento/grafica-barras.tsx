@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Line, Rect } from 'react-native-svg';
 
-const DIAS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+import { DIAS_CORTOS } from '@/constants/dias';
 
 export function GraficaBarras({
   valores,
@@ -59,7 +59,7 @@ export function GraficaBarras({
         })}
       </Svg>
       <View style={[styles.filaEtiquetas, { width: ancho }]}>
-        {DIAS.map((dia, i) => (
+        {DIAS_CORTOS.map((dia, i) => (
           <View key={i} style={{ width: anchoBarra, alignItems: 'center' }}>
             <Text style={{ color: i === diaActual ? color : colorTexto, fontWeight: i === diaActual ? '800' : '600', fontSize: 12 }}>
               {dia}

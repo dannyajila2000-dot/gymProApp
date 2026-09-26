@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service.js'
-import { inicioYFinDelDiaEcuador, inicioYFinDeLaSemanaEcuador } from '../common/fecha-ecuador.util.js'
+import {
+  fechaDeHoyEcuador,
+  fechaEcuadorDeFecha,
+  inicioYFinDelDiaEcuador,
+  inicioYFinDeLaSemanaEcuador,
+} from '../common/fecha-ecuador.util.js'
 
 @Injectable()
 export class ProgresoService {
@@ -44,10 +49,12 @@ export class ProgresoService {
     return { pesoObjetivoKg: cliente.pesoObjetivoKg }
   }
 
-  async obtenerMetaSeguimiento(clienteId: string) {
-    const meta = await this.prisma.metaSeguimiento.findUnique({ where: { clienteId } })
-    if (meta) return meta
-    return this.prisma.metaSeguimiento.create({ data: { clienteId } })
+  obtenerMetaSeguimiento(clienteId: string) {
+    return this.prisma.metaSeguimiento.upsert({
+      where: { clienteId },
+      create: { clienteId },
+      update: {},
+    })
   }
 
   actualizarMetaSeguimiento(
@@ -166,17 +173,18 @@ export class ProgresoService {
     })
     const diasConActividad = new Set(
       [...sesiones.map((s) => s.completadaEn), ...actividades.map((a) => a.fecha)].map((f) =>
-        f.toISOString().slice(0, 10),
+        fechaEcuadorDeFecha(f),
       ),
     )
 
     let racha = 0
-    const cursor = new Date()
+    let claveCursor = fechaDeHoyEcuador()
     for (;;) {
-      const clave = cursor.toISOString().slice(0, 10)
-      if (!diasConActividad.has(clave)) break
+      if (!diasConActividad.has(claveCursor)) break
       racha++
-      cursor.setUTCDate(cursor.getUTCDate() - 1)
+      const anterior = new Date(`${claveCursor}T00:00:00.000Z`)
+      anterior.setUTCDate(anterior.getUTCDate() - 1)
+      claveCursor = anterior.toISOString().slice(0, 10)
     }
     return racha
   }

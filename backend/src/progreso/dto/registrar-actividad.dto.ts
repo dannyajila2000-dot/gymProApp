@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsPositive, IsString, MaxLength, MinLength } from 'class-validator'
+import { IsInt, IsNumber, IsOptional, IsPositive, IsString, MaxLength, MinLength } from 'class-validator'
 
 export class RegistrarActividadDto {
   @IsString()
@@ -6,7 +6,7 @@ export class RegistrarActividadDto {
   @MaxLength(60)
   nombre!: string
 
-  @IsNumber()
+  @IsInt()
   @IsPositive()
   duracionMin!: number
 

@@ -21,6 +21,8 @@ import * as progresoApi from '@/api/progreso';
 import type { RegistroProgreso, ResumenHoy, ResumenSemana } from '@/api/progreso';
 import * as clientesApi from '@/api/clientes';
 import { calcularImc, categoriaImc } from '@/lib/imc';
+import { fechaDeHoyEcuador, fechaEcuadorDeFecha } from '@/lib/fecha-ecuador';
+import { DIAS_CORTOS } from '@/constants/dias';
 import { CATALOGO_ACTIVIDADES } from '@/lib/actividades-catalogo';
 import { ReglaHorizontal } from '@/components/onboarding/regla-horizontal';
 import { usePodometro } from '@/hooks/use-podometro';
@@ -74,8 +76,6 @@ export default function Progreso() {
 }
 
 // ---------- RESUMEN ----------
-
-const DIAS_CORTOS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
 function TabResumen() {
   const colors = useTheme();
@@ -205,7 +205,8 @@ function TabHoy() {
         progresoApi.pasosPorSemana(),
       ]);
       setResumen(r);
-      setActividades(act.filter((a) => a.fecha.slice(0, 10) === new Date().toISOString().slice(0, 10)));
+      const hoyEcuador = fechaDeHoyEcuador();
+      setActividades(act.filter((a) => fechaEcuadorDeFecha(new Date(a.fecha)) === hoyEcuador));
       setPasosSemana(semanaPasos);
     } finally {
       setCargando(false);
@@ -619,10 +620,11 @@ function ModalActividad({
     if (!elegida || !duracion) return;
     setGuardando(true);
     try {
+      const distanciaKm = Number(distancia);
       await progresoApi.registrarActividad({
         nombre: elegida.nombre,
-        duracionMin: Number(duracion),
-        distanciaM: distancia ? Number(distancia) * 1000 : undefined,
+        duracionMin: Math.round(Number(duracion)),
+        distanciaM: distancia && !Number.isNaN(distanciaKm) ? distanciaKm * 1000 : undefined,
         caloriasEstimadas: Number(calorias) || 1,
       });
       setElegida(null);
