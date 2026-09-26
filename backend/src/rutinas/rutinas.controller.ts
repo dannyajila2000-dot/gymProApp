@@ -75,7 +75,7 @@ export class RutinasController {
     @ClienteActual() cliente: ClienteAutenticado,
     @Param('rutinaEjercicioId') rutinaEjercicioId: string,
   ) {
-    return this.rutinasService.quitarSustitucion(cliente.clienteId, rutinaEjercicioId)
+    return this.rutinasService.quitarSustitucion(cliente.clienteId, cliente.gimnasioId, rutinaEjercicioId)
   }
 
   @Get('catalogo-ejercicios')

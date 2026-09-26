@@ -196,8 +196,15 @@ export default function Entrenamiento() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finalizado, guiaDeVozActiva]);
 
+  function quitarPausa() {
+    setPausado((actual) => {
+      if (actual && pistaUri) musica.play();
+      return false;
+    });
+  }
+
   async function avanzar() {
-    setPausado(false);
+    quitarPausa();
     if (pasoActual + 1 >= pasos.length) {
       await finalizar();
     } else {
@@ -207,7 +214,7 @@ export default function Entrenamiento() {
 
   function retroceder() {
     if (pasoActual === 0) return;
-    setPausado(false);
+    quitarPausa();
     setPasoActual((i) => i - 1);
   }
 

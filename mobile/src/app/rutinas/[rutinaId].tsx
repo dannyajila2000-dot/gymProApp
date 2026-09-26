@@ -12,13 +12,8 @@ import { SustituirEjercicioModal } from '@/components/entrenamiento/sustituir-ej
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 import { OBJETIVO_LABEL } from '@/constants/objetivos';
+import { NIVEL_LABEL } from '@/constants/niveles';
 import { caloriasEstimadas, duracionEstimadaMin } from '@/lib/rutina-utils';
-
-const NIVEL_LABEL: Record<string, string> = {
-  principiante: 'Principiante',
-  intermedio: 'Intermedio',
-  avanzado: 'Avanzado',
-};
 
 export default function DetalleRutina() {
   const colors = useTheme();

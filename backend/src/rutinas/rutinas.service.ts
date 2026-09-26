@@ -207,12 +207,30 @@ export class RutinasService {
     })
   }
 
-  async alternativasParaEjercicio(clienteId: string, gimnasioId: string, rutinaEjercicioId: string) {
+  /**
+   * Un ejercicio de rutina solo es accesible para sustituir/consultar si
+   * pertenece a la rutina propia del cliente o a la que tiene asignada
+   * actualmente — nunca a la rutina (personal o no) de otro cliente del
+   * mismo gimnasio.
+   */
+  private async obtenerRutinaEjercicioDelCliente(clienteId: string, gimnasioId: string, rutinaEjercicioId: string) {
     const rutinaEjercicio = await this.prisma.rutinaEjercicio.findFirst({
       where: { id: rutinaEjercicioId, rutina: { gimnasioId } },
-      include: { ejercicio: true },
+      include: { ejercicio: true, rutina: true },
     })
     if (!rutinaEjercicio) throw new NotFoundException('Ejercicio no encontrado')
+    if (rutinaEjercicio.rutina.creadaPorClienteId === clienteId) return rutinaEjercicio
+
+    const asignacionActiva = await this.prisma.clienteRutina.findFirst({
+      where: { clienteId, rutinaId: rutinaEjercicio.rutinaId, activa: true },
+    })
+    if (!asignacionActiva) throw new NotFoundException('Ejercicio no encontrado')
+
+    return rutinaEjercicio
+  }
+
+  async alternativasParaEjercicio(clienteId: string, gimnasioId: string, rutinaEjercicioId: string) {
+    const rutinaEjercicio = await this.obtenerRutinaEjercicioDelCliente(clienteId, gimnasioId, rutinaEjercicioId)
 
     const cliente = await this.prisma.cliente.findUnique({
       where: { id: clienteId },
@@ -232,10 +250,9 @@ export class RutinasService {
   }
 
   async sustituirEjercicio(clienteId: string, gimnasioId: string, rutinaEjercicioId: string, ejercicioId: string) {
-    const rutinaEjercicio = await this.prisma.rutinaEjercicio.findFirst({
-      where: { id: rutinaEjercicioId, rutina: { gimnasioId } },
-    })
-    if (!rutinaEjercicio) throw new NotFoundException('Ejercicio no encontrado')
+    await this.obtenerRutinaEjercicioDelCliente(clienteId, gimnasioId, rutinaEjercicioId)
+    const ejercicio = await this.prisma.ejercicio.findUnique({ where: { id: ejercicioId } })
+    if (!ejercicio) throw new NotFoundException('Ejercicio sustituto no encontrado')
 
     return this.prisma.sustitucionEjercicio.upsert({
       where: { clienteId_rutinaEjercicioId: { clienteId, rutinaEjercicioId } },
@@ -244,7 +261,8 @@ export class RutinasService {
     })
   }
 
-  async quitarSustitucion(clienteId: string, rutinaEjercicioId: string) {
+  async quitarSustitucion(clienteId: string, gimnasioId: string, rutinaEjercicioId: string) {
+    await this.obtenerRutinaEjercicioDelCliente(clienteId, gimnasioId, rutinaEjercicioId)
     await this.prisma.sustitucionEjercicio.deleteMany({ where: { clienteId, rutinaEjercicioId } })
   }
 
@@ -314,6 +332,9 @@ export class RutinasService {
     datos: { ejercicioId: string; series?: number; repeticiones?: number; duracionSeg?: number; descansoSeg?: number },
   ) {
     await this.obtenerRutinaPropia(clienteId, rutinaId)
+    const ejercicio = await this.prisma.ejercicio.findUnique({ where: { id: datos.ejercicioId } })
+    if (!ejercicio) throw new NotFoundException('Ejercicio no encontrado')
+
     const ultimo = await this.prisma.rutinaEjercicio.findFirst({
       where: { rutinaId },
       orderBy: { orden: 'desc' },

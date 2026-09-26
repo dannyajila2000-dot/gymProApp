@@ -3,19 +3,15 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { ErrorApi } from '@/api/client';
 import * as rutinasApi from '@/api/rutinas';
 import type { Ejercicio, Rutina, RutinaEjercicio } from '@/api/rutinas';
 import { AgregarEjercicioModal } from '@/components/entrenamiento/agregar-ejercicio-modal';
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
 import { OBJETIVO_LABEL } from '@/constants/objetivos';
+import { NIVEL_LABEL } from '@/constants/niveles';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-
-const NIVEL_LABEL: Record<string, string> = {
-  principiante: 'Principiante',
-  intermedio: 'Intermedio',
-  avanzado: 'Avanzado',
-};
 
 type CampoNumerico = 'series' | 'repeticiones' | 'duracionSeg' | 'descansoSeg';
 
@@ -29,6 +25,7 @@ export default function EditarRutinaPersonal() {
   const [comenzando, setComenzando] = useState(false);
   const [editandoNombre, setEditandoNombre] = useState(false);
   const [nombreBorrador, setNombreBorrador] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     const rutinas = await rutinasApi.misRutinasPersonales();
@@ -42,23 +39,43 @@ export default function EditarRutinaPersonal() {
     }, [cargar]),
   );
 
+  function manejarError(e: unknown) {
+    setError(e instanceof ErrorApi ? e.message : 'No pudimos guardar el cambio. Intenta de nuevo.');
+    cargar();
+  }
+
   async function guardarNombre() {
     setEditandoNombre(false);
     if (!rutina || !nombreBorrador.trim() || nombreBorrador === rutina.nombre) return;
-    await rutinasApi.actualizarRutinaPersonal(rutina.id, { nombre: nombreBorrador.trim() });
-    cargar();
+    setError(null);
+    try {
+      await rutinasApi.actualizarRutinaPersonal(rutina.id, { nombre: nombreBorrador.trim() });
+      cargar();
+    } catch (e) {
+      manejarError(e);
+    }
   }
 
   async function cambiarNivel(nivel: string) {
     if (!rutina) return;
+    setError(null);
     setRutina({ ...rutina, nivel: nivel as Rutina['nivel'] });
-    await rutinasApi.actualizarRutinaPersonal(rutina.id, { nivel });
+    try {
+      await rutinasApi.actualizarRutinaPersonal(rutina.id, { nivel });
+    } catch (e) {
+      manejarError(e);
+    }
   }
 
   async function cambiarObjetivo(objetivo: string) {
     if (!rutina) return;
+    setError(null);
     setRutina({ ...rutina, objetivo });
-    await rutinasApi.actualizarRutinaPersonal(rutina.id, { objetivo });
+    try {
+      await rutinasApi.actualizarRutinaPersonal(rutina.id, { objetivo });
+    } catch (e) {
+      manejarError(e);
+    }
   }
 
   function confirmarEliminar() {
@@ -69,8 +86,12 @@ export default function EditarRutinaPersonal() {
         style: 'destructive',
         onPress: async () => {
           if (!rutina) return;
-          await rutinasApi.eliminarRutinaPersonal(rutina.id);
-          router.back();
+          try {
+            await rutinasApi.eliminarRutinaPersonal(rutina.id);
+            router.back();
+          } catch (e) {
+            manejarError(e);
+          }
         },
       },
     ]);
@@ -79,25 +100,40 @@ export default function EditarRutinaPersonal() {
   async function agregarEjercicio(ejercicio: Ejercicio) {
     if (!rutina) return;
     setModalAgregar(false);
-    await rutinasApi.agregarEjercicioARutina(rutina.id, {
-      ejercicioId: ejercicio.id,
-      series: 3,
-      ...(ejercicio.tipoMedida === 'duracion' ? { duracionSeg: 30 } : { repeticiones: 12 }),
-      descansoSeg: 20,
-    });
-    cargar();
+    setError(null);
+    try {
+      await rutinasApi.agregarEjercicioARutina(rutina.id, {
+        ejercicioId: ejercicio.id,
+        series: 3,
+        ...(ejercicio.tipoMedida === 'duracion' ? { duracionSeg: 30 } : { repeticiones: 12 }),
+        descansoSeg: 20,
+      });
+      cargar();
+    } catch (e) {
+      manejarError(e);
+    }
   }
 
   async function quitarEjercicio(item: RutinaEjercicio) {
     if (!rutina) return;
+    setError(null);
     setRutina({ ...rutina, ejercicios: rutina.ejercicios.filter((e) => e.id !== item.id) });
-    await rutinasApi.eliminarEjercicioDeRutina(rutina.id, item.id);
+    try {
+      await rutinasApi.eliminarEjercicioDeRutina(rutina.id, item.id);
+    } catch (e) {
+      manejarError(e);
+    }
   }
 
   async function mover(item: RutinaEjercicio, direccion: 'arriba' | 'abajo') {
     if (!rutina) return;
-    await rutinasApi.moverEjercicioDeRutina(rutina.id, item.id, direccion);
-    cargar();
+    setError(null);
+    try {
+      await rutinasApi.moverEjercicioDeRutina(rutina.id, item.id, direccion);
+      cargar();
+    } catch (e) {
+      manejarError(e);
+    }
   }
 
   async function cambiarValor(item: RutinaEjercicio, campo: CampoNumerico, delta: number, minimo: number) {
@@ -105,11 +141,16 @@ export default function EditarRutinaPersonal() {
     const actual = item[campo] ?? minimo;
     const nuevo = Math.max(minimo, actual + delta);
     if (nuevo === actual) return;
+    setError(null);
     setRutina({
       ...rutina,
       ejercicios: rutina.ejercicios.map((e) => (e.id === item.id ? { ...e, [campo]: nuevo } : e)),
     });
-    await rutinasApi.actualizarEjercicioDeRutina(rutina.id, item.id, { [campo]: nuevo });
+    try {
+      await rutinasApi.actualizarEjercicioDeRutina(rutina.id, item.id, { [campo]: nuevo });
+    } catch (e) {
+      manejarError(e);
+    }
   }
 
   async function comenzar() {
@@ -217,6 +258,8 @@ export default function EditarRutinaPersonal() {
           ))}
         </View>
 
+        {error && <Text style={{ color: colors.danger, fontSize: 13 }}>{error}</Text>}
+
         <View style={styles.filaEntre}>
           <Text style={[styles.seccionTitulo, { color: colors.text }]}>Ejercicios ({rutina.ejercicios.length})</Text>
           <Pressable onPress={() => setModalAgregar(true)} style={styles.filaAgregar}>
@@ -305,7 +348,9 @@ export default function EditarRutinaPersonal() {
         </Pressable>
       </View>
 
-      <AgregarEjercicioModal visible={modalAgregar} onCerrar={() => setModalAgregar(false)} onAgregar={agregarEjercicio} />
+      {modalAgregar && (
+        <AgregarEjercicioModal visible onCerrar={() => setModalAgregar(false)} onAgregar={agregarEjercicio} />
+      )}
     </View>
   );
 }

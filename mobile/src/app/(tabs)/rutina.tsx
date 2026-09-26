@@ -9,13 +9,8 @@ import { Spacing } from '@/constants/theme';
 import * as rutinasApi from '@/api/rutinas';
 import type { Rutina as RutinaModelo, SesionEntrenamiento } from '@/api/rutinas';
 import { OBJETIVO_LABEL } from '@/constants/objetivos';
+import { NIVEL_LABEL } from '@/constants/niveles';
 import { duracionEstimadaMin } from '@/lib/rutina-utils';
-
-const NIVEL_LABEL: Record<string, string> = {
-  principiante: 'Principiante',
-  intermedio: 'Intermedio',
-  avanzado: 'Avanzado',
-};
 
 export default function Rutina() {
   const colors = useTheme();
