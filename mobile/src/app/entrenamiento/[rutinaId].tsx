@@ -35,6 +35,39 @@ function construirPasos(rutina: Rutina): Paso[] {
   return pasos;
 }
 
+const EJERCICIOS_CALENTAMIENTO: { nombre: string; patron: RutinaEjercicio['ejercicio']['patronMovimiento']; duracionSeg: number }[] = [
+  { nombre: 'Saltos de tijera', patron: 'salto', duracionSeg: 30 },
+  { nombre: 'Rotación de hombros', patron: 'press', duracionSeg: 20 },
+  { nombre: 'Rodillas al pecho', patron: 'abdominal', duracionSeg: 20 },
+  { nombre: 'Sentadilla suave', patron: 'sentadilla', duracionSeg: 30 },
+];
+
+function construirPasosCalentamiento(): Paso[] {
+  return EJERCICIOS_CALENTAMIENTO.map((e) => ({
+    tipo: 'ejercicio',
+    serie: 1,
+    totalSeries: 1,
+    item: {
+      id: `calentamiento-${e.nombre}`,
+      orden: 0,
+      series: 1,
+      repeticiones: null,
+      duracionSeg: e.duracionSeg,
+      descansoSeg: null,
+      ejercicio: {
+        id: `calentamiento-${e.nombre}`,
+        nombre: e.nombre,
+        grupoMuscular: 'Calentamiento',
+        tipoMedida: 'duracion',
+        patronMovimiento: e.patron,
+        descripcion: 'Ejercicio de calentamiento para preparar el cuerpo antes de entrenar.',
+        gifUrl: null,
+        caloriasPorMinuto: null,
+      },
+    },
+  }));
+}
+
 function Temporizador({
   duracion,
   color,
@@ -120,7 +153,11 @@ export default function Entrenamiento() {
     };
   }, [rutinaId, reintentos]);
 
-  const pasos = useMemo(() => (rutina ? construirPasos(rutina) : []), [rutina]);
+  const calentamientoActivo = cliente?.calentamientoActivo ?? true;
+  const pasos = useMemo(() => {
+    if (!rutina) return [];
+    return [...(calentamientoActivo ? construirPasosCalentamiento() : []), ...construirPasos(rutina)];
+  }, [rutina, calentamientoActivo]);
   const paso = pasos[pasoActual];
 
   useEffect(() => {

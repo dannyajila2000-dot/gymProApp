@@ -21,6 +21,7 @@ export interface Cliente {
   volumenMusica: number;
   bajarVolumenConVoz: boolean;
   diasEntrenamientoSemana: number[];
+  calentamientoActivo: boolean;
   onboardingCompletado: boolean;
 }
 

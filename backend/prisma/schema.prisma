@@ -42,6 +42,7 @@ model Cliente {
   volumenMusica   Float   @default(0.5)
   bajarVolumenConVoz Boolean @default(true)
   diasEntrenamientoSemana Int[] @default([]) // 0=domingo..6=sábado; vacío = todos los días son de entrenamiento
+  calentamientoActivo Boolean @default(true)
   onboardingCompletado Boolean @default(false)
   activo          Boolean  @default(true)
   creadoEn        DateTime @default(now())

@@ -15,6 +15,7 @@ export interface DatosPerfil {
   volumenMusica?: number;
   bajarVolumenConVoz?: boolean;
   diasEntrenamientoSemana?: number[];
+  calentamientoActivo?: boolean;
 }
 
 export interface DatosOnboarding {

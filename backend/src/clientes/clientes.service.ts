@@ -125,6 +125,7 @@ export class ClientesService {
         volumenMusica: dto.volumenMusica,
         bajarVolumenConVoz: dto.bajarVolumenConVoz,
         diasEntrenamientoSemana: dto.diasEntrenamientoSemana,
+        calentamientoActivo: dto.calentamientoActivo,
       },
     })
   }

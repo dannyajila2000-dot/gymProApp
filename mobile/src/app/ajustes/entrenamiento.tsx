@@ -44,6 +44,7 @@ export default function AjustesEntrenamiento() {
   const [volumenMusica, setVolumenMusica] = useState(cliente?.volumenMusica ?? 0.5);
   const [bajarVolumenConVoz, setBajarVolumenConVoz] = useState(cliente?.bajarVolumenConVoz ?? true);
   const [diasEntrenamientoSemana, setDiasEntrenamientoSemana] = useState(cliente?.diasEntrenamientoSemana ?? []);
+  const [calentamientoActivo, setCalentamientoActivo] = useState(cliente?.calentamientoActivo ?? true);
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<{ texto: string; esError: boolean } | null>(null);
 
@@ -65,6 +66,7 @@ export default function AjustesEntrenamiento() {
         volumenMusica,
         bajarVolumenConVoz,
         diasEntrenamientoSemana,
+        calentamientoActivo,
       });
       actualizarCliente(actualizado);
       setMensaje({ texto: 'Ajustes guardados', esError: false });
@@ -181,6 +183,17 @@ export default function AjustesEntrenamiento() {
           </Text>
         </View>
         <Switch value={bajarVolumenConVoz} onValueChange={setBajarVolumenConVoz} trackColor={{ true: colors.tint }} />
+      </View>
+
+      <Text style={[styles.tituloSeccion, { color: colors.text }]}>Antes de entrenar</Text>
+      <View style={[styles.filaAjuste, { backgroundColor: colors.backgroundElement }]}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.text, fontWeight: '700' }}>Calentamiento</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>
+            Agrega unos minutos de calentamiento antes de cada rutina
+          </Text>
+        </View>
+        <Switch value={calentamientoActivo} onValueChange={setCalentamientoActivo} trackColor={{ true: colors.tint }} />
       </View>
 
       <Text style={[styles.tituloSeccion, { color: colors.text }]}>Voz y cuenta atrás</Text>

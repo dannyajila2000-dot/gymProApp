@@ -83,4 +83,8 @@ export class ActualizarPerfilDto {
   @Min(0, { each: true })
   @Max(6, { each: true })
   diasEntrenamientoSemana?: number[]
+
+  @IsOptional()
+  @IsBoolean()
+  calentamientoActivo?: boolean
 }
