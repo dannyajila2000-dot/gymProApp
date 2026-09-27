@@ -19,7 +19,6 @@ export default function Inicio() {
   const [refrescando, setRefrescando] = useState(false);
   const [plan, setPlan] = useState<DiaPlan[]>([]);
   const [racha, setRacha] = useState(0);
-  const [comenzando, setComenzando] = useState(false);
 
   const cargar = useCallback(async () => {
     try {
@@ -41,19 +40,12 @@ export default function Inicio() {
     }, [cargar]),
   );
 
-  async function comenzarHoy() {
-    const hoy = plan.find((d) => d.esHoy);
-    if (!hoy?.rutinaId) {
+  function verRutinaDelDia(dia: DiaPlan) {
+    if (!dia.rutinaId) {
       router.push('/(tabs)/rutina');
       return;
     }
-    setComenzando(true);
-    try {
-      await rutinasApi.asignarme(hoy.rutinaId);
-      router.push({ pathname: '/entrenamiento/[rutinaId]', params: { rutinaId: hoy.rutinaId } });
-    } finally {
-      setComenzando(false);
-    }
+    router.push({ pathname: '/rutinas/[rutinaId]', params: { rutinaId: dia.rutinaId } });
   }
 
   if (cargando) {
@@ -113,7 +105,7 @@ export default function Inicio() {
               {indice < plan.length - 1 && <View style={[styles.lineaVertical, { backgroundColor: colors.border }]} />}
             </View>
 
-            <DiaTarjeta dia={dia} comenzando={comenzando} onComenzar={comenzarHoy} colors={colors} />
+            <DiaTarjeta dia={dia} onVerRutina={() => verRutinaDelDia(dia)} colors={colors} />
           </View>
         ))}
       </View>
@@ -129,13 +121,11 @@ export default function Inicio() {
 
 function DiaTarjeta({
   dia,
-  comenzando,
-  onComenzar,
+  onVerRutina,
   colors,
 }: {
   dia: DiaPlan;
-  comenzando: boolean;
-  onComenzar: () => void;
+  onVerRutina: () => void;
   colors: ReturnType<typeof useTheme>;
 }) {
   const destacar = dia.esHoy && !dia.completado;
@@ -157,7 +147,8 @@ function DiaTarjeta({
   }
 
   return (
-    <View
+    <Pressable
+      onPress={onVerRutina}
       style={[
         styles.tarjetaDia,
         destacar
@@ -180,25 +171,21 @@ function DiaTarjeta({
             {dia.completado ? '¡Completado!' : (dia.rutinaNombre ?? 'Sin rutina disponible')}
           </Text>
         </View>
+        <Ionicons
+          name="chevron-forward"
+          size={18}
+          color={destacar ? colors.tintForeground : colors.textSecondary}
+        />
       </View>
       {destacar && (
-        <Pressable
-          onPress={onComenzar}
-          disabled={comenzando}
-          style={[styles.botonComenzar, { backgroundColor: colors.tintForeground, opacity: comenzando ? 0.6 : 1 }]}>
-          {comenzando ? (
-            <ActivityIndicator color={colors.tint} size="small" />
-          ) : (
-            <>
-              <Text style={{ color: colors.tint, fontWeight: '800' }}>
-                {dia.rutinaId ? 'Comenzar' : 'Elegir rutina'}
-              </Text>
-              <Ionicons name="arrow-forward" size={16} color={colors.tint} />
-            </>
-          )}
-        </Pressable>
+        <View style={[styles.botonComenzar, { backgroundColor: colors.tintForeground }]}>
+          <Text style={{ color: colors.tint, fontWeight: '800' }}>
+            {dia.rutinaId ? 'Ver rutina y comenzar' : 'Elegir rutina'}
+          </Text>
+          <Ionicons name="arrow-forward" size={16} color={colors.tint} />
+        </View>
       )}
-    </View>
+    </Pressable>
   );
 }
 

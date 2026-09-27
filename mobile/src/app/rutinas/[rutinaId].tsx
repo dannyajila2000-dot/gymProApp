@@ -30,9 +30,17 @@ export default function DetalleRutina() {
   const cargar = useCallback(async () => {
     setError(null);
     try {
-      const [rutinas, mia] = await Promise.all([rutinasApi.listarRutinas(), rutinasApi.obtenerMiRutina()]);
+      const [rutinas, mia, propias] = await Promise.all([
+        rutinasApi.listarRutinas(),
+        rutinasApi.obtenerMiRutina(),
+        rutinasApi.misRutinasPersonales(),
+      ]);
       setMiRutinaId(mia?.id ?? null);
-      setRutina(mia?.id === rutinaId ? mia : (rutinas.find((r) => r.id === rutinaId) ?? null));
+      setRutina(
+        mia?.id === rutinaId
+          ? mia
+          : (rutinas.find((r) => r.id === rutinaId) ?? propias.find((r) => r.id === rutinaId) ?? null),
+      );
     } catch (e) {
       setError(e instanceof ErrorApi ? e.message : 'No pudimos cargar esta rutina');
     } finally {
