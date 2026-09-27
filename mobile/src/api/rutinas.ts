@@ -39,6 +39,7 @@ export interface Rutina {
   descripcion: string | null;
   imagenUrl: string | null;
   ejercicios: RutinaEjercicio[];
+  creadaPorClienteId: string | null;
 }
 
 export interface SesionEntrenamiento {

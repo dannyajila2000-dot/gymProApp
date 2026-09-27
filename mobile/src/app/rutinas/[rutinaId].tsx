@@ -9,6 +9,7 @@ import * as rutinasApi from '@/api/rutinas';
 import type { Rutina } from '@/api/rutinas';
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
 import { SustituirEjercicioModal } from '@/components/entrenamiento/sustituir-ejercicio-modal';
+import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 import { OBJETIVO_LABEL } from '@/constants/objetivos';
@@ -17,6 +18,7 @@ import { caloriasEstimadas, duracionEstimadaMin } from '@/lib/rutina-utils';
 
 export default function DetalleRutina() {
   const colors = useTheme();
+  const { cliente } = useSesion();
   const { rutinaId } = useLocalSearchParams<{ rutinaId: string }>();
 
   const [cargando, setCargando] = useState(true);
@@ -25,6 +27,7 @@ export default function DetalleRutina() {
   const [miRutinaId, setMiRutinaId] = useState<string | null>(null);
   const [descripcionExpandida, setDescripcionExpandida] = useState(false);
   const [asignando, setAsignando] = useState(false);
+  const [duplicando, setDuplicando] = useState(false);
   const [sustituirItem, setSustituirItem] = useState<{ id: string; nombre: string } | null>(null);
 
   const cargar = useCallback(async () => {
@@ -64,6 +67,35 @@ export default function DetalleRutina() {
       router.push({ pathname: '/entrenamiento/[rutinaId]', params: { rutinaId: rutina.id } });
     } finally {
       setAsignando(false);
+    }
+  }
+
+  async function editarRutina() {
+    if (!rutina) return;
+    if (rutina.creadaPorClienteId === cliente?.id) {
+      router.push({ pathname: '/rutinas/mias/[rutinaId]', params: { rutinaId: rutina.id } });
+      return;
+    }
+    setDuplicando(true);
+    try {
+      const nueva = await rutinasApi.crearRutinaPersonal({
+        nombre: rutina.nombre,
+        nivel: rutina.nivel,
+        objetivo: rutina.objetivo,
+      });
+      for (const item of rutina.ejercicios) {
+        await rutinasApi.agregarEjercicioARutina(nueva.id, {
+          ejercicioId: item.ejercicio.id,
+          series: item.series ?? undefined,
+          repeticiones: item.repeticiones ?? undefined,
+          duracionSeg: item.duracionSeg ?? undefined,
+          descansoSeg: item.descansoSeg ?? undefined,
+        });
+      }
+      await rutinasApi.asignarme(nueva.id);
+      router.replace({ pathname: '/rutinas/mias/[rutinaId]', params: { rutinaId: nueva.id } });
+    } finally {
+      setDuplicando(false);
     }
   }
 
@@ -145,7 +177,21 @@ export default function DetalleRutina() {
             </Pressable>
           )}
 
-          <Text style={[styles.seccionTitulo, { color: colors.text }]}>Ejercicios ({rutina.ejercicios.length})</Text>
+          <View style={styles.filaEntreSeccion}>
+            <Text style={[styles.seccionTitulo, { color: colors.text }]}>Ejercicios ({rutina.ejercicios.length})</Text>
+            {esMiRutina && (
+              <Pressable onPress={editarRutina} disabled={duplicando} style={styles.filaEditar}>
+                {duplicando ? (
+                  <ActivityIndicator color={colors.tint} size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="create-outline" size={18} color={colors.tint} />
+                    <Text style={{ color: colors.tint, fontWeight: '700', fontSize: 13.5 }}>Editar esta rutina</Text>
+                  </>
+                )}
+              </Pressable>
+            )}
+          </View>
           <View style={{ gap: Spacing.one }}>
             {rutina.ejercicios.map((item) => (
               <View key={item.id} style={[styles.filaEjercicio, { borderColor: colors.border }]}>
@@ -222,7 +268,15 @@ const styles = StyleSheet.create({
   tarjetaInfo: { flex: 1, borderRadius: 16, padding: Spacing.two, alignItems: 'center', gap: 2 },
   tarjetaInfoValor: { fontSize: 16, fontWeight: '800' },
   descripcion: { fontSize: 14, lineHeight: 20, marginTop: Spacing.three },
-  seccionTitulo: { fontSize: 17, fontWeight: '800', marginTop: Spacing.four, marginBottom: Spacing.one },
+  seccionTitulo: { fontSize: 17, fontWeight: '800' },
+  filaEntreSeccion: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: Spacing.four,
+    marginBottom: Spacing.one,
+  },
+  filaEditar: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   filaEjercicio: {
     flexDirection: 'row',
     alignItems: 'center',
