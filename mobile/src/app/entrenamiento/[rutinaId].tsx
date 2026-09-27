@@ -79,8 +79,17 @@ function Temporizador({
   onTerminar: () => void;
   pausado?: boolean;
 }) {
+  const colors = useTheme();
   const [restante, setRestante] = useState(duracion);
   const onTerminarRef = useRef(onTerminar);
+  // El conteo se calcula siempre a partir de un instante final fijo (reloj de
+  // pared), nunca restando 1 en cada tick: así el número nunca puede "saltar"
+  // aunque el intervalo se retrase o se reprograme (pausa/reanudar).
+  const restanteRef = useRef(duracion);
+  // useState con inicializador perezoso es el único lugar sancionado por
+  // React para llamar algo impuro (Date.now()) una sola vez al montar.
+  const [finDeCuentaInicial] = useState(() => Date.now() + duracion * 1000);
+  const finDeCuentaRef = useRef(finDeCuentaInicial);
 
   useEffect(() => {
     onTerminarRef.current = onTerminar;
@@ -88,24 +97,33 @@ function Temporizador({
 
   useEffect(() => {
     if (pausado) return;
-    let timeoutFinal: ReturnType<typeof setTimeout> | null = null;
+    finDeCuentaRef.current = Date.now() + restanteRef.current * 1000;
+    let terminado = false;
     const intervalo = setInterval(() => {
-      setRestante((actual) => {
-        if (actual <= 1) {
-          clearInterval(intervalo);
-          timeoutFinal = setTimeout(() => onTerminarRef.current(), 300);
-          return 0;
-        }
-        return actual - 1;
-      });
-    }, 1000);
-    return () => {
-      clearInterval(intervalo);
-      if (timeoutFinal) clearTimeout(timeoutFinal);
-    };
+      const segundos = Math.max(0, Math.ceil((finDeCuentaRef.current - Date.now()) / 1000));
+      restanteRef.current = segundos;
+      setRestante(segundos);
+      if (segundos <= 0 && !terminado) {
+        terminado = true;
+        clearInterval(intervalo);
+        setTimeout(() => onTerminarRef.current(), 300);
+      }
+    }, 200);
+    return () => clearInterval(intervalo);
   }, [pausado]);
 
-  return <Text style={[styles.temporizador, { color }]}>{restante}s</Text>;
+  const progreso = duracion > 0 ? restante / duracion : 0;
+
+  return (
+    <View style={styles.temporizadorBloque}>
+      <Text style={[styles.temporizador, { color }]}>{restante}s</Text>
+      <View style={[styles.temporizadorBarraFondo, { backgroundColor: colors.border }]}>
+        <View
+          style={[styles.temporizadorBarraRelleno, { backgroundColor: colors.tint, width: `${progreso * 100}%` }]}
+        />
+      </View>
+    </View>
+  );
 }
 
 export default function Entrenamiento() {
@@ -403,13 +421,6 @@ export default function Entrenamiento() {
       {paso.tipo === 'descanso' ? (
         <View style={styles.centroFlex}>
           <Text style={[styles.etiquetaFase, { color: colors.tint }]}>DESCANSO</Text>
-          <Temporizador
-            key={pasoActual}
-            duracion={paso.duracionSeg}
-            color={colors.text}
-            onTerminar={avanzar}
-            pausado={pausado}
-          />
         </View>
       ) : (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.centroScroll} showsVerticalScrollIndicator={false}>
@@ -443,21 +454,24 @@ export default function Entrenamiento() {
             </Text>
           )}
 
-          {duracionPaso ? (
-            <Temporizador
-              key={pasoActual}
-              duracion={duracionPaso}
-              color={colors.text}
-              onTerminar={avanzar}
-              pausado={pausado}
-            />
-          ) : (
+          {!duracionPaso && (
             <Text style={[styles.repeticiones, { color: colors.text }]}>{paso.item.repeticiones} reps</Text>
           )}
         </ScrollView>
       )}
 
+      {/* Controles: siempre visibles, nunca dentro del scroll de arriba. */}
       <View style={{ gap: Spacing.two }}>
+        {!!duracionPaso && (
+          <Temporizador
+            key={pasoActual}
+            duracion={duracionPaso}
+            color={colors.text}
+            onTerminar={avanzar}
+            pausado={pausado}
+          />
+        )}
+
         {!!duracionPaso && (
           <Pressable style={[styles.botonPrincipal, { backgroundColor: colors.tint }]} onPress={alternarPausa}>
             <Text style={[styles.botonPrincipalTexto, { color: colors.tintForeground }]}>
@@ -588,10 +602,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
     paddingTop: Spacing.one,
   },
+  temporizadorBloque: {
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
   temporizador: {
     fontSize: 56,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
+  },
+  temporizadorBarraFondo: {
+    width: '100%',
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  temporizadorBarraRelleno: {
+    height: 8,
+    borderRadius: 4,
   },
   repeticiones: {
     fontSize: 44,
