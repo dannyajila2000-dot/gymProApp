@@ -84,6 +84,8 @@ export interface DiaPlan {
   esDiaEntrenamiento: boolean;
   completado: boolean;
   esHoy: boolean;
+  rutinaId: string | null;
+  rutinaNombre: string | null;
 }
 
 export function obtenerPlanSemana() {

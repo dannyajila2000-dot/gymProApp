@@ -5,7 +5,7 @@ import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, T
 
 import * as progresoApi from '@/api/progreso';
 import * as rutinasApi from '@/api/rutinas';
-import type { DiaPlan, Rutina } from '@/api/rutinas';
+import type { DiaPlan } from '@/api/rutinas';
 import { useSesion } from '@/context/auth-context';
 import { DIAS_NOMBRE } from '@/constants/dias';
 import { useTheme } from '@/hooks/use-theme';
@@ -18,18 +18,16 @@ export default function Inicio() {
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
   const [plan, setPlan] = useState<DiaPlan[]>([]);
-  const [miRutina, setMiRutina] = useState<Rutina | null>(null);
   const [racha, setRacha] = useState(0);
+  const [comenzando, setComenzando] = useState(false);
 
   const cargar = useCallback(async () => {
     try {
-      const [semana, rutina, resumen] = await Promise.all([
+      const [semana, resumen] = await Promise.all([
         rutinasApi.obtenerPlanSemana(),
-        rutinasApi.obtenerMiRutina(),
         progresoApi.resumenDeLaSemana(),
       ]);
       setPlan(semana);
-      setMiRutina(rutina);
       setRacha(resumen.racha);
     } finally {
       setCargando(false);
@@ -43,12 +41,19 @@ export default function Inicio() {
     }, [cargar]),
   );
 
-  function comenzarHoy() {
-    if (!miRutina) {
+  async function comenzarHoy() {
+    const hoy = plan.find((d) => d.esHoy);
+    if (!hoy?.rutinaId) {
       router.push('/(tabs)/rutina');
       return;
     }
-    router.push({ pathname: '/entrenamiento/[rutinaId]', params: { rutinaId: miRutina.id } });
+    setComenzando(true);
+    try {
+      await rutinasApi.asignarme(hoy.rutinaId);
+      router.push({ pathname: '/entrenamiento/[rutinaId]', params: { rutinaId: hoy.rutinaId } });
+    } finally {
+      setComenzando(false);
+    }
   }
 
   if (cargando) {
@@ -108,7 +113,7 @@ export default function Inicio() {
               {indice < plan.length - 1 && <View style={[styles.lineaVertical, { backgroundColor: colors.border }]} />}
             </View>
 
-            <DiaTarjeta dia={dia} miRutina={miRutina} onComenzar={comenzarHoy} colors={colors} />
+            <DiaTarjeta dia={dia} comenzando={comenzando} onComenzar={comenzarHoy} colors={colors} />
           </View>
         ))}
       </View>
@@ -124,12 +129,12 @@ export default function Inicio() {
 
 function DiaTarjeta({
   dia,
-  miRutina,
+  comenzando,
   onComenzar,
   colors,
 }: {
   dia: DiaPlan;
-  miRutina: Rutina | null;
+  comenzando: boolean;
   onComenzar: () => void;
   colors: ReturnType<typeof useTheme>;
 }) {
@@ -172,16 +177,25 @@ function DiaTarjeta({
             {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
           </Text>
           <Text style={{ color: destacar ? colors.tintForeground : colors.textSecondary, fontSize: 12.5, opacity: destacar ? 0.9 : 1 }}>
-            {dia.completado ? '¡Completado!' : (miRutina?.nombre ?? 'Día de entrenamiento')}
+            {dia.completado ? '¡Completado!' : (dia.rutinaNombre ?? 'Sin rutina disponible')}
           </Text>
         </View>
       </View>
       {destacar && (
         <Pressable
           onPress={onComenzar}
-          style={[styles.botonComenzar, { backgroundColor: colors.tintForeground }]}>
-          <Text style={{ color: colors.tint, fontWeight: '800' }}>Comenzar</Text>
-          <Ionicons name="arrow-forward" size={16} color={colors.tint} />
+          disabled={comenzando}
+          style={[styles.botonComenzar, { backgroundColor: colors.tintForeground, opacity: comenzando ? 0.6 : 1 }]}>
+          {comenzando ? (
+            <ActivityIndicator color={colors.tint} size="small" />
+          ) : (
+            <>
+              <Text style={{ color: colors.tint, fontWeight: '800' }}>
+                {dia.rutinaId ? 'Comenzar' : 'Elegir rutina'}
+              </Text>
+              <Ionicons name="arrow-forward" size={16} color={colors.tint} />
+            </>
+          )}
         </Pressable>
       )}
     </View>

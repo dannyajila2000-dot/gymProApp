@@ -370,33 +370,77 @@ export class RutinasService {
   async planSemana(clienteId: string) {
     const cliente = await this.prisma.cliente.findUnique({
       where: { id: clienteId },
-      select: { diasEntrenamientoSemana: true },
+      select: { diasEntrenamientoSemana: true, nivelFitness: true },
     })
-    const diasEntrenamiento = cliente?.diasEntrenamientoSemana?.length
-      ? new Set(cliente.diasEntrenamientoSemana)
-      : null // sin preferencia configurada: todos los días son de entrenamiento
+    const diasEntrenamientoConfigurados = cliente?.diasEntrenamientoSemana ?? []
+    const diasSemanaEntrenamiento = diasEntrenamientoConfigurados.length
+      ? [...diasEntrenamientoConfigurados].sort((a, b) => a - b)
+      : [0, 1, 2, 3, 4, 5, 6] // sin preferencia configurada: todos los días son de entrenamiento
 
     const hoy = fechaDeHoyEcuador()
     const { inicio } = inicioYFinDeLaSemanaEcuador(hoy)
 
-    const sesiones = await this.prisma.sesionEntrenamiento.findMany({
-      where: { clienteId, completadaEn: { gte: inicio, lte: new Date(inicio.getTime() + 7 * 24 * 60 * 60 * 1000 - 1) } },
-      select: { completadaEn: true },
-    })
+    const [sesiones, poolRotacion] = await Promise.all([
+      this.prisma.sesionEntrenamiento.findMany({
+        where: { clienteId, completadaEn: { gte: inicio, lte: new Date(inicio.getTime() + 7 * 24 * 60 * 60 * 1000 - 1) } },
+        select: { completadaEn: true },
+      }),
+      this.poolDeRotacion(clienteId, cliente?.nivelFitness ?? null),
+    ])
     const diasCompletados = new Set(sesiones.map((s) => fechaEcuadorDeFecha(s.completadaEn)))
+    const numeroSemana = Math.floor(inicio.getTime() / (7 * 24 * 60 * 60 * 1000))
 
     const dias = []
     for (let diaSemana = 0; diaSemana < 7; diaSemana++) {
       const fecha = fechaEcuadorDeFecha(new Date(inicio.getTime() + diaSemana * 24 * 60 * 60 * 1000))
+      const esDiaEntrenamiento = diasSemanaEntrenamiento.includes(diaSemana)
+      const posicionEnSemana = diasSemanaEntrenamiento.indexOf(diaSemana)
+      const rutinaDelDia =
+        esDiaEntrenamiento && poolRotacion.length > 0
+          ? poolRotacion[(numeroSemana * diasSemanaEntrenamiento.length + posicionEnSemana) % poolRotacion.length]
+          : null
+
       dias.push({
         fecha,
         diaSemana,
-        esDiaEntrenamiento: diasEntrenamiento ? diasEntrenamiento.has(diaSemana) : true,
+        esDiaEntrenamiento,
         completado: diasCompletados.has(fecha),
         esHoy: fecha === hoy,
+        rutinaId: rutinaDelDia?.id ?? null,
+        rutinaNombre: rutinaDelDia?.nombre ?? null,
       })
     }
     return dias
+  }
+
+  /**
+   * Conjunto de rutinas entre las que rota el plan semanal: las plantillas
+   * del gimnasio que combinan con el nivel del cliente (o todas si ninguna
+   * combina) más sus propias rutinas personales. Se ordena de forma estable
+   * para que la rotación sea determinística entre llamadas.
+   */
+  private async poolDeRotacion(clienteId: string, nivelFitness: string | null) {
+    const [plantillasNivel, plantillasTodas, personales] = await Promise.all([
+      nivelFitness
+        ? this.prisma.rutina.findMany({
+            where: { creadaPorClienteId: null, activa: true, nivel: nivelFitness },
+            select: { id: true, nombre: true },
+            orderBy: { id: 'asc' },
+          })
+        : Promise.resolve([]),
+      this.prisma.rutina.findMany({
+        where: { creadaPorClienteId: null, activa: true },
+        select: { id: true, nombre: true },
+        orderBy: { id: 'asc' },
+      }),
+      this.prisma.rutina.findMany({
+        where: { creadaPorClienteId: clienteId },
+        select: { id: true, nombre: true },
+        orderBy: { id: 'asc' },
+      }),
+    ])
+    const plantillas = plantillasNivel.length ? plantillasNivel : plantillasTodas
+    return [...plantillas, ...personales]
   }
 
   async moverEjercicioDeRutinaPersonal(
