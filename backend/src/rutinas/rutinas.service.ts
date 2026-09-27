@@ -380,25 +380,35 @@ export class RutinasService {
     const hoy = fechaDeHoyEcuador()
     const { inicio } = inicioYFinDeLaSemanaEcuador(hoy)
 
-    const [sesiones, poolRotacion] = await Promise.all([
+    const [sesiones, poolRotacion, asignacionActiva] = await Promise.all([
       this.prisma.sesionEntrenamiento.findMany({
         where: { clienteId, completadaEn: { gte: inicio, lte: new Date(inicio.getTime() + 7 * 24 * 60 * 60 * 1000 - 1) } },
         select: { completadaEn: true },
       }),
       this.poolDeRotacion(clienteId, cliente?.nivelFitness ?? null),
+      this.prisma.clienteRutina.findFirst({
+        where: { clienteId, activa: true },
+        orderBy: { fechaInicio: 'desc' },
+        select: { fechaInicio: true, rutina: { select: { id: true, nombre: true } } },
+      }),
     ])
     const diasCompletados = new Set(sesiones.map((s) => fechaEcuadorDeFecha(s.completadaEn)))
     const numeroSemana = Math.floor(inicio.getTime() / (7 * 24 * 60 * 60 * 1000))
+    // Si el cliente ya eligió/empezó una rutina hoy (a mano o con "Comenzar"),
+    // esa elección manda sobre la sugerencia automática — no la pisamos.
+    const rutinaElegidaHoy =
+      asignacionActiva && fechaEcuadorDeFecha(asignacionActiva.fechaInicio) === hoy ? asignacionActiva.rutina : null
 
     const dias = []
     for (let diaSemana = 0; diaSemana < 7; diaSemana++) {
       const fecha = fechaEcuadorDeFecha(new Date(inicio.getTime() + diaSemana * 24 * 60 * 60 * 1000))
       const esDiaEntrenamiento = diasSemanaEntrenamiento.includes(diaSemana)
       const posicionEnSemana = diasSemanaEntrenamiento.indexOf(diaSemana)
-      const rutinaDelDia =
+      const sugerenciaRotacion =
         esDiaEntrenamiento && poolRotacion.length > 0
           ? poolRotacion[(numeroSemana * diasSemanaEntrenamiento.length + posicionEnSemana) % poolRotacion.length]
           : null
+      const rutinaDelDia = fecha === hoy && rutinaElegidaHoy ? rutinaElegidaHoy : sugerenciaRotacion
 
       dias.push({
         fecha,
