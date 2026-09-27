@@ -153,6 +153,24 @@ export default function EditarRutinaPersonal() {
     }
   }
 
+  async function cambiarModoMedida(item: RutinaEjercicio, modo: 'reps' | 'tiempo') {
+    if (!rutina) return;
+    const datos =
+      modo === 'tiempo'
+        ? { duracionSeg: item.duracionSeg ?? 30, repeticiones: null }
+        : { repeticiones: item.repeticiones ?? 12, duracionSeg: null };
+    setError(null);
+    setRutina({
+      ...rutina,
+      ejercicios: rutina.ejercicios.map((e) => (e.id === item.id ? { ...e, ...datos } : e)),
+    });
+    try {
+      await rutinasApi.actualizarEjercicioDeRutina(rutina.id, item.id, datos);
+    } catch (e) {
+      manejarError(e);
+    }
+  }
+
   async function comenzar() {
     if (!rutina) return;
     setComenzando(true);
@@ -291,6 +309,29 @@ export default function EditarRutinaPersonal() {
                 </Pressable>
               </View>
 
+              <View style={styles.filaModo}>
+                <Pressable
+                  onPress={() => cambiarModoMedida(item, 'reps')}
+                  style={[
+                    styles.chipModo,
+                    { backgroundColor: !item.duracionSeg ? colors.tint : colors.background, borderColor: colors.border },
+                  ]}>
+                  <Text style={{ color: !item.duracionSeg ? colors.tintForeground : colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
+                    Repeticiones
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => cambiarModoMedida(item, 'tiempo')}
+                  style={[
+                    styles.chipModo,
+                    { backgroundColor: item.duracionSeg ? colors.tint : colors.background, borderColor: colors.border },
+                  ]}>
+                  <Text style={{ color: item.duracionSeg ? colors.tintForeground : colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
+                    Tiempo
+                  </Text>
+                </Pressable>
+              </View>
+
               <View style={styles.filaSteppers}>
                 <Stepper
                   etiqueta="Series"
@@ -298,7 +339,7 @@ export default function EditarRutinaPersonal() {
                   onCambiar={(delta) => cambiarValor(item, 'series', delta, 1)}
                   colors={colors}
                 />
-                {item.ejercicio.tipoMedida === 'duracion' ? (
+                {item.duracionSeg ? (
                   <Stepper
                     etiqueta="Segundos"
                     valor={item.duracionSeg ?? 30}
@@ -403,6 +444,8 @@ const styles = StyleSheet.create({
   filaAgregar: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   filaEjercicio: { borderRadius: 16, padding: Spacing.two, gap: Spacing.two },
   filaEjercicioSuperior: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  filaModo: { flexDirection: 'row', gap: Spacing.one },
+  chipModo: { borderRadius: 14, paddingVertical: 5, paddingHorizontal: 10, borderWidth: 1 },
   filaSteppers: { flexDirection: 'row', gap: Spacing.two },
   stepper: { alignItems: 'center', gap: 4 },
   stepperFila: {

@@ -153,7 +153,7 @@ export function agregarEjercicioARutina(
 export function actualizarEjercicioDeRutina(
   rutinaId: string,
   rutinaEjercicioId: string,
-  datos: { series?: number; repeticiones?: number; duracionSeg?: number; descansoSeg?: number },
+  datos: { series?: number; repeticiones?: number | null; duracionSeg?: number | null; descansoSeg?: number },
 ) {
   return solicitar<RutinaEjercicio>(`/rutinas/mias/${rutinaId}/ejercicios/${rutinaEjercicioId}`, {
     metodo: 'PATCH',

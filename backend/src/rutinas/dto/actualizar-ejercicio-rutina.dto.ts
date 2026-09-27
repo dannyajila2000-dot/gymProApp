@@ -9,12 +9,12 @@ export class ActualizarEjercicioRutinaDto {
   @IsOptional()
   @IsInt()
   @IsPositive()
-  repeticiones?: number
+  repeticiones?: number | null
 
   @IsOptional()
   @IsInt()
   @IsPositive()
-  duracionSeg?: number
+  duracionSeg?: number | null
 
   @IsOptional()
   @IsInt()

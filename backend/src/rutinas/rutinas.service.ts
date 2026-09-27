@@ -356,7 +356,7 @@ export class RutinasService {
     clienteId: string,
     rutinaId: string,
     rutinaEjercicioId: string,
-    datos: { series?: number; repeticiones?: number; duracionSeg?: number; descansoSeg?: number },
+    datos: { series?: number; repeticiones?: number | null; duracionSeg?: number | null; descansoSeg?: number },
   ) {
     await this.obtenerEjercicioDeRutinaPropia(clienteId, rutinaId, rutinaEjercicioId)
     return this.prisma.rutinaEjercicio.update({ where: { id: rutinaEjercicioId }, data: datos, include: { ejercicio: true } })
