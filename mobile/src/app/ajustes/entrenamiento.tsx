@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { ErrorApi } from '@/api/client';
 import * as clientesApi from '@/api/clientes';
@@ -70,8 +70,11 @@ export default function AjustesEntrenamiento() {
       });
       actualizarCliente(actualizado);
       setMensaje({ texto: 'Ajustes guardados', esError: false });
+      Alert.alert('Ajustes guardados', 'Tus días de entrenamiento y demás preferencias se actualizaron correctamente.');
     } catch (e) {
-      setMensaje({ texto: e instanceof ErrorApi ? e.message : 'No pudimos guardar los ajustes', esError: true });
+      const texto = e instanceof ErrorApi ? e.message : 'No pudimos guardar los ajustes';
+      setMensaje({ texto, esError: true });
+      Alert.alert('No se pudo guardar', texto);
     } finally {
       setGuardando(false);
     }

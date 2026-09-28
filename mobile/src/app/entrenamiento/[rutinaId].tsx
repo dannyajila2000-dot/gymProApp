@@ -4,7 +4,7 @@ import * as Speech from 'expo-speech';
 import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ErrorApi } from '@/api/client';
 import { useTheme } from '@/hooks/use-theme';
@@ -14,6 +14,8 @@ import * as rutinasApi from '@/api/rutinas';
 import type { Rutina, RutinaEjercicio } from '@/api/rutinas';
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
 import { DetalleEjercicioModal } from '@/components/entrenamiento/detalle-ejercicio-modal';
+import { ConfirmarModal } from '@/components/entrenamiento/confirmar-modal';
+import { OverlayCompletado } from '@/components/entrenamiento/overlay-completado';
 import { obtenerPistaGuardada } from '@/lib/musica';
 import { caloriasEstimadas } from '@/lib/rutina-utils';
 
@@ -90,6 +92,7 @@ function Temporizador({
   // React para llamar algo impuro (Date.now()) una sola vez al montar.
   const [finDeCuentaInicial] = useState(() => Date.now() + duracion * 1000);
   const finDeCuentaRef = useRef(finDeCuentaInicial);
+  const timeoutFinRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     onTerminarRef.current = onTerminar;
@@ -106,10 +109,16 @@ function Temporizador({
       if (segundos <= 0 && !terminado) {
         terminado = true;
         clearInterval(intervalo);
-        setTimeout(() => onTerminarRef.current(), 300);
+        timeoutFinRef.current = setTimeout(() => onTerminarRef.current(), 300);
       }
     }, 200);
-    return () => clearInterval(intervalo);
+    return () => {
+      clearInterval(intervalo);
+      if (timeoutFinRef.current) {
+        clearTimeout(timeoutFinRef.current);
+        timeoutFinRef.current = null;
+      }
+    };
   }, [pausado]);
 
   const progreso = duracion > 0 ? restante / duracion : 0;
@@ -148,6 +157,8 @@ export default function Entrenamiento() {
   const [enPreparacion, setEnPreparacion] = useState(cuentaAtrasSeg > 0);
   const [pausado, setPausado] = useState(false);
   const [modalDetalle, setModalDetalle] = useState(false);
+  const [confirmarSalto, setConfirmarSalto] = useState(false);
+  const [mostrandoCompletado, setMostrandoCompletado] = useState(false);
   const inicioRef = useRef<number>(0);
 
   useEffect(() => {
@@ -267,6 +278,23 @@ export default function Entrenamiento() {
     }
   }
 
+  function completarPaso() {
+    quitarPausa();
+    // El último paso pasa directo a la pantalla de "entrenamiento completado";
+    // mostrar el overlay de "ejercicio completado" justo antes se vería como
+    // dos celebraciones seguidas.
+    if (pasoActual + 1 >= pasos.length) {
+      avanzar();
+    } else {
+      setMostrandoCompletado(true);
+    }
+  }
+
+  function alTerminarOverlayCompletado() {
+    setMostrandoCompletado(false);
+    avanzar();
+  }
+
   function retroceder() {
     if (pasoActual === 0) return;
     quitarPausa();
@@ -286,14 +314,16 @@ export default function Entrenamiento() {
   }
 
   function saltar() {
-    if (paso?.tipo === 'ejercicio' && !duracionPaso) {
-      Alert.alert('¿Saltar este ejercicio?', 'No se marcará como completado.', [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Saltar', style: 'destructive', onPress: () => avanzar() },
-      ]);
+    if (paso?.tipo === 'ejercicio') {
+      setConfirmarSalto(true);
     } else {
       avanzar();
     }
+  }
+
+  function confirmarSaltoSi() {
+    setConfirmarSalto(false);
+    avanzar();
   }
 
   async function finalizar() {
@@ -467,7 +497,7 @@ export default function Entrenamiento() {
             key={pasoActual}
             duracion={duracionPaso}
             color={colors.text}
-            onTerminar={avanzar}
+            onTerminar={paso.tipo === 'ejercicio' ? completarPaso : avanzar}
             pausado={pausado}
           />
         )}
@@ -482,7 +512,7 @@ export default function Entrenamiento() {
         {paso.tipo === 'ejercicio' && !duracionPaso && (
           <Pressable
             style={[styles.botonPrincipal, { backgroundColor: colors.tint }]}
-            onPress={avanzar}
+            onPress={completarPaso}
             disabled={guardando}>
             <Text style={[styles.botonPrincipalTexto, { color: colors.tintForeground }]}>
               {guardando ? 'Guardando...' : 'Marcar como completado'}
@@ -510,6 +540,18 @@ export default function Entrenamiento() {
           mostrarVideo={cliente?.preferenciaEntrenador !== 'animacion'}
         />
       )}
+
+      <ConfirmarModal
+        visible={confirmarSalto}
+        titulo="¿Saltar este ejercicio?"
+        mensaje="No se marcará como completado."
+        textoConfirmar="Saltar"
+        destructivo
+        onConfirmar={confirmarSaltoSi}
+        onCancelar={() => setConfirmarSalto(false)}
+      />
+
+      <OverlayCompletado visible={mostrandoCompletado} onTerminar={alTerminarOverlayCompletado} />
     </View>
   );
 }
