@@ -225,6 +225,8 @@ function DiaTarjeta({
       <Image source={foto} style={[styles.foto, FotoFlotanteShadow]} contentFit="contain" />
 
       <View style={styles.contenido}>
+        {/* Este bloque (texto + stats + barra) se queda angosto a propósito
+            (paddingRight) para no meterse debajo de la foto. */}
         <View style={{ paddingRight: 100 }}>
           <Text
             style={{
@@ -246,27 +248,36 @@ function DiaTarjeta({
             }}>
             {dia.completado ? '¡Completado!' : (dia.rutinaNombre ?? 'Sin rutina disponible')}
           </Text>
-        </View>
 
-        {tieneStats && (
-          <>
-            <Text
-              style={{
-                color: destacar ? '#ffffff' : colors.textSecondary,
-                opacity: destacar ? 0.9 : 1,
-                fontSize: 12.5,
-                fontWeight: '600',
-                marginTop: Spacing.two,
-              }}>
-              {dia.duracionMin} min · {dia.caloriasEstimadas} kcal
-            </Text>
-            <BarraProgreso
-              pct={dia.progresoPct}
-              colorFondo={destacar ? 'rgba(255,255,255,0.28)' : colors.backgroundSelected}
-              colorRelleno={destacar ? '#ffffff' : colors.tint}
-            />
-          </>
-        )}
+          {tieneStats && (
+            <>
+              <Text
+                style={{
+                  color: destacar ? '#ffffff' : colors.textSecondary,
+                  opacity: destacar ? 0.9 : 1,
+                  fontSize: 12.5,
+                  fontWeight: '600',
+                  marginTop: Spacing.two,
+                }}>
+                {dia.duracionMin} min · {dia.caloriasEstimadas} kcal
+              </Text>
+              <Text
+                style={{
+                  color: destacar ? '#ffffff' : colors.text,
+                  fontSize: 11.5,
+                  fontWeight: '800',
+                  marginTop: Spacing.two,
+                }}>
+                {dia.progresoPct}%
+              </Text>
+              <BarraProgreso
+                pct={dia.progresoPct}
+                colorFondo={destacar ? 'rgba(255,255,255,0.28)' : colors.backgroundSelected}
+                colorRelleno={destacar ? '#ffffff' : colors.tint}
+              />
+            </>
+          )}
+        </View>
 
         {destacar && (
           <View style={styles.botonComenzar}>
