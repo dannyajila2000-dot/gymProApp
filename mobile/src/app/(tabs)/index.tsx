@@ -361,12 +361,13 @@ const styles = StyleSheet.create({
     minHeight: 150,
   },
   barraFondo: {
-    height: 6,
-    borderRadius: 3,
+    height: 4,
+    width: '70%',
+    borderRadius: 2,
     marginTop: Spacing.two,
     overflow: 'hidden',
   },
-  barraRelleno: { height: '100%', borderRadius: 3 },
+  barraRelleno: { height: '100%', borderRadius: 2 },
   botonComenzar: {
     flexDirection: 'row',
     alignItems: 'center',
