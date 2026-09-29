@@ -9,7 +9,7 @@ const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 // Duración total de la bienvenida: entra suave, se queda visible un rato,
 // sale suave — unos 3 segundos en total, como pidió Danny.
 const DURATION = 3000;
-const COLOR_FONDO = '#2563EB';
+const COLOR_FONDO = '#0284C7';
 
 export function AnimatedSplashOverlay() {
   const [animate, setAnimate] = useState(false);

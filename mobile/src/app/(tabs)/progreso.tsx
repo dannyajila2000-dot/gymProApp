@@ -862,7 +862,7 @@ function TabPeso() {
             color={colors.tint}
             colorMeta={colors.info}
             colorTexto={colors.textSecondary}
-            colorFondoTooltip={colors.text === '#ffffff' ? '#2A2A2E' : '#1C1C1E'}
+            colorFondoTooltip="#1C1C1E"
             unidad="kg"
           />
         </View>

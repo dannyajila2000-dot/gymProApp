@@ -1,6 +1,7 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { ActivityIndicator, useColorScheme, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { ActivityIndicator, View } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { SessionProvider, useSesion } from '@/context/auth-context';
@@ -9,9 +10,11 @@ import { useTheme } from '@/hooks/use-theme';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  // El fondo blanco aplica siempre (sin importar el tema del celular), así que
+  // la navegación también se fuerza siempre a DefaultTheme (claro).
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={DefaultTheme}>
+      <StatusBar style="dark" />
       <AnimatedSplashOverlay />
       <SessionProvider>
         <RootNavigator />

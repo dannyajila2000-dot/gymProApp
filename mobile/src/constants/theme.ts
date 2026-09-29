@@ -7,43 +7,32 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+// El fondo blanco + azul cielo se pide siempre, sin importar el tema del
+// celular (Danny confirmó "blanco siempre" en vez de solo modo claro) —
+// por eso `dark` es una copia idéntica de `light` en vez de una paleta
+// oscura propia.
+const paleta = {
+  text: '#0F172A',
+  background: '#ffffff',
+  backgroundElement: '#F4F7FB',
+  backgroundSelected: '#E4EEFB',
+  textSecondary: '#5B6472',
+  tint: '#0284C7',
+  tintForeground: '#ffffff',
+  border: '#E2E8F0',
+  danger: '#B3402E',
+  info: '#0D9488',
+  infoForeground: '#ffffff',
+  success: '#1FA971',
+  warning: '#D9A62E',
+  energia: '#38BDF8',
+  energiaOscuro: '#0284C7',
+  energiaSuave: '#EAF6FF',
+} as const;
+
 export const Colors = {
-  light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
-    tint: '#2563EB',
-    tintForeground: '#ffffff',
-    border: '#E3E1DC',
-    danger: '#B3402E',
-    info: '#0D9488',
-    infoForeground: '#ffffff',
-    success: '#1FA971',
-    warning: '#D9A62E',
-    energia: '#5B4FE9',
-    energiaOscuro: '#7C3AED',
-    energiaSuave: '#EDEBFC',
-  },
-  dark: {
-    text: '#ffffff',
-    background: '#0B1220',
-    backgroundElement: '#16213A',
-    backgroundSelected: '#1E2B4A',
-    textSecondary: '#9BA9C6',
-    tint: '#5B9DFF',
-    tintForeground: '#0B1730',
-    border: '#22314F',
-    danger: '#FF6B54',
-    info: '#2DD4BF',
-    infoForeground: '#052E2B',
-    success: '#3FCB93',
-    warning: '#F0C155',
-    energia: '#7C74F0',
-    energiaOscuro: '#9D5CF5',
-    energiaSuave: '#241F45',
-  },
+  light: paleta,
+  dark: paleta,
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
