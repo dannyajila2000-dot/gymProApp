@@ -234,29 +234,20 @@ export default function EditarRutinaPersonal() {
             </Pressable>
           </View>
 
-          <View style={styles.filaPrincipal}>
-            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>
-              Repeticiones
-            </Text>
-            <View style={[styles.stepperFilaGrande, { backgroundColor: colors.background, borderColor: colors.border }]}>
-              <Pressable onPress={() => cambiarRepeticiones(item, -1)} hitSlop={8} style={styles.stepperBotonGrande}>
-                <Ionicons name="remove" size={18} color={colors.text} />
-              </Pressable>
-              <Text style={{ color: colors.text, fontWeight: '800', fontSize: 18, minWidth: 56, textAlign: 'center' }}>
-                x{item.repeticiones ?? 12}
-              </Text>
-              <Pressable onPress={() => cambiarRepeticiones(item, 1)} hitSlop={8} style={styles.stepperBotonGrande}>
-                <Ionicons name="add" size={18} color={colors.text} />
-              </Pressable>
-            </View>
+          <View style={styles.filaSteppers}>
+            <Stepper
+              etiqueta="Repeticiones"
+              valor={item.repeticiones ?? 12}
+              onCambiar={(delta) => cambiarRepeticiones(item, delta)}
+              colors={colors}
+            />
+            <Stepper
+              etiqueta="Series"
+              valor={item.series ?? 1}
+              onCambiar={(delta) => cambiarSeries(item, delta)}
+              colors={colors}
+            />
           </View>
-
-          <Stepper
-            etiqueta="Series"
-            valor={item.series ?? 1}
-            onCambiar={(delta) => cambiarSeries(item, delta)}
-            colors={colors}
-          />
         </View>
       </ScaleDecorator>
     );
@@ -442,19 +433,7 @@ const styles = StyleSheet.create({
   asa: { paddingRight: 2 },
   filaEjercicioInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   iconoEjercicio: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  filaPrincipal: { gap: 4 },
-  stepperFilaGrande: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.three,
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.one,
-    alignSelf: 'flex-start',
-  },
-  stepperBotonGrande: { padding: 4 },
+  filaSteppers: { flexDirection: 'row', gap: Spacing.three },
   stepper: { alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
   stepperFila: {
     flexDirection: 'row',
