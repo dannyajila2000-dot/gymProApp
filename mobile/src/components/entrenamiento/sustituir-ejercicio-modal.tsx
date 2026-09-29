@@ -81,7 +81,9 @@ export function SustituirEjercicioModal({
           {cargando ? (
             <ActivityIndicator color={colors.tint} style={{ marginTop: Spacing.four }} />
           ) : (
-            <ScrollView contentContainerStyle={{ gap: Spacing.one, paddingBottom: Spacing.three }}>
+            <ScrollView
+              style={{ flexShrink: 1 }}
+              contentContainerStyle={{ gap: Spacing.one, paddingBottom: Spacing.three }}>
               {alternativas.map((ejercicio) => (
                 <Pressable
                   key={ejercicio.id}

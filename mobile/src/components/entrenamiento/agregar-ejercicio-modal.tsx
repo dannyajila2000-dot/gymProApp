@@ -64,7 +64,11 @@ export function AgregarEjercicioModal({
             <ActivityIndicator color={colors.tint} style={{ marginTop: Spacing.four }} />
           ) : (
             <>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filaChips}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.filaChipsScroll}
+                contentContainerStyle={styles.filaChips}>
                 <Chip
                   activo={grupoActivo === null}
                   texto="Todos"
@@ -82,7 +86,12 @@ export function AgregarEjercicioModal({
                 ))}
               </ScrollView>
 
-              <ScrollView contentContainerStyle={{ gap: Spacing.one, paddingBottom: Spacing.three }}>
+              {/* Sin esto, esta lista (potencialmente larga) se estira a su alto
+                  natural en vez de encogerse dentro de la hoja con maxHeight,
+                  empujando los chips de arriba fuera de la pantalla. */}
+              <ScrollView
+                style={{ flexShrink: 1 }}
+                contentContainerStyle={{ gap: Spacing.one, paddingBottom: Spacing.three }}>
                 {filtrados.map((ejercicio) => (
                   <Pressable
                     key={ejercicio.id}
@@ -146,6 +155,7 @@ const styles = StyleSheet.create({
   },
   encabezado: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   titulo: { fontSize: 18, fontWeight: '800' },
+  filaChipsScroll: { flexShrink: 0, flexGrow: 0 },
   buscador: { borderWidth: 1, borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: 10, fontSize: 14 },
   filaChips: { flexDirection: 'row', gap: Spacing.one, paddingBottom: 4 },
   chip: { borderRadius: 20, paddingVertical: 7, paddingHorizontal: 12, borderWidth: 1 },
