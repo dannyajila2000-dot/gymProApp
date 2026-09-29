@@ -8,7 +8,6 @@ import { ErrorApi } from '@/api/client';
 import * as rutinasApi from '@/api/rutinas';
 import type { Rutina } from '@/api/rutinas';
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
-import { MapaMuscular } from '@/components/mapa-muscular';
 import { SustituirEjercicioModal } from '@/components/entrenamiento/sustituir-ejercicio-modal';
 import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
@@ -165,18 +164,6 @@ export default function DetalleRutina() {
             </View>
           </View>
 
-          <View style={[styles.tarjetaMapa, CardShadow, { backgroundColor: colors.backgroundElement }]}>
-            <Text style={{ color: colors.tint, fontWeight: '800', fontSize: 13.5 }}>Áreas de enfoque</Text>
-            <MapaMuscular
-              grupos={rutina.ejercicios.map((item) => item.ejercicio.grupoMuscular)}
-              colorActivo={colors.tint}
-              colorInactivo={colors.backgroundSelected}
-              colorDecorativo={colors.border}
-              colorContorno={colors.background}
-              size={110}
-            />
-          </View>
-
           {rutina.descripcion && (
             <Pressable onPress={() => setDescripcionExpandida((v) => !v)}>
               <Text
@@ -291,13 +278,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.one,
   },
   filaEditar: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  tarjetaMapa: {
-    marginTop: Spacing.two,
-    borderRadius: 18,
-    padding: Spacing.three,
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
   filaEjercicio: {
     flexDirection: 'row',
     alignItems: 'center',
