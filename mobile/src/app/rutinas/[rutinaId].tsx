@@ -8,6 +8,7 @@ import { ErrorApi } from '@/api/client';
 import * as rutinasApi from '@/api/rutinas';
 import type { Rutina } from '@/api/rutinas';
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
+import { MapaMuscular } from '@/components/mapa-muscular';
 import { SustituirEjercicioModal } from '@/components/entrenamiento/sustituir-ejercicio-modal';
 import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
@@ -164,6 +165,18 @@ export default function DetalleRutina() {
             </View>
           </View>
 
+          <View style={[styles.tarjetaMapa, CardShadow, { backgroundColor: colors.backgroundElement }]}>
+            <Text style={{ color: colors.tint, fontWeight: '800', fontSize: 13.5 }}>Áreas de enfoque</Text>
+            <MapaMuscular
+              grupos={rutina.ejercicios.map((item) => item.ejercicio.grupoMuscular)}
+              colorActivo={colors.tint}
+              colorInactivo={colors.backgroundSelected}
+              colorDecorativo={colors.border}
+              colorContorno={colors.background}
+              size={110}
+            />
+          </View>
+
           {rutina.descripcion && (
             <Pressable onPress={() => setDescripcionExpandida((v) => !v)}>
               <Text
@@ -192,17 +205,18 @@ export default function DetalleRutina() {
               </Pressable>
             )}
           </View>
-          <View style={{ gap: Spacing.one }}>
+          <View style={{ gap: Spacing.two }}>
             {rutina.ejercicios.map((item) => (
-              <View key={item.id} style={[styles.filaEjercicio, { borderColor: colors.border }]}>
-                <View style={[styles.iconoEjercicio, { backgroundColor: colors.backgroundElement }]}>
-                  <MunecoEjercicio patron={item.ejercicio.patronMovimiento} color={colors.tint} size={26} />
+              <View key={item.id} style={[styles.filaEjercicio, CardShadow, { backgroundColor: colors.backgroundElement }]}>
+                <View style={[styles.iconoEjercicio, { backgroundColor: colors.background }]}>
+                  <MunecoEjercicio patron={item.ejercicio.patronMovimiento} color={colors.tint} size={36} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.text, fontWeight: '700' }}>{item.ejercicio.nombre}</Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>
-                    {item.series ?? 1} serie{(item.series ?? 1) > 1 ? 's' : ''} ·{' '}
-                    {item.duracionSeg ? `${item.duracionSeg}s` : `${item.repeticiones ?? 10} reps`}
+                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15.5 }}>{item.ejercicio.nombre}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 2 }}>
+                    {item.duracionSeg ? `${item.duracionSeg}s` : `x${item.repeticiones ?? 10}`}
+                    {' · '}
+                    {item.series ?? 1} serie{(item.series ?? 1) > 1 ? 's' : ''}
                   </Text>
                 </View>
                 {esMiRutina && (
@@ -277,14 +291,21 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.one,
   },
   filaEditar: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  tarjetaMapa: {
+    marginTop: Spacing.two,
+    borderRadius: 18,
+    padding: Spacing.three,
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
   filaEjercicio: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
-    borderBottomWidth: 1,
-    paddingVertical: Spacing.two,
+    gap: Spacing.three,
+    borderRadius: 16,
+    padding: Spacing.three,
   },
-  iconoEjercicio: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  iconoEjercicio: { width: 60, height: 60, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   pieFijo: {
     position: 'absolute',
     bottom: 0,
