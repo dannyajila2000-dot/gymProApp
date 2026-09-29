@@ -82,11 +82,15 @@ export function obtenerHistorial() {
 export interface DiaPlan {
   fecha: string;
   diaSemana: number;
+  numeroDia: number;
   esDiaEntrenamiento: boolean;
   completado: boolean;
+  progresoPct: number;
   esHoy: boolean;
   rutinaId: string | null;
   rutinaNombre: string | null;
+  duracionMin: number | null;
+  caloriasEstimadas: number | null;
 }
 
 export function obtenerPlanSemana() {

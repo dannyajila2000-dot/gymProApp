@@ -140,6 +140,14 @@ export default function Inicio() {
   );
 }
 
+function BarraProgreso({ pct, colorFondo, colorRelleno }: { pct: number; colorFondo: string; colorRelleno: string }) {
+  return (
+    <View style={[styles.barraFondo, { backgroundColor: colorFondo }]}>
+      <View style={[styles.barraRelleno, { backgroundColor: colorRelleno, width: `${Math.min(100, Math.max(0, pct))}%` }]} />
+    </View>
+  );
+}
+
 function DiaTarjeta({
   dia,
   foto,
@@ -152,6 +160,7 @@ function DiaTarjeta({
   colors: ReturnType<typeof useTheme>;
 }) {
   const destacar = dia.esHoy && !dia.completado;
+  const tieneStats = dia.duracionMin != null && dia.caloriasEstimadas != null;
 
   if (!dia.esDiaEntrenamiento) {
     return (
@@ -166,11 +175,16 @@ function DiaTarjeta({
         </View>
         {/* La foto va SIN recorte (overflow visible) para que "salga" del borde de la tarjeta. */}
         <Image source={foto} style={[styles.foto, FotoFlotanteShadow]} contentFit="contain" />
-        <View style={styles.textoContenedor}>
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>
-            {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
-          </Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>¡Día de descanso!</Text>
+        <View style={styles.contenido}>
+          <View style={{ paddingRight: 100 }}>
+            <Text style={{ color: colors.tint, fontWeight: '700', fontSize: 11.5, opacity: 0.85 }}>
+              Día {dia.numeroDia}
+            </Text>
+            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>
+              {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
+            </Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>¡Día de descanso!</Text>
+          </View>
         </View>
       </View>
     );
@@ -205,35 +219,66 @@ function DiaTarjeta({
         )}
       </View>
 
-      {/* La foto se pinta antes que el texto/botón para que ellos queden por
-          encima donde se monten — así el botón "corta" la silueta como en la
-          referencia, en vez de taparla por completo. */}
+      {/* La foto se pinta antes que el contenido para que el texto/barra/botón
+          queden por encima donde se monten — así se "cortan" la silueta como
+          en la referencia, en vez de taparla por completo. */}
       <Image source={foto} style={[styles.foto, FotoFlotanteShadow]} contentFit="contain" />
 
-      <View style={styles.textoContenedor}>
-        <Text style={{ color: destacar ? '#ffffff' : colors.text, fontWeight: '700', fontSize: 16 }}>
-          {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
-        </Text>
-        <Text
-          style={{
-            color: destacar ? '#ffffff' : colors.textSecondary,
-            fontSize: 13.5,
-            opacity: destacar ? 0.9 : 1,
-          }}>
-          {dia.completado ? '¡Completado!' : (dia.rutinaNombre ?? 'Sin rutina disponible')}
-        </Text>
-      </View>
-
-      {destacar && (
-        <View style={styles.botonComenzar}>
-          <Text style={styles.botonComenzarTexto} numberOfLines={1}>
-            {dia.rutinaId ? 'Ver rutina y comenzar' : 'Elegir rutina'}
+      <View style={styles.contenido}>
+        <View style={{ paddingRight: 100 }}>
+          <Text
+            style={{
+              color: destacar ? '#ffffff' : colors.tint,
+              fontWeight: '700',
+              fontSize: 11.5,
+              opacity: destacar ? 0.85 : 0.85,
+            }}>
+            Día {dia.numeroDia}
           </Text>
-          <View style={styles.botonComenzarFlecha}>
-            <Ionicons name="arrow-forward" size={15} color="#ffffff" />
-          </View>
+          <Text style={{ color: destacar ? '#ffffff' : colors.text, fontWeight: '700', fontSize: 16 }}>
+            {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
+          </Text>
+          <Text
+            style={{
+              color: destacar ? '#ffffff' : colors.textSecondary,
+              fontSize: 13.5,
+              opacity: destacar ? 0.9 : 1,
+            }}>
+            {dia.completado ? '¡Completado!' : (dia.rutinaNombre ?? 'Sin rutina disponible')}
+          </Text>
         </View>
-      )}
+
+        {tieneStats && (
+          <>
+            <Text
+              style={{
+                color: destacar ? '#ffffff' : colors.textSecondary,
+                opacity: destacar ? 0.9 : 1,
+                fontSize: 12.5,
+                fontWeight: '600',
+                marginTop: Spacing.two,
+              }}>
+              {dia.duracionMin} min · {dia.caloriasEstimadas} kcal
+            </Text>
+            <BarraProgreso
+              pct={dia.progresoPct}
+              colorFondo={destacar ? 'rgba(255,255,255,0.28)' : colors.backgroundSelected}
+              colorRelleno={destacar ? '#ffffff' : colors.tint}
+            />
+          </>
+        )}
+
+        {destacar && (
+          <View style={styles.botonComenzar}>
+            <Text style={styles.botonComenzarTexto} numberOfLines={1}>
+              {dia.rutinaId ? 'Ver rutina y comenzar' : 'Elegir rutina'}
+            </Text>
+            <View style={styles.botonComenzarFlecha}>
+              <Ionicons name="arrow-forward" size={15} color="#ffffff" />
+            </View>
+          </View>
+        )}
+      </View>
     </Pressable>
   );
 }
@@ -274,9 +319,10 @@ const styles = StyleSheet.create({
   // Sin overflow:hidden aquí a propósito — la foto necesita "salirse" del
   // borde de la tarjeta para el efecto 3D. Lo que sí debe recortarse (el
   // degradado/color de fondo) vive dentro de `tarjetaFondo`, que sí lo tiene.
+  // La altura ya no es fija: la define `contenido` (en flujo normal), así
+  // que crece solo si hace falta más espacio para las stats/barra/botón.
   tarjetaDia: {
     flex: 1,
-    minHeight: 154,
     // Más separación que un margen normal: deja aire para que la foto de la
     // tarjeta de abajo se salga hacia arriba sin encimarse con esta.
     marginBottom: 44,
@@ -297,17 +343,20 @@ const styles = StyleSheet.create({
     top: -38,
     right: -14,
   },
-  textoContenedor: {
-    position: 'absolute',
-    top: Spacing.four,
-    left: Spacing.three,
-    right: 112,
+  // En flujo normal (no absoluto): es lo que le da altura real a la tarjeta.
+  contenido: {
+    padding: Spacing.three,
+    paddingTop: Spacing.four,
+    minHeight: 150,
   },
+  barraFondo: {
+    height: 6,
+    borderRadius: 3,
+    marginTop: Spacing.two,
+    overflow: 'hidden',
+  },
+  barraRelleno: { height: '100%', borderRadius: 3 },
   botonComenzar: {
-    position: 'absolute',
-    left: Spacing.three,
-    right: Spacing.three,
-    bottom: Spacing.three,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -317,6 +366,7 @@ const styles = StyleSheet.create({
     paddingLeft: 18,
     paddingRight: 8,
     backgroundColor: '#ffffff',
+    marginTop: Spacing.three,
   },
   botonComenzarTexto: { color: '#1F2430', fontWeight: '800', flexShrink: 1, fontSize: 12.5 },
   botonComenzarFlecha: {

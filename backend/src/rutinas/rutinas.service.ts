@@ -13,6 +13,27 @@ type RutinaConEjercicios = Prisma.RutinaGetPayload<{
 type RutinaEjercicioConEjercicio = RutinaConEjercicios['ejercicios'][number]
 type PerfilCliente = { nivelFitness: string | null; restriccionFisica: string | null }
 
+/** Misma fórmula que `duracionEstimadaMin` en mobile/src/lib/rutina-utils.ts. */
+function duracionEstimadaMin(rutina: RutinaConEjercicios): number {
+  const segundos = rutina.ejercicios.reduce((suma, item) => {
+    const trabajo = item.duracionSeg ?? (item.repeticiones ?? 10) * 3
+    const series = item.series ?? 1
+    return suma + trabajo * series + (item.descansoSeg ?? 20) * series
+  }, 0)
+  return Math.max(1, Math.round(segundos / 60))
+}
+
+/** Misma fórmula que `caloriasEstimadas` en mobile/src/lib/rutina-utils.ts. */
+function caloriasEstimadasDeRutina(rutina: RutinaConEjercicios): number {
+  const calorias = rutina.ejercicios.reduce((suma, item) => {
+    const minutos = item.duracionSeg
+      ? (item.duracionSeg * (item.series ?? 1)) / 60
+      : ((item.repeticiones ?? 10) * (item.series ?? 1) * 3) / 60
+    return suma + minutos * (item.ejercicio.caloriasPorMinuto ?? 6)
+  }, 0)
+  return Math.round(calorias)
+}
+
 @Injectable()
 export class RutinasService {
   constructor(private readonly prisma: PrismaService) {}
@@ -370,7 +391,7 @@ export class RutinasService {
   async planSemana(clienteId: string) {
     const cliente = await this.prisma.cliente.findUnique({
       where: { id: clienteId },
-      select: { diasEntrenamientoSemana: true, nivelFitness: true },
+      select: { diasEntrenamientoSemana: true, nivelFitness: true, creadoEn: true },
     })
     const diasEntrenamientoConfigurados = cliente?.diasEntrenamientoSemana ?? []
     const diasSemanaEntrenamiento = diasEntrenamientoConfigurados.length
@@ -379,20 +400,26 @@ export class RutinasService {
 
     const hoy = fechaDeHoyEcuador()
     const { inicio } = inicioYFinDeLaSemanaEcuador(hoy)
+    const fechaInicioCliente = cliente?.creadoEn ? fechaEcuadorDeFecha(cliente.creadoEn) : hoy
 
     const [sesiones, poolRotacion, asignacionActiva] = await Promise.all([
       this.prisma.sesionEntrenamiento.findMany({
         where: { clienteId, completadaEn: { gte: inicio, lte: new Date(inicio.getTime() + 7 * 24 * 60 * 60 * 1000 - 1) } },
-        select: { completadaEn: true },
+        select: { completadaEn: true, duracionMin: true, caloriasEstimadas: true },
       }),
       this.poolDeRotacion(clienteId, cliente?.nivelFitness ?? null),
       this.prisma.clienteRutina.findFirst({
         where: { clienteId, activa: true },
         orderBy: { fechaInicio: 'desc' },
-        select: { fechaInicio: true, rutina: { select: { id: true, nombre: true } } },
+        select: {
+          fechaInicio: true,
+          rutina: { include: { ejercicios: { include: { ejercicio: true } } } },
+        },
       }),
     ])
-    const diasCompletados = new Set(sesiones.map((s) => fechaEcuadorDeFecha(s.completadaEn)))
+    // Si hay varias sesiones el mismo día, se queda la última (no debería pasar
+    // en el flujo normal — un solo entrenamiento completado por día).
+    const sesionPorFecha = new Map(sesiones.map((s) => [fechaEcuadorDeFecha(s.completadaEn), s]))
     const numeroSemana = Math.floor(inicio.getTime() / (7 * 24 * 60 * 60 * 1000))
     // Si el cliente ya eligió/empezó una rutina hoy (a mano o con "Comenzar"),
     // esa elección manda sobre la sugerencia automática — no la pisamos.
@@ -409,15 +436,29 @@ export class RutinasService {
           ? poolRotacion[(numeroSemana * diasSemanaEntrenamiento.length + posicionEnSemana) % poolRotacion.length]
           : null
       const rutinaDelDia = fecha === hoy && rutinaElegidaHoy ? rutinaElegidaHoy : sugerenciaRotacion
+      const completado = sesionPorFecha.has(fecha)
+      const sesionDelDia = sesionPorFecha.get(fecha)
+      // Si ya se completó, se muestra lo que de verdad duró/quemó esa sesión;
+      // si no, se muestra la estimación calculada a partir de los ejercicios
+      // configurados en la rutina (misma fórmula que en el detalle de rutina).
+      const duracionMin = sesionDelDia?.duracionMin ?? (rutinaDelDia ? duracionEstimadaMin(rutinaDelDia) : null)
+      const caloriasEstimadas =
+        sesionDelDia?.caloriasEstimadas ?? (rutinaDelDia ? caloriasEstimadasDeRutina(rutinaDelDia) : null)
+      const numeroDia =
+        Math.floor((Date.parse(`${fecha}T00:00:00Z`) - Date.parse(`${fechaInicioCliente}T00:00:00Z`)) / 86400000) + 1
 
       dias.push({
         fecha,
         diaSemana,
+        numeroDia: Math.max(1, numeroDia),
         esDiaEntrenamiento,
-        completado: diasCompletados.has(fecha),
+        completado,
+        progresoPct: completado ? 100 : 0,
         esHoy: fecha === hoy,
         rutinaId: rutinaDelDia?.id ?? null,
         rutinaNombre: rutinaDelDia?.nombre ?? null,
+        duracionMin,
+        caloriasEstimadas: caloriasEstimadas != null ? Math.round(caloriasEstimadas) : null,
       })
     }
     return dias
@@ -430,22 +471,23 @@ export class RutinasService {
    * para que la rotación sea determinística entre llamadas.
    */
   private async poolDeRotacion(clienteId: string, nivelFitness: string | null) {
+    const conEjercicios = { ejercicios: { include: { ejercicio: true } } } as const
     const [plantillasNivel, plantillasTodas, personales] = await Promise.all([
       nivelFitness
         ? this.prisma.rutina.findMany({
             where: { creadaPorClienteId: null, activa: true, nivel: nivelFitness },
-            select: { id: true, nombre: true },
+            include: conEjercicios,
             orderBy: { id: 'asc' },
           })
         : Promise.resolve([]),
       this.prisma.rutina.findMany({
         where: { creadaPorClienteId: null, activa: true },
-        select: { id: true, nombre: true },
+        include: conEjercicios,
         orderBy: { id: 'asc' },
       }),
       this.prisma.rutina.findMany({
         where: { creadaPorClienteId: clienteId },
-        select: { id: true, nombre: true },
+        include: conEjercicios,
         orderBy: { id: 'asc' },
       }),
     ])
