@@ -47,6 +47,7 @@ function RootNavigator() {
         <Stack.Screen name="rutinas/[rutinaId]" />
         <Stack.Screen name="rutinas/nueva" />
         <Stack.Screen name="rutinas/mias/[rutinaId]" />
+        <Stack.Screen name="rutinas/mi-semana" />
         <Stack.Screen name="ajustes" />
       </Stack.Protected>
 

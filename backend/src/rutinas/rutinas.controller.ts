@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { RutinasService } from './rutinas.service.js'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js'
 import { ClienteActual } from '../auth/decorators/cliente-actual.decorator.js'
@@ -12,6 +12,7 @@ import { ActualizarRutinaPersonalDto } from './dto/actualizar-rutina-personal.dt
 import { AgregarEjercicioRutinaDto } from './dto/agregar-ejercicio-rutina.dto.js'
 import { ActualizarEjercicioRutinaDto } from './dto/actualizar-ejercicio-rutina.dto.js'
 import { ReordenarEjerciciosDto } from './dto/reordenar-ejercicios.dto.js'
+import { FijarRutinaDiaDto } from './dto/fijar-rutina-dia.dto.js'
 
 @UseGuards(JwtAuthGuard)
 @Controller('rutinas')
@@ -46,6 +47,25 @@ export class RutinasController {
   @Get('plan-semana')
   planSemana(@ClienteActual() cliente: ClienteAutenticado) {
     return this.rutinasService.planSemana(cliente.clienteId)
+  }
+
+  @Get('dias-fijados')
+  diasFijados(@ClienteActual() cliente: ClienteAutenticado) {
+    return this.rutinasService.listarRutinasFijadas(cliente.clienteId)
+  }
+
+  @Put('dias-fijados/:diaSemana')
+  fijarRutinaEnDia(
+    @ClienteActual() cliente: ClienteAutenticado,
+    @Param('diaSemana') diaSemana: string,
+    @Body() dto: FijarRutinaDiaDto,
+  ) {
+    return this.rutinasService.fijarRutinaEnDia(cliente.clienteId, cliente.gimnasioId, Number(diaSemana), dto.rutinaId)
+  }
+
+  @Delete('dias-fijados/:diaSemana')
+  quitarRutinaDeDia(@ClienteActual() cliente: ClienteAutenticado, @Param('diaSemana') diaSemana: string) {
+    return this.rutinasService.quitarRutinaDeDia(cliente.clienteId, Number(diaSemana))
   }
 
   @Get('ejercicios/:rutinaEjercicioId/alternativas')

@@ -402,7 +402,7 @@ export class RutinasService {
     const { inicio } = inicioYFinDeLaSemanaEcuador(hoy)
     const fechaInicioCliente = cliente?.creadoEn ? fechaEcuadorDeFecha(cliente.creadoEn) : hoy
 
-    const [sesiones, poolRotacion, asignacionActiva] = await Promise.all([
+    const [sesiones, poolRotacion, asignacionActiva, fijadasPorDia] = await Promise.all([
       this.prisma.sesionEntrenamiento.findMany({
         where: { clienteId, completadaEn: { gte: inicio, lte: new Date(inicio.getTime() + 7 * 24 * 60 * 60 * 1000 - 1) } },
         select: { completadaEn: true, duracionMin: true, caloriasEstimadas: true },
@@ -416,7 +416,12 @@ export class RutinasService {
           rutina: { include: { ejercicios: { include: { ejercicio: true } } } },
         },
       }),
+      this.prisma.rutinaPorDia.findMany({
+        where: { clienteId },
+        include: { rutina: { include: { ejercicios: { include: { ejercicio: true } } } } },
+      }),
     ])
+    const rutinaFijadaPorDiaSemana = new Map(fijadasPorDia.map((f) => [f.diaSemana, f.rutina]))
     // Si hay varias sesiones el mismo día, se queda la última (no debería pasar
     // en el flujo normal — un solo entrenamiento completado por día).
     const sesionPorFecha = new Map(sesiones.map((s) => [fechaEcuadorDeFecha(s.completadaEn), s]))
@@ -431,11 +436,15 @@ export class RutinasService {
       const fecha = fechaEcuadorDeFecha(new Date(inicio.getTime() + diaSemana * 24 * 60 * 60 * 1000))
       const esDiaEntrenamiento = diasSemanaEntrenamiento.includes(diaSemana)
       const posicionEnSemana = diasSemanaEntrenamiento.indexOf(diaSemana)
+      const rutinaFijada = rutinaFijadaPorDiaSemana.get(diaSemana) ?? null
       const sugerenciaRotacion =
         esDiaEntrenamiento && poolRotacion.length > 0
           ? poolRotacion[(numeroSemana * diasSemanaEntrenamiento.length + posicionEnSemana) % poolRotacion.length]
           : null
-      const rutinaDelDia = fecha === hoy && rutinaElegidaHoy ? rutinaElegidaHoy : sugerenciaRotacion
+      // Prioridad: lo que el cliente eligió a mano hoy mismo > lo que fijó
+      // para este día de la semana (si no fijó nada, sigue rotando solo).
+      const rutinaDelDia =
+        fecha === hoy && rutinaElegidaHoy ? rutinaElegidaHoy : (rutinaFijada ?? sugerenciaRotacion)
       const completado = sesionPorFecha.has(fecha)
       const sesionDelDia = sesionPorFecha.get(fecha)
       // Si ya se completó, se muestra lo que de verdad duró/quemó esa sesión;
@@ -457,6 +466,7 @@ export class RutinasService {
         esHoy: fecha === hoy,
         rutinaId: rutinaDelDia?.id ?? null,
         rutinaNombre: rutinaDelDia?.nombre ?? null,
+        fijadaPorCliente: rutinaFijada != null,
         duracionMin,
         caloriasEstimadas: caloriasEstimadas != null ? Math.round(caloriasEstimadas) : null,
       })
@@ -512,5 +522,34 @@ export class RutinasService {
     await this.prisma.$transaction(
       ordenIds.map((id, indice) => this.prisma.rutinaEjercicio.update({ where: { id }, data: { orden: indice + 1 } })),
     )
+  }
+
+  /**
+   * Fija una rutina concreta a un día de la semana (0=domingo..6=sábado) para
+   * que planSemana() deje de rotar automáticamente ese día — es opcional,
+   * a mano, y se puede quitar en cualquier momento con quitarRutinaDeDia().
+   */
+  async fijarRutinaEnDia(clienteId: string, gimnasioId: string, diaSemana: number, rutinaId: string) {
+    if (!Number.isInteger(diaSemana) || diaSemana < 0 || diaSemana > 6) {
+      throw new BadRequestException('Día de la semana inválido')
+    }
+    const rutina = await this.prisma.rutina.findFirst({
+      where: { id: rutinaId, OR: [{ gimnasioId, creadaPorClienteId: null }, { creadaPorClienteId: clienteId }] },
+    })
+    if (!rutina) throw new NotFoundException('Rutina no encontrada')
+
+    return this.prisma.rutinaPorDia.upsert({
+      where: { clienteId_diaSemana: { clienteId, diaSemana } },
+      create: { clienteId, diaSemana, rutinaId },
+      update: { rutinaId },
+    })
+  }
+
+  async quitarRutinaDeDia(clienteId: string, diaSemana: number) {
+    await this.prisma.rutinaPorDia.deleteMany({ where: { clienteId, diaSemana } })
+  }
+
+  listarRutinasFijadas(clienteId: string) {
+    return this.prisma.rutinaPorDia.findMany({ where: { clienteId }, include: { rutina: true } })
   }
 }

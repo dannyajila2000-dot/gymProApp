@@ -89,8 +89,16 @@ export interface DiaPlan {
   esHoy: boolean;
   rutinaId: string | null;
   rutinaNombre: string | null;
+  fijadaPorCliente: boolean;
   duracionMin: number | null;
   caloriasEstimadas: number | null;
+}
+
+export interface RutinaFijadaPorDia {
+  id: string;
+  diaSemana: number;
+  rutinaId: string;
+  rutina: { id: string; nombre: string };
 }
 
 export function obtenerPlanSemana() {
@@ -178,5 +186,24 @@ export function reordenarEjerciciosDeRutina(rutinaId: string, ordenIds: string[]
     metodo: 'POST',
     autenticado: true,
     cuerpo: { ordenIds },
+  });
+}
+
+export function listarDiasFijados() {
+  return solicitar<RutinaFijadaPorDia[]>('/rutinas/dias-fijados', { autenticado: true });
+}
+
+export function fijarRutinaEnDia(diaSemana: number, rutinaId: string) {
+  return solicitar(`/rutinas/dias-fijados/${diaSemana}`, {
+    metodo: 'PUT',
+    autenticado: true,
+    cuerpo: { rutinaId },
+  });
+}
+
+export function quitarRutinaDeDia(diaSemana: number) {
+  return solicitar(`/rutinas/dias-fijados/${diaSemana}`, {
+    metodo: 'DELETE',
+    autenticado: true,
   });
 }

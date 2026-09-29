@@ -50,6 +50,7 @@ model Cliente {
 
   refreshTokens         RefreshToken[]
   rutinasAsignadas      ClienteRutina[]
+  rutinasPorDia         RutinaPorDia[]
   sesionesEntrenamiento SesionEntrenamiento[]
   registrosProgreso     RegistroProgreso[]
   comidas               Comida[]
@@ -103,6 +104,7 @@ model Rutina {
   ejercicios   RutinaEjercicio[]
   asignaciones ClienteRutina[]
   sesiones     SesionEntrenamiento[]
+  fijaEnDias   RutinaPorDia[]
 
   @@map("rutinas")
 }
@@ -149,6 +151,24 @@ model ClienteRutina {
   activa       Boolean   @default(true)
 
   @@map("cliente_rutinas")
+}
+
+/**
+ * Fija una rutina concreta a un día de la semana (0=domingo..6=sábado) para
+ * que ya no rote automáticamente ese día — es opcional: si el cliente no
+ * fija nada, planSemana() sigue sugiriendo por rotación según su nivel.
+ */
+model RutinaPorDia {
+  id        String   @id @default(uuid())
+  clienteId String
+  cliente   Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  diaSemana Int
+  rutinaId  String
+  rutina    Rutina   @relation(fields: [rutinaId], references: [id])
+  creadoEn  DateTime @default(now())
+
+  @@unique([clienteId, diaSemana])
+  @@map("rutina_por_dia")
 }
 
 model SesionEntrenamiento {

@@ -87,7 +87,13 @@ export default function Rutina() {
           tintColor={colors.tint}
         />
       }>
-      <Text style={[styles.titulo, { color: colors.text }]}>Rutina</Text>
+      <View style={styles.filaTitulo}>
+        <Text style={[styles.titulo, { color: colors.text }]}>Rutina</Text>
+        <Pressable onPress={() => router.push('/rutinas/mi-semana')} style={styles.filaMiSemana} hitSlop={8}>
+          <Ionicons name="calendar-outline" size={16} color={colors.tint} />
+          <Text style={{ color: colors.tint, fontWeight: '700', fontSize: 13 }}>Mi semana</Text>
+        </Pressable>
+      </View>
 
       {miRutina ? (
         <View style={[styles.tarjetaHero, CardShadow, { backgroundColor: colors.tint }]}>
@@ -309,6 +315,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginTop: Spacing.two,
   },
+  filaTitulo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  filaMiSemana: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   tarjetaHero: {
     borderRadius: 20,
     padding: Spacing.four,
