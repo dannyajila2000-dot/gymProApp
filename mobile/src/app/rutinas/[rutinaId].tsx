@@ -121,6 +121,10 @@ export default function DetalleRutina() {
   }
 
   const esMiRutina = rutina.id === miRutinaId;
+  // "Editar esta rutina" y sustituir un ejercicio no dependen de que esta sea
+  // la rutina activa hoy — una rutina propia (creada por el cliente) siempre
+  // se puede editar, esté o no asignada en este momento.
+  const esRutinaPropia = rutina.creadaPorClienteId === cliente?.id;
   const primeraFoto = rutina.imagenUrl ?? rutina.ejercicios[0]?.ejercicio.gifUrl ?? null;
 
   return (
@@ -179,18 +183,16 @@ export default function DetalleRutina() {
 
           <View style={styles.filaEntreSeccion}>
             <Text style={[styles.seccionTitulo, { color: colors.text }]}>Ejercicios ({rutina.ejercicios.length})</Text>
-            {esMiRutina && (
-              <Pressable onPress={editarRutina} disabled={duplicando} style={styles.filaEditar}>
-                {duplicando ? (
-                  <ActivityIndicator color={colors.tint} size="small" />
-                ) : (
-                  <>
-                    <Ionicons name="create-outline" size={18} color={colors.tint} />
-                    <Text style={{ color: colors.tint, fontWeight: '700', fontSize: 13.5 }}>Editar esta rutina</Text>
-                  </>
-                )}
-              </Pressable>
-            )}
+            <Pressable onPress={editarRutina} disabled={duplicando} style={styles.filaEditar}>
+              {duplicando ? (
+                <ActivityIndicator color={colors.tint} size="small" />
+              ) : (
+                <>
+                  <Ionicons name="create-outline" size={18} color={colors.tint} />
+                  <Text style={{ color: colors.tint, fontWeight: '700', fontSize: 13.5 }}>Editar esta rutina</Text>
+                </>
+              )}
+            </Pressable>
           </View>
           <View style={{ gap: Spacing.two }}>
             {rutina.ejercicios.map((item) => (
@@ -206,7 +208,7 @@ export default function DetalleRutina() {
                     {item.series ?? 1} serie{(item.series ?? 1) > 1 ? 's' : ''}
                   </Text>
                 </View>
-                {esMiRutina && (
+                {(esRutinaPropia || esMiRutina) && (
                   <Pressable
                     onPress={() => setSustituirItem({ id: item.id, nombre: item.ejercicio.nombre })}
                     hitSlop={8}>
