@@ -173,10 +173,10 @@ export function eliminarEjercicioDeRutina(rutinaId: string, rutinaEjercicioId: s
   });
 }
 
-export function moverEjercicioDeRutina(rutinaId: string, rutinaEjercicioId: string, direccion: 'arriba' | 'abajo') {
-  return solicitar(`/rutinas/mias/${rutinaId}/ejercicios/${rutinaEjercicioId}/mover`, {
+export function reordenarEjerciciosDeRutina(rutinaId: string, ordenIds: string[]) {
+  return solicitar(`/rutinas/mias/${rutinaId}/ejercicios/orden`, {
     metodo: 'POST',
     autenticado: true,
-    cuerpo: { direccion },
+    cuerpo: { ordenIds },
   });
 }

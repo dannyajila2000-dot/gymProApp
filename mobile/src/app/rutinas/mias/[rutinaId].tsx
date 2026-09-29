@@ -1,12 +1,15 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { NestableDraggableFlatList, NestableScrollContainer, ScaleDecorator } from 'react-native-draggable-flatlist';
+import type { RenderItemParams } from 'react-native-draggable-flatlist';
 
 import { ErrorApi } from '@/api/client';
 import * as rutinasApi from '@/api/rutinas';
 import type { Ejercicio, Rutina, RutinaEjercicio } from '@/api/rutinas';
 import { AgregarEjercicioModal } from '@/components/entrenamiento/agregar-ejercicio-modal';
+import { EjercicioDetalleModal } from '@/components/entrenamiento/ejercicio-detalle-modal';
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
 import { OBJETIVO_LABEL } from '@/constants/objetivos';
 import { NIVEL_LABEL } from '@/constants/niveles';
@@ -22,6 +25,7 @@ export default function EditarRutinaPersonal() {
   const [cargando, setCargando] = useState(true);
   const [rutina, setRutina] = useState<Rutina | null>(null);
   const [modalAgregar, setModalAgregar] = useState(false);
+  const [detalleEjercicio, setDetalleEjercicio] = useState<Ejercicio | null>(null);
   const [comenzando, setComenzando] = useState(false);
   const [editandoNombre, setEditandoNombre] = useState(false);
   const [nombreBorrador, setNombreBorrador] = useState('');
@@ -125,13 +129,18 @@ export default function EditarRutinaPersonal() {
     }
   }
 
-  async function mover(item: RutinaEjercicio, direccion: 'arriba' | 'abajo') {
+  async function alTerminarArrastre(nuevoOrden: RutinaEjercicio[]) {
     if (!rutina) return;
     setError(null);
+    const anterior = rutina.ejercicios;
+    setRutina({ ...rutina, ejercicios: nuevoOrden });
     try {
-      await rutinasApi.moverEjercicioDeRutina(rutina.id, item.id, direccion);
-      cargar();
+      await rutinasApi.reordenarEjerciciosDeRutina(
+        rutina.id,
+        nuevoOrden.map((e) => e.id),
+      );
     } catch (e) {
+      setRutina({ ...rutina, ejercicios: anterior });
       manejarError(e);
     }
   }
@@ -201,9 +210,114 @@ export default function EditarRutinaPersonal() {
     );
   }
 
+  function renderItem({ item, drag, isActive }: RenderItemParams<RutinaEjercicio>) {
+    return (
+      <ScaleDecorator>
+        <View
+          style={[
+            styles.filaEjercicio,
+            CardShadow,
+            { backgroundColor: isActive ? colors.backgroundSelected : colors.backgroundElement, marginBottom: Spacing.two },
+          ]}>
+          <View style={styles.filaEjercicioSuperior}>
+            <Pressable onLongPress={drag} disabled={isActive} hitSlop={10} style={styles.asa}>
+              <Ionicons name="reorder-three-outline" size={24} color={colors.textSecondary} />
+            </Pressable>
+
+            <Pressable
+              onPress={() => setDetalleEjercicio(item.ejercicio)}
+              style={styles.filaEjercicioInfo}
+              hitSlop={4}>
+              <View style={[styles.iconoEjercicio, { backgroundColor: colors.background }]}>
+                <MunecoEjercicio patron={item.ejercicio.patronMovimiento} color={colors.tint} size={28} />
+              </View>
+              <Text style={{ color: colors.text, fontWeight: '700', flexShrink: 1 }} numberOfLines={1}>
+                {item.ejercicio.nombre}
+              </Text>
+            </Pressable>
+
+            <Pressable onPress={() => quitarEjercicio(item)} hitSlop={8}>
+              <Ionicons name="trash-outline" size={18} color={colors.danger} />
+            </Pressable>
+          </View>
+
+          <View style={styles.filaModo}>
+            <Pressable
+              onPress={() => cambiarModoMedida(item, 'reps')}
+              style={[
+                styles.chipModo,
+                { backgroundColor: !item.duracionSeg ? colors.tint : colors.background, borderColor: colors.border },
+              ]}>
+              <Text style={{ color: !item.duracionSeg ? colors.tintForeground : colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
+                Repeticiones
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => cambiarModoMedida(item, 'tiempo')}
+              style={[
+                styles.chipModo,
+                { backgroundColor: item.duracionSeg ? colors.tint : colors.background, borderColor: colors.border },
+              ]}>
+              <Text style={{ color: item.duracionSeg ? colors.tintForeground : colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
+                Tiempo
+              </Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.filaPrincipal}>
+            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>
+              {item.duracionSeg ? 'Duración' : 'Repeticiones'}
+            </Text>
+            <View style={[styles.stepperFilaGrande, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Pressable
+                onPress={() =>
+                  item.duracionSeg
+                    ? cambiarValor(item, 'duracionSeg', -5, 5)
+                    : cambiarValor(item, 'repeticiones', -1, 1)
+                }
+                hitSlop={8}
+                style={styles.stepperBotonGrande}>
+                <Ionicons name="remove" size={18} color={colors.text} />
+              </Pressable>
+              <Text style={{ color: colors.text, fontWeight: '800', fontSize: 18, minWidth: 56, textAlign: 'center' }}>
+                {item.duracionSeg ? `${item.duracionSeg}s` : `x${item.repeticiones ?? 12}`}
+              </Text>
+              <Pressable
+                onPress={() =>
+                  item.duracionSeg
+                    ? cambiarValor(item, 'duracionSeg', 5, 5)
+                    : cambiarValor(item, 'repeticiones', 1, 1)
+                }
+                hitSlop={8}
+                style={styles.stepperBotonGrande}>
+                <Ionicons name="add" size={18} color={colors.text} />
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={styles.filaSteppers}>
+            <Stepper
+              etiqueta="Series"
+              valor={item.series ?? 1}
+              onCambiar={(delta) => cambiarValor(item, 'series', delta, 1)}
+              colors={colors}
+            />
+            <Stepper
+              etiqueta="Descanso"
+              valor={item.descansoSeg ?? 20}
+              paso={5}
+              onCambiar={(delta) => cambiarValor(item, 'descansoSeg', delta, 0)}
+              colors={colors}
+            />
+          </View>
+        </View>
+      </ScaleDecorator>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView contentContainerStyle={styles.contenedor}>
+      <NestableScrollContainer contentContainerStyle={styles.contenedor}>
         <View style={styles.filaEncabezado}>
           {editandoNombre ? (
             <TextInput
@@ -285,93 +399,23 @@ export default function EditarRutinaPersonal() {
             <Text style={{ color: colors.tint, fontWeight: '700' }}>Agregar</Text>
           </Pressable>
         </View>
+        <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: Spacing.two }}>
+          Mantén presionadas las tres líneas para arrastrar y reordenar.
+        </Text>
 
-        <View style={{ gap: Spacing.two }}>
-          {rutina.ejercicios.map((item, indice) => (
-            <View key={item.id} style={[styles.filaEjercicio, CardShadow, { backgroundColor: colors.backgroundElement }]}>
-              <View style={styles.filaEjercicioSuperior}>
-                <MunecoEjercicio patron={item.ejercicio.patronMovimiento} color={colors.tint} size={26} />
-                <Text style={{ color: colors.text, fontWeight: '700', flex: 1 }} numberOfLines={1}>
-                  {item.ejercicio.nombre}
-                </Text>
-                <Pressable onPress={() => mover(item, 'arriba')} disabled={indice === 0} hitSlop={6}>
-                  <Ionicons name="chevron-up" size={20} color={indice === 0 ? colors.border : colors.textSecondary} />
-                </Pressable>
-                <Pressable onPress={() => mover(item, 'abajo')} disabled={indice === rutina.ejercicios.length - 1} hitSlop={6}>
-                  <Ionicons
-                    name="chevron-down"
-                    size={20}
-                    color={indice === rutina.ejercicios.length - 1 ? colors.border : colors.textSecondary}
-                  />
-                </Pressable>
-                <Pressable onPress={() => quitarEjercicio(item)} hitSlop={6}>
-                  <Ionicons name="trash-outline" size={18} color={colors.danger} />
-                </Pressable>
-              </View>
-
-              <View style={styles.filaModo}>
-                <Pressable
-                  onPress={() => cambiarModoMedida(item, 'reps')}
-                  style={[
-                    styles.chipModo,
-                    { backgroundColor: !item.duracionSeg ? colors.tint : colors.background, borderColor: colors.border },
-                  ]}>
-                  <Text style={{ color: !item.duracionSeg ? colors.tintForeground : colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
-                    Repeticiones
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => cambiarModoMedida(item, 'tiempo')}
-                  style={[
-                    styles.chipModo,
-                    { backgroundColor: item.duracionSeg ? colors.tint : colors.background, borderColor: colors.border },
-                  ]}>
-                  <Text style={{ color: item.duracionSeg ? colors.tintForeground : colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
-                    Tiempo
-                  </Text>
-                </Pressable>
-              </View>
-
-              <View style={styles.filaSteppers}>
-                <Stepper
-                  etiqueta="Series"
-                  valor={item.series ?? 1}
-                  onCambiar={(delta) => cambiarValor(item, 'series', delta, 1)}
-                  colors={colors}
-                />
-                {item.duracionSeg ? (
-                  <Stepper
-                    etiqueta="Segundos"
-                    valor={item.duracionSeg ?? 30}
-                    paso={5}
-                    onCambiar={(delta) => cambiarValor(item, 'duracionSeg', delta, 5)}
-                    colors={colors}
-                  />
-                ) : (
-                  <Stepper
-                    etiqueta="Reps"
-                    valor={item.repeticiones ?? 12}
-                    onCambiar={(delta) => cambiarValor(item, 'repeticiones', delta, 1)}
-                    colors={colors}
-                  />
-                )}
-                <Stepper
-                  etiqueta="Descanso"
-                  valor={item.descansoSeg ?? 20}
-                  paso={5}
-                  onCambiar={(delta) => cambiarValor(item, 'descansoSeg', delta, 0)}
-                  colors={colors}
-                />
-              </View>
-            </View>
-          ))}
-          {rutina.ejercicios.length === 0 && (
-            <Text style={{ color: colors.textSecondary, textAlign: 'center', marginTop: Spacing.three }}>
-              Aún no agregas ejercicios. Toca &quot;Agregar&quot; para empezar.
-            </Text>
-          )}
-        </View>
-      </ScrollView>
+        {rutina.ejercicios.length === 0 ? (
+          <Text style={{ color: colors.textSecondary, textAlign: 'center', marginTop: Spacing.three }}>
+            Aún no agregas ejercicios. Toca &quot;Agregar&quot; para empezar.
+          </Text>
+        ) : (
+          <NestableDraggableFlatList
+            data={rutina.ejercicios}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            onDragEnd={({ data }) => alTerminarArrastre(data)}
+          />
+        )}
+      </NestableScrollContainer>
 
       <View style={[styles.pieFijo, { backgroundColor: colors.background, borderColor: colors.border }]}>
         <Pressable
@@ -391,6 +435,10 @@ export default function EditarRutinaPersonal() {
 
       {modalAgregar && (
         <AgregarEjercicioModal visible onCerrar={() => setModalAgregar(false)} onAgregar={agregarEjercicio} />
+      )}
+
+      {detalleEjercicio && (
+        <EjercicioDetalleModal ejercicio={detalleEjercicio} onCerrar={() => setDetalleEjercicio(null)} />
       )}
     </View>
   );
@@ -442,10 +490,26 @@ const styles = StyleSheet.create({
   filaEntre: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: Spacing.four },
   seccionTitulo: { fontSize: 17, fontWeight: '800' },
   filaAgregar: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  filaEjercicio: { borderRadius: 16, padding: Spacing.two, gap: Spacing.two },
+  filaEjercicio: { borderRadius: 18, padding: Spacing.three, gap: Spacing.two },
   filaEjercicioSuperior: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  asa: { paddingRight: 2 },
+  filaEjercicioInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  iconoEjercicio: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   filaModo: { flexDirection: 'row', gap: Spacing.one },
   chipModo: { borderRadius: 14, paddingVertical: 5, paddingHorizontal: 10, borderWidth: 1 },
+  filaPrincipal: { gap: 4 },
+  stepperFilaGrande: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.three,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one,
+    alignSelf: 'flex-start',
+  },
+  stepperBotonGrande: { padding: 4 },
   filaSteppers: { flexDirection: 'row', gap: Spacing.two },
   stepper: { alignItems: 'center', gap: 4 },
   stepperFila: {

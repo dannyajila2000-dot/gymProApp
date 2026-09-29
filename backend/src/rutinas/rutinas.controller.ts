@@ -11,7 +11,7 @@ import { CrearRutinaPersonalDto } from './dto/crear-rutina-personal.dto.js'
 import { ActualizarRutinaPersonalDto } from './dto/actualizar-rutina-personal.dto.js'
 import { AgregarEjercicioRutinaDto } from './dto/agregar-ejercicio-rutina.dto.js'
 import { ActualizarEjercicioRutinaDto } from './dto/actualizar-ejercicio-rutina.dto.js'
-import { MoverEjercicioDto } from './dto/mover-ejercicio.dto.js'
+import { ReordenarEjerciciosDto } from './dto/reordenar-ejercicios.dto.js'
 
 @UseGuards(JwtAuthGuard)
 @Controller('rutinas')
@@ -135,18 +135,12 @@ export class RutinasController {
     return this.rutinasService.eliminarEjercicioDeRutinaPersonal(cliente.clienteId, rutinaId, rutinaEjercicioId)
   }
 
-  @Post('mias/:rutinaId/ejercicios/:rutinaEjercicioId/mover')
-  moverEjercicio(
+  @Post('mias/:rutinaId/ejercicios/orden')
+  reordenarEjercicios(
     @ClienteActual() cliente: ClienteAutenticado,
     @Param('rutinaId') rutinaId: string,
-    @Param('rutinaEjercicioId') rutinaEjercicioId: string,
-    @Body() dto: MoverEjercicioDto,
+    @Body() dto: ReordenarEjerciciosDto,
   ) {
-    return this.rutinasService.moverEjercicioDeRutinaPersonal(
-      cliente.clienteId,
-      rutinaId,
-      rutinaEjercicioId,
-      dto.direccion,
-    )
+    return this.rutinasService.reordenarEjerciciosPersonal(cliente.clienteId, rutinaId, dto.ordenIds)
   }
 }

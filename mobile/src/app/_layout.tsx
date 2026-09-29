@@ -2,6 +2,7 @@ import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { SessionProvider, useSesion } from '@/context/auth-context';
@@ -13,13 +14,15 @@ export default function RootLayout() {
   // El fondo blanco aplica siempre (sin importar el tema del celular), así que
   // la navegación también se fuerza siempre a DefaultTheme (claro).
   return (
-    <ThemeProvider value={DefaultTheme}>
-      <StatusBar style="dark" />
-      <AnimatedSplashOverlay />
-      <SessionProvider>
-        <RootNavigator />
-      </SessionProvider>
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={DefaultTheme}>
+        <StatusBar style="dark" />
+        <AnimatedSplashOverlay />
+        <SessionProvider>
+          <RootNavigator />
+        </SessionProvider>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
 

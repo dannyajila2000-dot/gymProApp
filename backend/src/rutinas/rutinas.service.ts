@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
 import { PrismaService } from '../prisma/prisma.service.js'
 import {
@@ -495,21 +495,22 @@ export class RutinasService {
     return [...plantillas, ...personales]
   }
 
-  async moverEjercicioDeRutinaPersonal(
-    clienteId: string,
-    rutinaId: string,
-    rutinaEjercicioId: string,
-    direccion: 'arriba' | 'abajo',
-  ) {
-    const actual = await this.obtenerEjercicioDeRutinaPropia(clienteId, rutinaId, rutinaEjercicioId)
-    const vecino = await this.prisma.rutinaEjercicio.findFirst({
-      where: { rutinaId, orden: direccion === 'arriba' ? { lt: actual.orden } : { gt: actual.orden } },
-      orderBy: { orden: direccion === 'arriba' ? 'desc' : 'asc' },
-    })
-    if (!vecino) return
-    await this.prisma.$transaction([
-      this.prisma.rutinaEjercicio.update({ where: { id: actual.id }, data: { orden: vecino.orden } }),
-      this.prisma.rutinaEjercicio.update({ where: { id: vecino.id }, data: { orden: actual.orden } }),
-    ])
+  /**
+   * Reordena de una sola vez (arrastrar-y-soltar en el móvil, en vez de
+   * mover de a uno con flechas). `ordenIds` debe contener exactamente los
+   * mismos rutinaEjercicioId que ya tiene la rutina, en el orden nuevo.
+   */
+  async reordenarEjerciciosPersonal(clienteId: string, rutinaId: string, ordenIds: string[]) {
+    await this.obtenerRutinaPropia(clienteId, rutinaId)
+    const actuales = await this.prisma.rutinaEjercicio.findMany({ where: { rutinaId }, select: { id: true } })
+    const idsActuales = new Set(actuales.map((e) => e.id))
+    const idsNuevos = new Set(ordenIds)
+    if (idsActuales.size !== ordenIds.length || [...idsActuales].some((id) => !idsNuevos.has(id))) {
+      throw new BadRequestException('El nuevo orden no coincide con los ejercicios de esta rutina')
+    }
+
+    await this.prisma.$transaction(
+      ordenIds.map((id, indice) => this.prisma.rutinaEjercicio.update({ where: { id }, data: { orden: indice + 1 } })),
+    )
   }
 }
