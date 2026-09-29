@@ -22,6 +22,9 @@ export const Colors = {
     infoForeground: '#ffffff',
     success: '#1FA971',
     warning: '#D9A62E',
+    energia: '#5B4FE9',
+    energiaOscuro: '#7C3AED',
+    energiaSuave: '#EDEBFC',
   },
   dark: {
     text: '#ffffff',
@@ -37,6 +40,9 @@ export const Colors = {
     infoForeground: '#052E2B',
     success: '#3FCB93',
     warning: '#F0C155',
+    energia: '#7C74F0',
+    energiaOscuro: '#9D5CF5',
+    energiaSuave: '#241F45',
   },
 } as const;
 

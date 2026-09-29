@@ -1,7 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Svg, { Line } from 'react-native-svg';
 
 import * as progresoApi from '@/api/progreso';
 import * as rutinasApi from '@/api/rutinas';
@@ -10,6 +13,13 @@ import { useSesion } from '@/context/auth-context';
 import { DIAS_NOMBRE } from '@/constants/dias';
 import { useTheme } from '@/hooks/use-theme';
 import { CardShadow, Spacing } from '@/constants/theme';
+
+const FOTOS_ENTRENANDO = [
+  require('@/assets/images/dashboard/persona-entrenando-1.jpg'),
+  require('@/assets/images/dashboard/persona-entrenando-2.jpg'),
+  require('@/assets/images/dashboard/persona-entrenando-3.jpg'),
+];
+const FOTO_DESCANSO = require('@/assets/images/dashboard/dia-descanso.jpg');
 
 export default function Inicio() {
   const colors = useTheme();
@@ -102,10 +112,21 @@ export default function Inicio() {
                 ]}>
                 {dia.completado && <Ionicons name="checkmark" size={12} color={colors.tintForeground} />}
               </View>
-              {indice < plan.length - 1 && <View style={[styles.lineaVertical, { backgroundColor: colors.border }]} />}
+              {indice < plan.length - 1 && (
+                <View style={styles.lineaVerticalContenedor}>
+                  <Svg width="100%" height="100%">
+                    <Line x1="50%" y1="0" x2="50%" y2="100%" stroke={colors.border} strokeWidth={2} strokeDasharray="4,6" />
+                  </Svg>
+                </View>
+              )}
             </View>
 
-            <DiaTarjeta dia={dia} onVerRutina={() => verRutinaDelDia(dia)} colors={colors} />
+            <DiaTarjeta
+              dia={dia}
+              foto={dia.esDiaEntrenamiento ? FOTOS_ENTRENANDO[indice % FOTOS_ENTRENANDO.length] : FOTO_DESCANSO}
+              onVerRutina={() => verRutinaDelDia(dia)}
+              colors={colors}
+            />
           </View>
         ))}
       </View>
@@ -121,10 +142,12 @@ export default function Inicio() {
 
 function DiaTarjeta({
   dia,
+  foto,
   onVerRutina,
   colors,
 }: {
   dia: DiaPlan;
+  foto: number;
   onVerRutina: () => void;
   colors: ReturnType<typeof useTheme>;
 }) {
@@ -133,65 +156,77 @@ function DiaTarjeta({
   if (!dia.esDiaEntrenamiento) {
     return (
       <View style={[styles.tarjetaDia, CardShadow, { backgroundColor: colors.backgroundElement }]}>
+        <LinearGradient
+          colors={[colors.backgroundElement, colors.energiaSuave]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
         <View style={styles.filaTarjeta}>
-          <View style={[styles.iconoBadge, { backgroundColor: colors.background }]}>
-            <Ionicons name="cafe-outline" size={20} color={colors.textSecondary} />
-          </View>
           <View style={{ flex: 1 }}>
             <Text style={{ color: colors.text, fontWeight: '700' }}>
               {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
             </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>Día de descanso</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>¡Día de descanso!</Text>
           </View>
+          <Image source={foto} style={styles.foto} contentFit="cover" />
         </View>
       </View>
     );
   }
 
   return (
-    <Pressable
-      onPress={onVerRutina}
-      style={[
-        styles.tarjetaDia,
-        CardShadow,
-        destacar
-          ? { backgroundColor: colors.tint }
-          : dia.completado
-            ? { backgroundColor: colors.backgroundElement, borderWidth: 1, borderColor: colors.tint }
-            : { backgroundColor: colors.backgroundElement },
-      ]}>
-      <View style={styles.filaTarjeta}>
+    <Pressable onPress={onVerRutina} style={[styles.tarjetaDia, CardShadow]}>
+      {destacar && (
+        <LinearGradient
+          colors={[colors.energia, colors.energiaOscuro]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      {dia.completado && (
         <View
           style={[
-            styles.iconoBadge,
-            { backgroundColor: destacar ? 'rgba(255,255,255,0.22)' : colors.background },
-          ]}>
-          <Ionicons
-            name="barbell-outline"
-            size={20}
-            color={destacar ? colors.tintForeground : dia.completado ? colors.tint : colors.textSecondary}
-          />
-        </View>
+            StyleSheet.absoluteFill,
+            { backgroundColor: colors.backgroundElement, borderWidth: 1, borderColor: colors.tint, borderRadius: 22 },
+          ]}
+        />
+      )}
+      {!destacar && !dia.completado && (
+        <LinearGradient
+          colors={[colors.backgroundElement, colors.energiaSuave]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+
+      <View style={styles.filaTarjeta}>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: destacar ? colors.tintForeground : colors.text, fontWeight: '700' }}>
+          <Text style={{ color: destacar ? '#ffffff' : colors.text, fontWeight: '700' }}>
             {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
           </Text>
-          <Text style={{ color: destacar ? colors.tintForeground : colors.textSecondary, fontSize: 12.5, opacity: destacar ? 0.9 : 1 }}>
+          <Text
+            style={{
+              color: destacar ? '#ffffff' : colors.textSecondary,
+              fontSize: 12.5,
+              opacity: destacar ? 0.9 : 1,
+            }}>
             {dia.completado ? '¡Completado!' : (dia.rutinaNombre ?? 'Sin rutina disponible')}
           </Text>
         </View>
-        <Ionicons
-          name="chevron-forward"
-          size={18}
-          color={destacar ? colors.tintForeground : colors.textSecondary}
-        />
+        <Image source={foto} style={styles.foto} contentFit="cover" />
       </View>
+
       {destacar && (
-        <View style={[styles.botonComenzar, { backgroundColor: colors.tintForeground }]}>
-          <Text style={{ color: colors.tint, fontWeight: '800' }}>
+        <View style={styles.botonComenzar}>
+          <Text style={styles.botonComenzarTexto} numberOfLines={1}>
             {dia.rutinaId ? 'Ver rutina y comenzar' : 'Elegir rutina'}
           </Text>
-          <Ionicons name="arrow-forward" size={16} color={colors.tint} />
+          <View style={styles.botonComenzarFlecha}>
+            <Ionicons name="arrow-forward" size={15} color="#ffffff" />
+          </View>
         </View>
       )}
     </Pressable>
@@ -228,28 +263,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  lineaVertical: { flex: 1, width: 2, marginVertical: 2 },
+  lineaVerticalContenedor: { flex: 1, width: 2, marginVertical: 2 },
   tarjetaDia: {
     flex: 1,
-    borderRadius: 18,
+    borderRadius: 22,
     padding: Spacing.three,
     marginBottom: Spacing.two,
     gap: Spacing.two,
+    overflow: 'hidden',
   },
   filaTarjeta: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  iconoBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+  foto: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.06)',
   },
   botonComenzar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     gap: 6,
-    borderRadius: 12,
-    paddingVertical: 10,
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingLeft: 18,
+    paddingRight: 8,
+    backgroundColor: '#ffffff',
+  },
+  botonComenzarTexto: { color: '#1F2430', fontWeight: '800', flexShrink: 1 },
+  botonComenzarFlecha: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#111827',
   },
 });
