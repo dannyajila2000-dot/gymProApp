@@ -16,8 +16,6 @@ import { NIVEL_LABEL } from '@/constants/niveles';
 import { CardShadow, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-type CampoNumerico = 'series' | 'repeticiones' | 'duracionSeg' | 'descansoSeg';
-
 export default function EditarRutinaPersonal() {
   const colors = useTheme();
   const { rutinaId } = useLocalSearchParams<{ rutinaId: string }>();
@@ -109,8 +107,7 @@ export default function EditarRutinaPersonal() {
       await rutinasApi.agregarEjercicioARutina(rutina.id, {
         ejercicioId: ejercicio.id,
         series: 3,
-        ...(ejercicio.tipoMedida === 'duracion' ? { duracionSeg: 30 } : { repeticiones: 12 }),
-        descansoSeg: 20,
+        repeticiones: 12,
       });
       cargar();
     } catch (e) {
@@ -145,34 +142,30 @@ export default function EditarRutinaPersonal() {
     }
   }
 
-  async function cambiarValor(item: RutinaEjercicio, campo: CampoNumerico, delta: number, minimo: number) {
+  async function cambiarSeries(item: RutinaEjercicio, delta: number) {
     if (!rutina) return;
-    const actual = item[campo] ?? minimo;
-    const nuevo = Math.max(minimo, actual + delta);
+    const actual = item.series ?? 1;
+    const nuevo = Math.max(1, actual + delta);
     if (nuevo === actual) return;
     setError(null);
-    setRutina({
-      ...rutina,
-      ejercicios: rutina.ejercicios.map((e) => (e.id === item.id ? { ...e, [campo]: nuevo } : e)),
-    });
+    setRutina({ ...rutina, ejercicios: rutina.ejercicios.map((e) => (e.id === item.id ? { ...e, series: nuevo } : e)) });
     try {
-      await rutinasApi.actualizarEjercicioDeRutina(rutina.id, item.id, { [campo]: nuevo });
+      await rutinasApi.actualizarEjercicioDeRutina(rutina.id, item.id, { series: nuevo });
     } catch (e) {
       manejarError(e);
     }
   }
 
-  async function cambiarModoMedida(item: RutinaEjercicio, modo: 'reps' | 'tiempo') {
+  // Siempre en repeticiones — si el ejercicio venía en modo tiempo (por
+  // ejemplo clonado de una plantilla del gym), la primera edición lo pasa a
+  // repeticiones definitivamente, limpiando duracionSeg.
+  async function cambiarRepeticiones(item: RutinaEjercicio, delta: number) {
     if (!rutina) return;
-    const datos =
-      modo === 'tiempo'
-        ? { duracionSeg: item.duracionSeg ?? 30, repeticiones: null }
-        : { repeticiones: item.repeticiones ?? 12, duracionSeg: null };
+    const actual = item.repeticiones ?? 12;
+    const nuevo = Math.max(1, actual + delta);
     setError(null);
-    setRutina({
-      ...rutina,
-      ejercicios: rutina.ejercicios.map((e) => (e.id === item.id ? { ...e, ...datos } : e)),
-    });
+    const datos = { repeticiones: nuevo, duracionSeg: null as number | null };
+    setRutina({ ...rutina, ejercicios: rutina.ejercicios.map((e) => (e.id === item.id ? { ...e, ...datos } : e)) });
     try {
       await rutinasApi.actualizarEjercicioDeRutina(rutina.id, item.id, datos);
     } catch (e) {
@@ -241,75 +234,29 @@ export default function EditarRutinaPersonal() {
             </Pressable>
           </View>
 
-          <View style={styles.filaModo}>
-            <Pressable
-              onPress={() => cambiarModoMedida(item, 'reps')}
-              style={[
-                styles.chipModo,
-                { backgroundColor: !item.duracionSeg ? colors.tint : colors.background, borderColor: colors.border },
-              ]}>
-              <Text style={{ color: !item.duracionSeg ? colors.tintForeground : colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
-                Repeticiones
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => cambiarModoMedida(item, 'tiempo')}
-              style={[
-                styles.chipModo,
-                { backgroundColor: item.duracionSeg ? colors.tint : colors.background, borderColor: colors.border },
-              ]}>
-              <Text style={{ color: item.duracionSeg ? colors.tintForeground : colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
-                Tiempo
-              </Text>
-            </Pressable>
-          </View>
-
           <View style={styles.filaPrincipal}>
             <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>
-              {item.duracionSeg ? 'Duración' : 'Repeticiones'}
+              Repeticiones
             </Text>
             <View style={[styles.stepperFilaGrande, { backgroundColor: colors.background, borderColor: colors.border }]}>
-              <Pressable
-                onPress={() =>
-                  item.duracionSeg
-                    ? cambiarValor(item, 'duracionSeg', -5, 5)
-                    : cambiarValor(item, 'repeticiones', -1, 1)
-                }
-                hitSlop={8}
-                style={styles.stepperBotonGrande}>
+              <Pressable onPress={() => cambiarRepeticiones(item, -1)} hitSlop={8} style={styles.stepperBotonGrande}>
                 <Ionicons name="remove" size={18} color={colors.text} />
               </Pressable>
               <Text style={{ color: colors.text, fontWeight: '800', fontSize: 18, minWidth: 56, textAlign: 'center' }}>
-                {item.duracionSeg ? `${item.duracionSeg}s` : `x${item.repeticiones ?? 12}`}
+                x{item.repeticiones ?? 12}
               </Text>
-              <Pressable
-                onPress={() =>
-                  item.duracionSeg
-                    ? cambiarValor(item, 'duracionSeg', 5, 5)
-                    : cambiarValor(item, 'repeticiones', 1, 1)
-                }
-                hitSlop={8}
-                style={styles.stepperBotonGrande}>
+              <Pressable onPress={() => cambiarRepeticiones(item, 1)} hitSlop={8} style={styles.stepperBotonGrande}>
                 <Ionicons name="add" size={18} color={colors.text} />
               </Pressable>
             </View>
           </View>
 
-          <View style={styles.filaSteppers}>
-            <Stepper
-              etiqueta="Series"
-              valor={item.series ?? 1}
-              onCambiar={(delta) => cambiarValor(item, 'series', delta, 1)}
-              colors={colors}
-            />
-            <Stepper
-              etiqueta="Descanso"
-              valor={item.descansoSeg ?? 20}
-              paso={5}
-              onCambiar={(delta) => cambiarValor(item, 'descansoSeg', delta, 0)}
-              colors={colors}
-            />
-          </View>
+          <Stepper
+            etiqueta="Series"
+            valor={item.series ?? 1}
+            onCambiar={(delta) => cambiarSeries(item, delta)}
+            colors={colors}
+          />
         </View>
       </ScaleDecorator>
     );
@@ -495,8 +442,6 @@ const styles = StyleSheet.create({
   asa: { paddingRight: 2 },
   filaEjercicioInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   iconoEjercicio: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  filaModo: { flexDirection: 'row', gap: Spacing.one },
-  chipModo: { borderRadius: 14, paddingVertical: 5, paddingHorizontal: 10, borderWidth: 1 },
   filaPrincipal: { gap: 4 },
   stepperFilaGrande: {
     flexDirection: 'row',
@@ -510,8 +455,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   stepperBotonGrande: { padding: 4 },
-  filaSteppers: { flexDirection: 'row', gap: Spacing.two },
-  stepper: { alignItems: 'center', gap: 4 },
+  stepper: { alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
   stepperFila: {
     flexDirection: 'row',
     alignItems: 'center',

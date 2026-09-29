@@ -27,17 +27,18 @@ export function EjercicioDetalleModal({ ejercicio, onCerrar }: { ejercicio: Ejer
               <MunecoEjercicio patron={ejercicio.patronMovimiento} color={colors.tint} size={110} />
             </View>
 
-            <View style={[styles.chipGrupo, { backgroundColor: colors.backgroundSelected }]}>
-              <Ionicons name="body-outline" size={14} color={colors.tint} />
-              <Text style={{ color: colors.tint, fontWeight: '700', fontSize: 12.5 }}>{ejercicio.grupoMuscular}</Text>
-            </View>
-
             {ejercicio.descripcion && (
               <>
                 <Text style={[styles.seccionTitulo, { color: colors.tint }]}>Instrucciones</Text>
                 <Text style={{ color: colors.text, fontSize: 14.5, lineHeight: 21 }}>{ejercicio.descripcion}</Text>
               </>
             )}
+
+            <Text style={[styles.seccionTitulo, { color: colors.tint }]}>Zona principal</Text>
+            <View style={[styles.chipGrupo, { backgroundColor: colors.backgroundSelected }]}>
+              <Ionicons name="body-outline" size={14} color={colors.tint} />
+              <Text style={{ color: colors.tint, fontWeight: '700', fontSize: 12.5 }}>{ejercicio.grupoMuscular}</Text>
+            </View>
           </ScrollView>
         </View>
       </View>
@@ -76,7 +77,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    marginTop: Spacing.three,
   },
   seccionTitulo: { fontSize: 13, fontWeight: '800', textTransform: 'uppercase', marginTop: Spacing.four, marginBottom: Spacing.one },
 });
