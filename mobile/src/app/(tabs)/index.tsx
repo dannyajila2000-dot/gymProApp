@@ -12,7 +12,7 @@ import type { DiaPlan } from '@/api/rutinas';
 import { useSesion } from '@/context/auth-context';
 import { DIAS_NOMBRE } from '@/constants/dias';
 import { useTheme } from '@/hooks/use-theme';
-import { CardShadow, Spacing } from '@/constants/theme';
+import { CardShadow, FotoFlotanteShadow, Spacing } from '@/constants/theme';
 
 const FOTOS_ENTRENANDO = [
   require('@/assets/images/dashboard/persona-entrenando-1-recorte.png'),
@@ -165,7 +165,7 @@ function DiaTarjeta({
           />
         </View>
         {/* La foto va SIN recorte (overflow visible) para que "salga" del borde de la tarjeta. */}
-        <Image source={foto} style={styles.foto} contentFit="contain" />
+        <Image source={foto} style={[styles.foto, FotoFlotanteShadow]} contentFit="contain" />
         <View style={styles.textoContenedor}>
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>
             {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
@@ -208,7 +208,7 @@ function DiaTarjeta({
       {/* La foto se pinta antes que el texto/botón para que ellos queden por
           encima donde se monten — así el botón "corta" la silueta como en la
           referencia, en vez de taparla por completo. */}
-      <Image source={foto} style={styles.foto} contentFit="contain" />
+      <Image source={foto} style={[styles.foto, FotoFlotanteShadow]} contentFit="contain" />
 
       <View style={styles.textoContenedor}>
         <Text style={{ color: destacar ? '#ffffff' : colors.text, fontWeight: '700', fontSize: 16 }}>
@@ -257,7 +257,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   seccionTitulo: { fontSize: 18, fontWeight: '800', marginTop: Spacing.five, marginBottom: Spacing.two },
-  lineaTiempo: { gap: 0 },
+  // paddingTop deja aire para que la foto de la primera tarjeta pueda
+  // "salirse" hacia arriba sin encimarse con el título de la sección.
+  lineaTiempo: { gap: 0, paddingTop: Spacing.four },
   filaDia: { flexDirection: 'row', gap: Spacing.two },
   columnaMarcador: { alignItems: 'center', width: 20 },
   marcador: {
@@ -275,7 +277,9 @@ const styles = StyleSheet.create({
   tarjetaDia: {
     flex: 1,
     minHeight: 154,
-    marginBottom: Spacing.three,
+    // Más separación que un margen normal: deja aire para que la foto de la
+    // tarjeta de abajo se salga hacia arriba sin encimarse con esta.
+    marginBottom: 44,
   },
   tarjetaFondo: {
     position: 'absolute',
@@ -288,10 +292,10 @@ const styles = StyleSheet.create({
   },
   foto: {
     position: 'absolute',
-    width: 138,
-    height: 176,
-    top: -28,
-    right: -10,
+    width: 150,
+    height: 194,
+    top: -38,
+    right: -14,
   },
   textoContenedor: {
     position: 'absolute',

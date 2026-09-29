@@ -88,3 +88,17 @@ export const CardShadow = Platform.select({
   },
   default: {},
 }) as object;
+
+/** Sombra más marcada para las fotos recortadas que "flotan" fuera de la tarjeta. */
+export const FotoFlotanteShadow = Platform.select({
+  ios: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+  },
+  android: {
+    elevation: 12,
+  },
+  default: {},
+}) as object;
