@@ -9,7 +9,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { ErrorApi } from '@/api/client';
 import { useTheme } from '@/hooks/use-theme';
 import { useSesion } from '@/context/auth-context';
-import { Spacing } from '@/constants/theme';
+import { CardShadow, Spacing } from '@/constants/theme';
 import * as rutinasApi from '@/api/rutinas';
 import type { Rutina, RutinaEjercicio } from '@/api/rutinas';
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
@@ -390,11 +390,11 @@ export default function Entrenamiento() {
         <Text style={[styles.tituloFinal, { color: colors.text }]}>¡Entrenamiento completado!</Text>
         <Text style={{ color: colors.textSecondary }}>{rutina.nombre}</Text>
         <View style={[styles.resumenFila, { marginTop: Spacing.three }]}>
-          <View style={[styles.resumenTarjeta, { backgroundColor: colors.backgroundElement }]}>
+          <View style={[styles.resumenTarjeta, CardShadow, { backgroundColor: colors.backgroundElement }]}>
             <Text style={[styles.resumenValor, { color: colors.text }]}>{finalizado.duracionMin}</Text>
             <Text style={{ color: colors.textSecondary, fontSize: 12 }}>minutos</Text>
           </View>
-          <View style={[styles.resumenTarjeta, { backgroundColor: colors.backgroundElement }]}>
+          <View style={[styles.resumenTarjeta, CardShadow, { backgroundColor: colors.backgroundElement }]}>
             <Text style={[styles.resumenValor, { color: colors.text }]}>{finalizado.caloriasEstimadas}</Text>
             <Text style={{ color: colors.textSecondary, fontSize: 12 }}>kcal estimadas</Text>
           </View>
@@ -458,13 +458,13 @@ export default function Entrenamiento() {
             SERIE {paso.serie} DE {paso.totalSeries}
           </Text>
 
-          <View style={[styles.fotoContenedor, { backgroundColor: colors.backgroundElement }]}>
+          <View style={[styles.fotoContenedor, CardShadow, { backgroundColor: colors.backgroundElement }]}>
             {cliente?.preferenciaEntrenador !== 'animacion' && paso.item.ejercicio.gifUrl ? (
               <Image source={{ uri: paso.item.ejercicio.gifUrl }} style={styles.foto} contentFit="cover" />
             ) : (
               <MunecoEjercicio patron={paso.item.ejercicio.patronMovimiento} color={colors.tint} size={140} />
             )}
-            <View style={[styles.munecoInsignia, { backgroundColor: colors.background, borderColor: colors.background }]}>
+            <View style={[styles.munecoInsignia, CardShadow, { backgroundColor: colors.background, borderColor: colors.background }]}>
               <MunecoEjercicio patron={paso.item.ejercicio.patronMovimiento} color={colors.tint} size={44} />
             </View>
           </View>
@@ -671,6 +671,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',
+    ...CardShadow,
   },
   botonPrincipalTexto: {
     fontSize: 16,

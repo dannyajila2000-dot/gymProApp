@@ -4,7 +4,7 @@ import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-nati
 
 import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing } from '@/constants/theme';
+import { CardShadow, Spacing } from '@/constants/theme';
 
 const OPCIONES_CUENTA = [
   {
@@ -64,7 +64,7 @@ export default function Perfil() {
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.contenedor}
       showsVerticalScrollIndicator={false}>
-      <View style={[styles.avatar, { backgroundColor: colors.tint }]}>
+      <View style={[styles.avatar, CardShadow, { backgroundColor: colors.tint }]}>
         <Text style={[styles.avatarTexto, { color: colors.tintForeground }]}>{iniciales}</Text>
       </View>
 
@@ -73,7 +73,7 @@ export default function Perfil() {
       </Text>
       <Text style={{ color: colors.textSecondary }}>{cliente?.email}</Text>
 
-      <View style={[styles.tarjeta, { backgroundColor: colors.backgroundElement }]}>
+      <View style={[styles.tarjeta, CardShadow, { backgroundColor: colors.backgroundElement }]}>
         <Fila etiqueta="Gimnasio" valor={cliente?.gimnasio ?? '—'} />
       </View>
 
@@ -82,7 +82,7 @@ export default function Perfil() {
           <Pressable
             key={op.ruta}
             onPress={() => router.push(op.ruta)}
-            style={[styles.filaMenu, { borderColor: colors.border }]}>
+            style={[styles.filaMenu, CardShadow, { backgroundColor: colors.backgroundElement }]}>
             <Ionicons name={op.icono} size={22} color={colors.text} />
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>{op.titulo}</Text>
@@ -98,7 +98,7 @@ export default function Perfil() {
           <Pressable
             key={op.ruta}
             onPress={() => router.push(op.ruta)}
-            style={[styles.filaMenu, { borderColor: colors.border }]}>
+            style={[styles.filaMenu, CardShadow, { backgroundColor: colors.backgroundElement }]}>
             <Ionicons name={op.icono} size={22} color={colors.text} />
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>{op.titulo}</Text>
@@ -107,7 +107,7 @@ export default function Perfil() {
             <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
           </Pressable>
         ))}
-        <Pressable onPress={compartir} style={[styles.filaMenu, { borderColor: colors.border }]}>
+        <Pressable onPress={compartir} style={[styles.filaMenu, CardShadow, { backgroundColor: colors.backgroundElement }]}>
           <Ionicons name="share-social-outline" size={22} color={colors.text} />
           <View style={{ flex: 1 }}>
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>Compartir la app</Text>
@@ -177,7 +177,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
-    borderWidth: 1,
     borderRadius: 16,
     padding: Spacing.three,
   },

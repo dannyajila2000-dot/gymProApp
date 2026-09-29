@@ -16,7 +16,7 @@ import * as clientesApi from '@/api/clientes';
 import * as authApi from '@/api/auth';
 import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing } from '@/constants/theme';
+import { CardShadow, Spacing } from '@/constants/theme';
 
 function formatearFecha(iso: string | null) {
   if (!iso) return 'Seleccionar';
@@ -226,7 +226,7 @@ function ToggleDos({
 
 const styles = StyleSheet.create({
   contenedor: { padding: Spacing.four, gap: Spacing.three, paddingBottom: Spacing.six },
-  tarjeta: { borderRadius: 18, padding: Spacing.three, gap: Spacing.three },
+  tarjeta: { borderRadius: 18, padding: Spacing.three, gap: Spacing.three, ...CardShadow },
   campo: { gap: Spacing.one },
   etiqueta: { fontSize: 13, fontWeight: '600' },
   input: {

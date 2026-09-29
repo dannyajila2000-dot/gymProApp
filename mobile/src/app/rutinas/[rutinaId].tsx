@@ -11,7 +11,7 @@ import { MunecoEjercicio } from '@/components/muneco-ejercicio';
 import { SustituirEjercicioModal } from '@/components/entrenamiento/sustituir-ejercicio-modal';
 import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing } from '@/constants/theme';
+import { CardShadow, Spacing } from '@/constants/theme';
 import { OBJETIVO_LABEL } from '@/constants/objetivos';
 import { NIVEL_LABEL } from '@/constants/niveles';
 import { caloriasEstimadas, duracionEstimadaMin } from '@/lib/rutina-utils';
@@ -134,7 +134,7 @@ export default function DetalleRutina() {
               <Ionicons name="barbell-outline" size={48} color={colors.textSecondary} />
             </View>
           )}
-          <Pressable onPress={() => router.back()} style={[styles.botonAtras, { backgroundColor: colors.background }]}>
+          <Pressable onPress={() => router.back()} style={[styles.botonAtras, CardShadow, { backgroundColor: colors.background }]}>
             <Ionicons name="chevron-back" size={22} color={colors.text} />
           </Pressable>
         </View>
@@ -147,17 +147,17 @@ export default function DetalleRutina() {
           </Text>
 
           <View style={styles.filaInfo}>
-            <View style={[styles.tarjetaInfo, { backgroundColor: colors.backgroundElement }]}>
+            <View style={[styles.tarjetaInfo, CardShadow, { backgroundColor: colors.backgroundElement }]}>
               <Ionicons name="flame-outline" size={20} color={colors.tint} />
               <Text style={[styles.tarjetaInfoValor, { color: colors.text }]}>{caloriasEstimadas(rutina)}</Text>
               <Text style={{ color: colors.textSecondary, fontSize: 11 }}>kcal aprox.</Text>
             </View>
-            <View style={[styles.tarjetaInfo, { backgroundColor: colors.backgroundElement }]}>
+            <View style={[styles.tarjetaInfo, CardShadow, { backgroundColor: colors.backgroundElement }]}>
               <Ionicons name="time-outline" size={20} color={colors.tint} />
               <Text style={[styles.tarjetaInfoValor, { color: colors.text }]}>{duracionEstimadaMin(rutina)}</Text>
               <Text style={{ color: colors.textSecondary, fontSize: 11 }}>minutos</Text>
             </View>
-            <View style={[styles.tarjetaInfo, { backgroundColor: colors.backgroundElement }]}>
+            <View style={[styles.tarjetaInfo, CardShadow, { backgroundColor: colors.backgroundElement }]}>
               <Ionicons name="layers-outline" size={20} color={colors.tint} />
               <Text style={[styles.tarjetaInfoValor, { color: colors.text }]}>{rutina.ejercicios.length}</Text>
               <Text style={{ color: colors.textSecondary, fontSize: 11 }}>ejercicios</Text>
@@ -292,6 +292,10 @@ const styles = StyleSheet.create({
     right: 0,
     padding: Spacing.four,
     borderTopWidth: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
   },
   botonPrincipal: { borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
   botonPrincipalTexto: { fontSize: 16, fontWeight: '800' },

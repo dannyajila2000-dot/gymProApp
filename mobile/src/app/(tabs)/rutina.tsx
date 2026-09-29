@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing } from '@/constants/theme';
+import { CardShadow, Spacing } from '@/constants/theme';
 import * as rutinasApi from '@/api/rutinas';
 import type { Rutina as RutinaModelo, SesionEntrenamiento } from '@/api/rutinas';
 import { OBJETIVO_LABEL } from '@/constants/objetivos';
@@ -90,7 +90,7 @@ export default function Rutina() {
       <Text style={[styles.titulo, { color: colors.text }]}>Rutina</Text>
 
       {miRutina ? (
-        <View style={[styles.tarjetaHero, { backgroundColor: colors.tint }]}>
+        <View style={[styles.tarjetaHero, CardShadow, { backgroundColor: colors.tint }]}>
           <View style={styles.heroFilaSuperior}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.heroNivel, { color: colors.tintForeground }]}>
@@ -117,7 +117,7 @@ export default function Rutina() {
           </Pressable>
         </View>
       ) : (
-        <View style={[styles.tarjetaVacia, { backgroundColor: colors.backgroundElement }]}>
+        <View style={[styles.tarjetaVacia, CardShadow, { backgroundColor: colors.backgroundElement }]}>
           <Ionicons name="barbell-outline" size={32} color={colors.textSecondary} />
           <Text style={[styles.tarjetaVaciaTexto, { color: colors.textSecondary }]}>
             Aún no tienes una rutina activa. Elige una para empezar a entrenar.
@@ -175,7 +175,7 @@ export default function Rutina() {
           <Pressable
             key={rutina.id}
             onPress={() => router.push({ pathname: '/rutinas/[rutinaId]', params: { rutinaId: rutina.id } })}
-            style={[styles.tarjetaRutina, { backgroundColor: colors.backgroundElement }]}>
+            style={[styles.tarjetaRutina, CardShadow, { backgroundColor: colors.backgroundElement }]}>
             {rutina.ejercicios[0]?.ejercicio.gifUrl && (
               <Image
                 source={{ uri: rutina.ejercicios[0].ejercicio.gifUrl }}
@@ -225,7 +225,7 @@ export default function Rutina() {
             <Pressable
               key={rutina.id}
               onPress={() => router.push({ pathname: '/rutinas/mias/[rutinaId]', params: { rutinaId: rutina.id } })}
-              style={[styles.tarjetaRutina, { backgroundColor: colors.backgroundElement }]}>
+              style={[styles.tarjetaRutina, CardShadow, { backgroundColor: colors.backgroundElement }]}>
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={[styles.tarjetaRutinaNombre, { color: colors.text }]}>{rutina.nombre}</Text>
                 <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{rutina.ejercicios.length} ejercicios</Text>
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
   tarjetaRutina: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 18,
     padding: Spacing.three,
     gap: Spacing.two,
   },

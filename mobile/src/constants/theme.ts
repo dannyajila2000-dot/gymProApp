@@ -79,3 +79,17 @@ export const Spacing = {
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
+
+/** Sombra sutil para tarjetas — misma receta en toda la app en vez de planas. */
+export const CardShadow = Platform.select({
+  ios: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+  },
+  android: {
+    elevation: 3,
+  },
+  default: {},
+}) as object;

@@ -9,7 +9,7 @@ import type { DiaPlan } from '@/api/rutinas';
 import { useSesion } from '@/context/auth-context';
 import { DIAS_NOMBRE } from '@/constants/dias';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing } from '@/constants/theme';
+import { CardShadow, Spacing } from '@/constants/theme';
 
 export default function Inicio() {
   const colors = useTheme();
@@ -78,9 +78,9 @@ export default function Inicio() {
           <Text style={{ color: colors.textSecondary }}>{cliente?.gimnasio}</Text>
         </View>
         {racha > 0 && (
-          <View style={[styles.rachaTarjeta, { backgroundColor: colors.backgroundElement }]}>
+          <View style={[styles.rachaTarjeta, CardShadow, { backgroundColor: colors.backgroundElement }]}>
             <Ionicons name="flame" size={18} color={colors.tint} />
-            <Text style={{ color: colors.text, fontWeight: '800' }}>{racha}</Text>
+            <Text style={{ color: colors.tint, fontWeight: '800', fontSize: 15 }}>{racha}</Text>
           </View>
         )}
       </View>
@@ -132,9 +132,11 @@ function DiaTarjeta({
 
   if (!dia.esDiaEntrenamiento) {
     return (
-      <View style={[styles.tarjetaDia, { backgroundColor: colors.backgroundElement }]}>
+      <View style={[styles.tarjetaDia, CardShadow, { backgroundColor: colors.backgroundElement }]}>
         <View style={styles.filaTarjeta}>
-          <Ionicons name="cafe-outline" size={22} color={colors.textSecondary} />
+          <View style={[styles.iconoBadge, { backgroundColor: colors.background }]}>
+            <Ionicons name="cafe-outline" size={20} color={colors.textSecondary} />
+          </View>
           <View style={{ flex: 1 }}>
             <Text style={{ color: colors.text, fontWeight: '700' }}>
               {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
@@ -151,6 +153,7 @@ function DiaTarjeta({
       onPress={onVerRutina}
       style={[
         styles.tarjetaDia,
+        CardShadow,
         destacar
           ? { backgroundColor: colors.tint }
           : dia.completado
@@ -158,11 +161,17 @@ function DiaTarjeta({
             : { backgroundColor: colors.backgroundElement },
       ]}>
       <View style={styles.filaTarjeta}>
-        <Ionicons
-          name="barbell-outline"
-          size={22}
-          color={destacar ? colors.tintForeground : dia.completado ? colors.tint : colors.textSecondary}
-        />
+        <View
+          style={[
+            styles.iconoBadge,
+            { backgroundColor: destacar ? 'rgba(255,255,255,0.22)' : colors.background },
+          ]}>
+          <Ionicons
+            name="barbell-outline"
+            size={20}
+            color={destacar ? colors.tintForeground : dia.completado ? colors.tint : colors.textSecondary}
+          />
+        </View>
         <View style={{ flex: 1 }}>
           <Text style={{ color: destacar ? colors.tintForeground : colors.text, fontWeight: '700' }}>
             {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
@@ -222,12 +231,19 @@ const styles = StyleSheet.create({
   lineaVertical: { flex: 1, width: 2, marginVertical: 2 },
   tarjetaDia: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 18,
     padding: Spacing.three,
     marginBottom: Spacing.two,
     gap: Spacing.two,
   },
   filaTarjeta: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  iconoBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   botonComenzar: {
     flexDirection: 'row',
     alignItems: 'center',

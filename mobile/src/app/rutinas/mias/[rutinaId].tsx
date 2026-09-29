@@ -10,7 +10,7 @@ import { AgregarEjercicioModal } from '@/components/entrenamiento/agregar-ejerci
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
 import { OBJETIVO_LABEL } from '@/constants/objetivos';
 import { NIVEL_LABEL } from '@/constants/niveles';
-import { Spacing } from '@/constants/theme';
+import { CardShadow, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type CampoNumerico = 'series' | 'repeticiones' | 'duracionSeg' | 'descansoSeg';
@@ -288,7 +288,7 @@ export default function EditarRutinaPersonal() {
 
         <View style={{ gap: Spacing.two }}>
           {rutina.ejercicios.map((item, indice) => (
-            <View key={item.id} style={[styles.filaEjercicio, { backgroundColor: colors.backgroundElement }]}>
+            <View key={item.id} style={[styles.filaEjercicio, CardShadow, { backgroundColor: colors.backgroundElement }]}>
               <View style={styles.filaEjercicioSuperior}>
                 <MunecoEjercicio patron={item.ejercicio.patronMovimiento} color={colors.tint} size={26} />
                 <Text style={{ color: colors.text, fontWeight: '700', flex: 1 }} numberOfLines={1}>
@@ -458,6 +458,17 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   stepperBoton: { padding: 2 },
-  pieFijo: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: Spacing.four, borderTopWidth: 1 },
+  pieFijo: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: Spacing.four,
+    borderTopWidth: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+  },
   botonPrincipal: { borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
 });

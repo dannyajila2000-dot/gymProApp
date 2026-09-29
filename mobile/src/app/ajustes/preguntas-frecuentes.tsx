@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { LayoutAnimation, Platform, Pressable, ScrollView, StyleSheet, Text, UIManager, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing } from '@/constants/theme';
+import { CardShadow, Spacing } from '@/constants/theme';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -80,6 +80,6 @@ export default function PreguntasFrecuentes() {
 
 const styles = StyleSheet.create({
   contenedor: { padding: Spacing.four, gap: Spacing.two, paddingBottom: Spacing.six },
-  tarjeta: { borderRadius: 16, padding: Spacing.three },
+  tarjeta: { borderRadius: 16, padding: Spacing.three, ...CardShadow },
   filaPregunta: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
 });

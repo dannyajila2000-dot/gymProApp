@@ -23,7 +23,7 @@ import {
   sincronizarNotificaciones,
 } from '@/lib/notificaciones';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing } from '@/constants/theme';
+import { CardShadow, Spacing } from '@/constants/theme';
 import { DIAS_CORTOS, DIAS_NOMBRE } from '@/constants/dias';
 
 function etiquetaDias(dias: number[]) {
@@ -245,6 +245,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 16,
     padding: Spacing.three,
+    ...CardShadow,
   },
   hora: { fontSize: 20, fontWeight: '800' },
   fab: {

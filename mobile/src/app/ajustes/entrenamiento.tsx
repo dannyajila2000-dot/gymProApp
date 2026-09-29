@@ -8,7 +8,7 @@ import { ErrorApi } from '@/api/client';
 import * as clientesApi from '@/api/clientes';
 import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing } from '@/constants/theme';
+import { CardShadow, Spacing } from '@/constants/theme';
 import { TarjetaOpcion } from '@/components/onboarding/tarjeta-opcion';
 import { DIAS_CORTOS } from '@/constants/dias';
 
@@ -251,7 +251,7 @@ export default function AjustesEntrenamiento() {
 const styles = StyleSheet.create({
   contenedor: { padding: Spacing.four, gap: Spacing.two, paddingBottom: Spacing.six },
   tituloSeccion: { fontSize: 16, fontWeight: '800', marginTop: Spacing.two },
-  aviso: { borderRadius: 16, padding: Spacing.three, marginBottom: Spacing.one },
+  aviso: { borderRadius: 16, padding: Spacing.three, marginBottom: Spacing.one, ...CardShadow },
   filaEntrenador: { flexDirection: 'row', gap: Spacing.two },
   filaDias: { flexDirection: 'row', justifyContent: 'space-between' },
   diaCirculo: {
@@ -281,6 +281,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: Spacing.three,
     gap: Spacing.two,
+    ...CardShadow,
   },
   stepper: {
     flexDirection: 'row',
