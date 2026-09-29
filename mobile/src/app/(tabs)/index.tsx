@@ -15,11 +15,11 @@ import { useTheme } from '@/hooks/use-theme';
 import { CardShadow, Spacing } from '@/constants/theme';
 
 const FOTOS_ENTRENANDO = [
-  require('@/assets/images/dashboard/persona-entrenando-1.jpg'),
-  require('@/assets/images/dashboard/persona-entrenando-2.jpg'),
-  require('@/assets/images/dashboard/persona-entrenando-3.jpg'),
+  require('@/assets/images/dashboard/persona-entrenando-1-recorte.png'),
+  require('@/assets/images/dashboard/persona-entrenando-2-recorte.png'),
+  require('@/assets/images/dashboard/persona-entrenando-3-recorte.png'),
 ];
-const FOTO_DESCANSO = require('@/assets/images/dashboard/dia-descanso.jpg');
+const FOTO_DESCANSO = require('@/assets/images/dashboard/dia-descanso-recorte.png');
 
 export default function Inicio() {
   const colors = useTheme();
@@ -155,21 +155,22 @@ function DiaTarjeta({
 
   if (!dia.esDiaEntrenamiento) {
     return (
-      <View style={[styles.tarjetaDia, CardShadow, { backgroundColor: colors.backgroundElement }]}>
-        <LinearGradient
-          colors={[colors.backgroundElement, colors.energiaSuave]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.filaTarjeta}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.text, fontWeight: '700' }}>
-              {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
-            </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>¡Día de descanso!</Text>
-          </View>
-          <Image source={foto} style={styles.foto} contentFit="cover" />
+      <View style={[styles.tarjetaDia, CardShadow]}>
+        <View style={styles.tarjetaFondo}>
+          <LinearGradient
+            colors={[colors.backgroundElement, colors.energiaSuave]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
+        {/* La foto va SIN recorte (overflow visible) para que "salga" del borde de la tarjeta. */}
+        <Image source={foto} style={styles.foto} contentFit="contain" />
+        <View style={styles.textoContenedor}>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>
+            {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
+          </Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>¡Día de descanso!</Text>
         </View>
       </View>
     );
@@ -177,46 +178,50 @@ function DiaTarjeta({
 
   return (
     <Pressable onPress={onVerRutina} style={[styles.tarjetaDia, CardShadow]}>
-      {destacar && (
-        <LinearGradient
-          colors={[colors.energia, colors.energiaOscuro]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
-      {dia.completado && (
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: colors.backgroundElement, borderWidth: 1, borderColor: colors.tint, borderRadius: 22 },
-          ]}
-        />
-      )}
-      {!destacar && !dia.completado && (
-        <LinearGradient
-          colors={[colors.backgroundElement, colors.energiaSuave]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
+      <View style={styles.tarjetaFondo}>
+        {destacar && (
+          <LinearGradient
+            colors={[colors.energia, colors.energiaOscuro]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+        {dia.completado && (
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: colors.backgroundElement, borderWidth: 1, borderColor: colors.tint },
+            ]}
+          />
+        )}
+        {!destacar && !dia.completado && (
+          <LinearGradient
+            colors={[colors.backgroundElement, colors.energiaSuave]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+      </View>
 
-      <View style={styles.filaTarjeta}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: destacar ? '#ffffff' : colors.text, fontWeight: '700' }}>
-            {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
-          </Text>
-          <Text
-            style={{
-              color: destacar ? '#ffffff' : colors.textSecondary,
-              fontSize: 12.5,
-              opacity: destacar ? 0.9 : 1,
-            }}>
-            {dia.completado ? '¡Completado!' : (dia.rutinaNombre ?? 'Sin rutina disponible')}
-          </Text>
-        </View>
-        <Image source={foto} style={styles.foto} contentFit="cover" />
+      {/* La foto se pinta antes que el texto/botón para que ellos queden por
+          encima donde se monten — así el botón "corta" la silueta como en la
+          referencia, en vez de taparla por completo. */}
+      <Image source={foto} style={styles.foto} contentFit="contain" />
+
+      <View style={styles.textoContenedor}>
+        <Text style={{ color: destacar ? '#ffffff' : colors.text, fontWeight: '700', fontSize: 16 }}>
+          {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
+        </Text>
+        <Text
+          style={{
+            color: destacar ? '#ffffff' : colors.textSecondary,
+            fontSize: 13.5,
+            opacity: destacar ? 0.9 : 1,
+          }}>
+          {dia.completado ? '¡Completado!' : (dia.rutinaNombre ?? 'Sin rutina disponible')}
+        </Text>
       </View>
 
       {destacar && (
@@ -264,22 +269,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   lineaVerticalContenedor: { flex: 1, width: 2, marginVertical: 2 },
+  // Sin overflow:hidden aquí a propósito — la foto necesita "salirse" del
+  // borde de la tarjeta para el efecto 3D. Lo que sí debe recortarse (el
+  // degradado/color de fondo) vive dentro de `tarjetaFondo`, que sí lo tiene.
   tarjetaDia: {
     flex: 1,
-    borderRadius: 22,
-    padding: Spacing.three,
-    marginBottom: Spacing.two,
-    gap: Spacing.two,
+    minHeight: 154,
+    marginBottom: Spacing.three,
+  },
+  tarjetaFondo: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 26,
     overflow: 'hidden',
   },
-  filaTarjeta: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   foto: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.06)',
+    position: 'absolute',
+    width: 138,
+    height: 176,
+    top: -28,
+    right: -10,
+  },
+  textoContenedor: {
+    position: 'absolute',
+    top: Spacing.four,
+    left: Spacing.three,
+    right: 112,
   },
   botonComenzar: {
+    position: 'absolute',
+    left: Spacing.three,
+    right: Spacing.three,
+    bottom: Spacing.three,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -290,7 +314,7 @@ const styles = StyleSheet.create({
     paddingRight: 8,
     backgroundColor: '#ffffff',
   },
-  botonComenzarTexto: { color: '#1F2430', fontWeight: '800', flexShrink: 1 },
+  botonComenzarTexto: { color: '#1F2430', fontWeight: '800', flexShrink: 1, fontSize: 12.5 },
   botonComenzarFlecha: {
     width: 30,
     height: 30,
