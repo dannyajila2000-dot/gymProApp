@@ -36,7 +36,7 @@ async function main() {
   const gimnasio = await prisma.gimnasio.upsert({
     where: { codigo: 'DEMO' },
     update: {},
-    create: { nombre: 'Gimnasio Demo', codigo: 'DEMO' },
+    create: { nombre: 'GymPro', codigo: 'DEMO' },
   })
   console.log('Gimnasio de prueba listo:', gimnasio.codigo, '-', gimnasio.nombre)
 
