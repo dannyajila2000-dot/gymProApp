@@ -11,8 +11,10 @@ const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 const DURATION = 3000;
 const COLOR_FONDO = '#0284C7';
 
-export function AnimatedSplashOverlay() {
-  const [animate, setAnimate] = useState(false);
+// `conSplashNativo`: true al abrir la app (hay que ocultar el splash nativo);
+// false cuando se reutiliza tras iniciar sesión (ya no hay splash nativo).
+export function AnimatedSplashOverlay({ conSplashNativo = true }: { conSplashNativo?: boolean }) {
+  const [animate, setAnimate] = useState(!conSplashNativo);
   const [visible, setVisible] = useState(true);
 
   if (!visible) return null;

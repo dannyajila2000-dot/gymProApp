@@ -1,20 +1,28 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { NestableDraggableFlatList, NestableScrollContainer, ScaleDecorator } from 'react-native-draggable-flatlist';
-import type { RenderItemParams } from 'react-native-draggable-flatlist';
+import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image } from 'expo-image';
+import ReorderableList, {
+  reorderItems,
+  useIsActive,
+  useReorderableDrag,
+  type ReorderableListReorderEvent,
+} from 'react-native-reorderable-list';
 
 import { ErrorApi } from '@/api/client';
 import * as rutinasApi from '@/api/rutinas';
 import type { Ejercicio, Rutina, RutinaEjercicio } from '@/api/rutinas';
 import { AgregarEjercicioModal } from '@/components/entrenamiento/agregar-ejercicio-modal';
 import { EjercicioDetalleModal } from '@/components/entrenamiento/ejercicio-detalle-modal';
+import { UsarEnDiaModal } from '@/components/rutinas/usar-en-dia-modal';
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
 import { OBJETIVO_LABEL } from '@/constants/objetivos';
 import { NIVEL_LABEL } from '@/constants/niveles';
-import { CardShadow, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+
+const NOMBRE_AUTOMATICO = /^Nuevo entrenamiento/i;
 
 export default function EditarRutinaPersonal() {
   const colors = useTheme();
@@ -24,8 +32,9 @@ export default function EditarRutinaPersonal() {
   const [rutina, setRutina] = useState<Rutina | null>(null);
   const [modalAgregar, setModalAgregar] = useState(false);
   const [detalleEjercicio, setDetalleEjercicio] = useState<Ejercicio | null>(null);
-  const [comenzando, setComenzando] = useState(false);
-  const [editandoNombre, setEditandoNombre] = useState(false);
+  const [agregarARutina, setAgregarARutina] = useState(false);
+  const [dialogoNombre, setDialogoNombre] = useState(false);
+  const [salirAlGuardar, setSalirAlGuardar] = useState(false);
   const [nombreBorrador, setNombreBorrador] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -46,16 +55,38 @@ export default function EditarRutinaPersonal() {
     cargar();
   }
 
-  async function guardarNombre() {
-    setEditandoNombre(false);
-    if (!rutina || !nombreBorrador.trim() || nombreBorrador === rutina.nombre) return;
+  function abrirDialogoNombre(alGuardarSalir: boolean) {
+    if (!rutina) return;
+    // Mientras tenga el nombre automático, el campo arranca vacío para escribir uno propio.
+    setNombreBorrador(NOMBRE_AUTOMATICO.test(rutina.nombre) ? '' : rutina.nombre);
+    setSalirAlGuardar(alGuardarSalir);
+    setDialogoNombre(true);
+  }
+
+  async function confirmarNombre() {
+    const nuevo = nombreBorrador.trim();
+    if (!rutina || !nuevo) return;
+    setDialogoNombre(false);
     setError(null);
     try {
-      await rutinasApi.actualizarRutinaPersonal(rutina.id, { nombre: nombreBorrador.trim() });
-      cargar();
+      if (nuevo !== rutina.nombre) {
+        await rutinasApi.actualizarRutinaPersonal(rutina.id, { nombre: nuevo });
+      }
+      if (salirAlGuardar) router.back();
+      else cargar();
     } catch (e) {
       manejarError(e);
     }
+  }
+
+  // Todo se guarda al momento; "Guardar" cierra la edición. Si la rutina sigue
+  // con el nombre automático, primero pide uno.
+  function guardar() {
+    if (rutina && NOMBRE_AUTOMATICO.test(rutina.nombre)) {
+      abrirDialogoNombre(true);
+      return;
+    }
+    router.back();
   }
 
   async function cambiarNivel(nivel: string) {
@@ -101,7 +132,6 @@ export default function EditarRutinaPersonal() {
 
   async function agregarEjercicio(ejercicio: Ejercicio) {
     if (!rutina) return;
-    setModalAgregar(false);
     setError(null);
     try {
       await rutinasApi.agregarEjercicioARutina(rutina.id, {
@@ -126,10 +156,11 @@ export default function EditarRutinaPersonal() {
     }
   }
 
-  async function alTerminarArrastre(nuevoOrden: RutinaEjercicio[]) {
+  async function alTerminarArrastre({ from, to }: ReorderableListReorderEvent) {
     if (!rutina) return;
     setError(null);
     const anterior = rutina.ejercicios;
+    const nuevoOrden = reorderItems(anterior, from, to);
     setRutina({ ...rutina, ejercicios: nuevoOrden });
     try {
       await rutinasApi.reordenarEjerciciosDeRutina(
@@ -173,15 +204,9 @@ export default function EditarRutinaPersonal() {
     }
   }
 
-  async function comenzar() {
+  function comenzar() {
     if (!rutina) return;
-    setComenzando(true);
-    try {
-      await rutinasApi.asignarme(rutina.id);
-      router.push({ pathname: '/entrenamiento/[rutinaId]', params: { rutinaId: rutina.id } });
-    } finally {
-      setComenzando(false);
-    }
+    router.push({ pathname: '/entrenamiento/[rutinaId]', params: { rutinaId: rutina.id } });
   }
 
   if (cargando) {
@@ -203,173 +228,174 @@ export default function EditarRutinaPersonal() {
     );
   }
 
-  function renderItem({ item, drag, isActive }: RenderItemParams<RutinaEjercicio>) {
-    return (
-      <ScaleDecorator>
-        <View
-          style={[
-            styles.filaEjercicio,
-            CardShadow,
-            { backgroundColor: isActive ? colors.backgroundSelected : colors.backgroundElement, marginBottom: Spacing.two },
-          ]}>
-          <View style={styles.filaEjercicioSuperior}>
-            <Pressable onLongPress={drag} disabled={isActive} hitSlop={10} style={styles.asa}>
-              <Ionicons name="reorder-three-outline" size={24} color={colors.textSecondary} />
-            </Pressable>
-
-            <Pressable
-              onPress={() => setDetalleEjercicio(item.ejercicio)}
-              style={styles.filaEjercicioInfo}
-              hitSlop={4}>
-              <View style={[styles.iconoEjercicio, { backgroundColor: colors.background }]}>
-                <MunecoEjercicio patron={item.ejercicio.patronMovimiento} color={colors.tint} size={28} />
-              </View>
-              <Text style={{ color: colors.text, fontWeight: '700', flexShrink: 1 }} numberOfLines={1}>
-                {item.ejercicio.nombre}
-              </Text>
-            </Pressable>
-
-            <Pressable onPress={() => quitarEjercicio(item)} hitSlop={8}>
-              <Ionicons name="trash-outline" size={18} color={colors.danger} />
-            </Pressable>
-          </View>
-
-          <View style={styles.filaSteppers}>
-            <Stepper
-              etiqueta="Repeticiones"
-              valor={item.repeticiones ?? 12}
-              onCambiar={(delta) => cambiarRepeticiones(item, delta)}
-              colors={colors}
-            />
-            <Stepper
-              etiqueta="Series"
-              valor={item.series ?? 1}
-              onCambiar={(delta) => cambiarSeries(item, delta)}
-              colors={colors}
-            />
-          </View>
-        </View>
-      </ScaleDecorator>
-    );
-  }
-
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <NestableScrollContainer contentContainerStyle={styles.contenedor}>
-        <View style={styles.filaEncabezado}>
-          {editandoNombre ? (
-            <TextInput
-              value={nombreBorrador}
-              onChangeText={setNombreBorrador}
-              onBlur={guardarNombre}
-              onSubmitEditing={guardarNombre}
-              autoFocus
-              style={[styles.inputNombre, { color: colors.text, borderColor: colors.border }]}
-            />
-          ) : (
-            <Pressable
-              style={styles.filaNombre}
-              onPress={() => {
-                setNombreBorrador(rutina.nombre);
-                setEditandoNombre(true);
-              }}>
-              <Text style={[styles.nombre, { color: colors.text }]} numberOfLines={1}>
-                {rutina.nombre}
-              </Text>
-              <Ionicons name="pencil-outline" size={16} color={colors.textSecondary} />
-            </Pressable>
-          )}
-          <Pressable onPress={confirmarEliminar} hitSlop={8}>
-            <Ionicons name="trash-outline" size={22} color={colors.danger} />
-          </Pressable>
-        </View>
+      <View style={styles.barraSuperior}>
+        <Pressable onPress={() => router.back()} hitSlop={10}>
+          <Ionicons name="arrow-back" size={26} color={colors.text} />
+        </Pressable>
+        <Text style={[styles.tituloPantalla, { color: colors.text }]}>Editar</Text>
+        <Pressable onPress={confirmarEliminar} hitSlop={10}>
+          <Ionicons name="trash-outline" size={22} color={colors.danger} />
+        </Pressable>
+      </View>
 
-        <Text style={[styles.etiqueta, { color: colors.textSecondary }]}>Nivel</Text>
-        <View style={styles.filaChips}>
-          {Object.keys(NIVEL_LABEL).map((valor) => (
-            <Pressable
-              key={valor}
-              onPress={() => cambiarNivel(valor)}
-              style={[
-                styles.chip,
-                { backgroundColor: rutina.nivel === valor ? colors.tint : colors.backgroundElement, borderColor: colors.border },
-              ]}>
-              <Text
-                style={{
-                  color: rutina.nivel === valor ? colors.tintForeground : colors.text,
-                  fontWeight: '700',
-                  fontSize: 12.5,
-                }}>
-                {NIVEL_LABEL[valor]}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <Text style={[styles.etiqueta, { color: colors.textSecondary }]}>Objetivo</Text>
-        <View style={styles.filaChips}>
-          {Object.keys(OBJETIVO_LABEL).map((valor) => (
-            <Pressable
-              key={valor}
-              onPress={() => cambiarObjetivo(valor)}
-              style={[
-                styles.chip,
-                { backgroundColor: rutina.objetivo === valor ? colors.tint : colors.backgroundElement, borderColor: colors.border },
-              ]}>
-              <Text
-                style={{
-                  color: rutina.objetivo === valor ? colors.tintForeground : colors.text,
-                  fontWeight: '700',
-                  fontSize: 12.5,
-                }}>
-                {OBJETIVO_LABEL[valor]}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {error && <Text style={{ color: colors.danger, fontSize: 13 }}>{error}</Text>}
-
-        <View style={styles.filaEntre}>
-          <Text style={[styles.seccionTitulo, { color: colors.text }]}>Ejercicios ({rutina.ejercicios.length})</Text>
-          <Pressable onPress={() => setModalAgregar(true)} style={styles.filaAgregar}>
-            <Ionicons name="add-circle" size={20} color={colors.tint} />
-            <Text style={{ color: colors.tint, fontWeight: '700' }}>Agregar</Text>
-          </Pressable>
-        </View>
-        <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: Spacing.two }}>
-          Mantén presionadas las tres líneas para arrastrar y reordenar.
-        </Text>
-
-        {rutina.ejercicios.length === 0 ? (
-          <Text style={{ color: colors.textSecondary, textAlign: 'center', marginTop: Spacing.three }}>
-            Aún no agregas ejercicios. Toca &quot;Agregar&quot; para empezar.
-          </Text>
-        ) : (
-          <NestableDraggableFlatList
-            data={rutina.ejercicios}
-            keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            onDragEnd={({ data }) => alTerminarArrastre(data)}
+      <ReorderableList
+        data={rutina.ejercicios}
+        keyExtractor={(item) => item.id}
+        onReorder={alTerminarArrastre}
+        contentContainerStyle={styles.contenedor}
+        renderItem={({ item }) => (
+          <FilaEjercicio
+            item={item}
+            colors={colors}
+            onDetalle={setDetalleEjercicio}
+            onQuitar={quitarEjercicio}
+            onCambiarRepeticiones={cambiarRepeticiones}
+            onCambiarSeries={cambiarSeries}
           />
         )}
-      </NestableScrollContainer>
+        ListEmptyComponent={
+          <Text style={{ color: colors.textSecondary, textAlign: 'center', marginVertical: Spacing.four }}>
+            Aún no agregas ejercicios. Toca &quot;Añadir ejercicios&quot; para empezar.
+          </Text>
+        }
+        ListHeaderComponent={
+          <View style={styles.encabezadoLista}>
+            <Pressable style={styles.filaNombre} onPress={() => abrirDialogoNombre(false)}>
+              <Text style={[styles.nombre, { color: colors.text }]} numberOfLines={2}>
+                {rutina.nombre}
+              </Text>
+              <View style={[styles.lapiz, { backgroundColor: colors.backgroundElement }]}>
+                <Ionicons name="pencil" size={16} color={colors.textSecondary} />
+              </View>
+            </Pressable>
+
+            <Text style={[styles.etiqueta, { color: colors.textSecondary }]}>Nivel</Text>
+            <View style={styles.filaChips}>
+              {Object.keys(NIVEL_LABEL).map((valor) => (
+                <Pressable
+                  key={valor}
+                  onPress={() => cambiarNivel(valor)}
+                  style={[
+                    styles.chip,
+                    { backgroundColor: rutina.nivel === valor ? colors.tint : colors.backgroundElement, borderColor: colors.border },
+                  ]}>
+                  <Text
+                    style={{
+                      color: rutina.nivel === valor ? colors.tintForeground : colors.text,
+                      fontWeight: '700',
+                      fontSize: 12.5,
+                    }}>
+                    {NIVEL_LABEL[valor]}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <Text style={[styles.etiqueta, { color: colors.textSecondary }]}>Objetivo</Text>
+            <View style={styles.filaChips}>
+              {Object.keys(OBJETIVO_LABEL).map((valor) => (
+                <Pressable
+                  key={valor}
+                  onPress={() => cambiarObjetivo(valor)}
+                  style={[
+                    styles.chip,
+                    { backgroundColor: rutina.objetivo === valor ? colors.tint : colors.backgroundElement, borderColor: colors.border },
+                  ]}>
+                  <Text
+                    style={{
+                      color: rutina.objetivo === valor ? colors.tintForeground : colors.text,
+                      fontWeight: '700',
+                      fontSize: 12.5,
+                    }}>
+                    {OBJETIVO_LABEL[valor]}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            {error && <Text style={{ color: colors.danger, fontSize: 13, marginTop: Spacing.two }}>{error}</Text>}
+
+            <View style={styles.filaEntre}>
+              <Text style={[styles.seccionTitulo, { color: colors.text }]}>
+                Ejercicios <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>({rutina.ejercicios.length})</Text>
+              </Text>
+              <Pressable onPress={() => setModalAgregar(true)} hitSlop={8}>
+                <Text style={{ color: colors.tint, fontWeight: '700', fontSize: 16 }}>Añadir</Text>
+              </Pressable>
+            </View>
+            {rutina.ejercicios.length > 1 && (
+              <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: Spacing.one }}>
+                Mantén presionadas las tres líneas para arrastrar y reordenar.
+              </Text>
+            )}
+          </View>
+        }
+        ListFooterComponent={
+          <Pressable onPress={() => setModalAgregar(true)} style={styles.filaAnadir}>
+            <Ionicons name="add" size={22} color={colors.tint} />
+            <Text style={{ color: colors.tint, fontWeight: '700', fontSize: 17 }}>Añadir ejercicios</Text>
+          </Pressable>
+        }
+      />
 
       <View style={[styles.pieFijo, { backgroundColor: colors.background, borderColor: colors.border }]}>
         <Pressable
-          disabled={rutina.ejercicios.length === 0 || comenzando}
-          onPress={comenzar}
-          style={[
-            styles.botonPrincipal,
-            { backgroundColor: colors.tint, opacity: rutina.ejercicios.length === 0 || comenzando ? 0.5 : 1 },
-          ]}>
-          {comenzando ? (
-            <ActivityIndicator color={colors.tintForeground} />
-          ) : (
-            <Text style={{ color: colors.tintForeground, fontWeight: '800', fontSize: 16 }}>Comenzar entrenamiento</Text>
-          )}
+          disabled={rutina.ejercicios.length === 0}
+          onPress={() => setAgregarARutina(true)}
+          style={[styles.botonAgregarARutina, { borderColor: colors.tint, opacity: rutina.ejercicios.length === 0 ? 0.5 : 1 }]}>
+          <Ionicons name="calendar-outline" size={18} color={colors.tint} />
+          <Text style={{ color: colors.tint, fontSize: 15, fontWeight: '800' }}>Agregar a rutina</Text>
         </Pressable>
+        <View style={styles.filaBotones}>
+          <Pressable
+            disabled={rutina.ejercicios.length === 0}
+            onPress={comenzar}
+            style={[
+              styles.botonSecundario,
+              { borderColor: colors.tint, opacity: rutina.ejercicios.length === 0 ? 0.5 : 1 },
+            ]}>
+            <Text style={{ color: colors.tint, fontSize: 16, fontWeight: '800' }}>Comenzar</Text>
+          </Pressable>
+          <Pressable onPress={guardar} style={[styles.botonPrincipal, { backgroundColor: colors.tint }]}>
+            <Text style={{ color: colors.tintForeground, fontWeight: '800', fontSize: 16 }}>Guardar</Text>
+          </Pressable>
+        </View>
       </View>
+
+      <Modal visible={dialogoNombre} transparent animationType="fade" onRequestClose={() => setDialogoNombre(false)}>
+        <View style={styles.fondoDialogo}>
+          <View style={[styles.dialogo, { backgroundColor: colors.background }]}>
+            <Text style={[styles.dialogoTitulo, { color: colors.text }]}>Añade un nombre a tu plan</Text>
+            <View style={[styles.dialogoCampo, { backgroundColor: colors.backgroundElement }]}>
+              <TextInput
+                value={nombreBorrador}
+                onChangeText={setNombreBorrador}
+                onSubmitEditing={confirmarNombre}
+                placeholder="Ej. Piernas 1"
+                placeholderTextColor={colors.textSecondary}
+                autoFocus
+                maxLength={60}
+                style={[styles.dialogoInput, { color: colors.text }]}
+              />
+              <Ionicons name="pencil" size={18} color={colors.tint} />
+            </View>
+            <View style={styles.dialogoBotones}>
+              <Pressable onPress={() => setDialogoNombre(false)} hitSlop={8}>
+                <Text style={{ color: colors.textSecondary, fontSize: 17, fontWeight: '700' }}>Cancelar</Text>
+              </Pressable>
+              <Pressable onPress={confirmarNombre} disabled={!nombreBorrador.trim()} hitSlop={8}>
+                <Text style={{ color: colors.tint, fontSize: 17, fontWeight: '800', opacity: nombreBorrador.trim() ? 1 : 0.4 }}>
+                  Guardar
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {agregarARutina && <UsarEnDiaModal rutina={rutina} onCerrar={() => setAgregarARutina(false)} />}
 
       {modalAgregar && (
         <AgregarEjercicioModal visible onCerrar={() => setModalAgregar(false)} onAgregar={agregarEjercicio} />
@@ -378,6 +404,74 @@ export default function EditarRutinaPersonal() {
       {detalleEjercicio && (
         <EjercicioDetalleModal ejercicio={detalleEjercicio} onCerrar={() => setDetalleEjercicio(null)} />
       )}
+    </View>
+  );
+}
+
+function FilaEjercicio({
+  item,
+  colors,
+  onDetalle,
+  onQuitar,
+  onCambiarRepeticiones,
+  onCambiarSeries,
+}: {
+  item: RutinaEjercicio;
+  colors: ReturnType<typeof useTheme>;
+  onDetalle: (ejercicio: Ejercicio) => void;
+  onQuitar: (item: RutinaEjercicio) => void;
+  onCambiarRepeticiones: (item: RutinaEjercicio, delta: number) => void;
+  onCambiarSeries: (item: RutinaEjercicio, delta: number) => void;
+}) {
+  const drag = useReorderableDrag();
+  const isActive = useIsActive();
+  const gif = item.ejercicio.gifUrl;
+
+  return (
+    <View
+      style={[
+        styles.filaEjercicio,
+        { backgroundColor: isActive ? colors.backgroundSelected : colors.background, borderColor: colors.border },
+      ]}>
+      <Pressable onLongPress={drag} disabled={isActive} hitSlop={10} style={styles.asa}>
+        <Ionicons name="reorder-three-outline" size={26} color={colors.textSecondary} />
+      </Pressable>
+
+      <Pressable onPress={() => onDetalle(item.ejercicio)} hitSlop={4}>
+        {gif ? (
+          <Image source={{ uri: gif }} style={[styles.miniaturaEjercicio, { backgroundColor: colors.backgroundElement }]} contentFit="cover" />
+        ) : (
+          <View style={[styles.miniaturaEjercicio, styles.iconoEjercicio, { backgroundColor: colors.backgroundElement }]}>
+            <MunecoEjercicio patron={item.ejercicio.patronMovimiento} color={colors.tint} size={36} />
+          </View>
+        )}
+      </Pressable>
+
+      <View style={{ flex: 1, gap: Spacing.two }}>
+        <Pressable onPress={() => onDetalle(item.ejercicio)}>
+          <Text style={{ color: colors.text, fontWeight: '900', fontSize: 16 }} numberOfLines={2}>
+            {item.ejercicio.nombre.toUpperCase()}
+          </Text>
+        </Pressable>
+        <View style={styles.filaSteppers}>
+          <Stepper
+            etiqueta="Repeticiones"
+            valor={item.repeticiones ?? 12}
+            onCambiar={(delta) => onCambiarRepeticiones(item, delta)}
+            colors={colors}
+          />
+          <Stepper
+            etiqueta="Series"
+            valor={item.series ?? 1}
+            onCambiar={(delta) => onCambiarSeries(item, delta)}
+            colors={colors}
+          />
+        </View>
+      </View>
+
+      <Pressable onPress={() => onQuitar(item)} hitSlop={10}>
+        <Ionicons name="trash-outline" size={20} color={colors.danger} />
+      </Pressable>
     </View>
   );
 }
@@ -417,10 +511,21 @@ function Stepper({
 
 const styles = StyleSheet.create({
   centro: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.four },
-  contenedor: { padding: Spacing.four, paddingBottom: 110, gap: Spacing.one },
+  contenedor: { padding: Spacing.four, paddingBottom: 110 },
+  encabezadoLista: { gap: Spacing.one },
   filaEncabezado: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  filaNombre: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
-  nombre: { fontSize: 22, fontWeight: '800', flexShrink: 1 },
+  barraSuperior: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.five,
+    paddingBottom: Spacing.two,
+  },
+  tituloPantalla: { flex: 1, fontSize: 22, fontWeight: '800' },
+  filaNombre: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, marginTop: Spacing.two },
+  nombre: { fontSize: 28, fontWeight: '900', flexShrink: 1 },
+  lapiz: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   inputNombre: { flex: 1, fontSize: 20, fontWeight: '800', borderBottomWidth: 1.5, paddingVertical: 4 },
   etiqueta: { fontSize: 12.5, fontWeight: '700', marginTop: Spacing.three, marginBottom: 4 },
   filaChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one },
@@ -428,11 +533,17 @@ const styles = StyleSheet.create({
   filaEntre: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: Spacing.four },
   seccionTitulo: { fontSize: 17, fontWeight: '800' },
   filaAgregar: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  filaEjercicio: { borderRadius: 18, padding: Spacing.three, gap: Spacing.two },
-  filaEjercicioSuperior: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  filaEjercicio: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.three,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
   asa: { paddingRight: 2 },
-  filaEjercicioInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  iconoEjercicio: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  miniaturaEjercicio: { width: 76, height: 76, borderRadius: 12 },
+  iconoEjercicio: { alignItems: 'center', justifyContent: 'center' },
+  filaAnadir: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.one, paddingVertical: Spacing.four },
   filaSteppers: { flexDirection: 'row', gap: Spacing.three },
   stepper: { alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
   stepperFila: {
@@ -457,5 +568,36 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 8,
   },
-  botonPrincipal: { borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
+  filaBotones: { flexDirection: 'row', gap: Spacing.two },
+  botonAgregarARutina: {
+    flexDirection: 'row',
+    gap: 6,
+    borderRadius: 26,
+    borderWidth: 1.5,
+    paddingVertical: 12,
+    marginBottom: Spacing.two,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  botonSecundario: {
+    flex: 1,
+    borderRadius: 26,
+    borderWidth: 1.5,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  botonPrincipal: { flex: 1, borderRadius: 26, paddingVertical: 16, alignItems: 'center' },
+  fondoDialogo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: Spacing.four },
+  dialogo: { borderRadius: 28, padding: Spacing.four, gap: Spacing.three },
+  dialogoTitulo: { fontSize: 22, fontWeight: '900' },
+  dialogoCampo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 26,
+    paddingHorizontal: Spacing.three,
+    gap: Spacing.two,
+  },
+  dialogoInput: { flex: 1, fontSize: 18, paddingVertical: 14 },
+  dialogoBotones: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: Spacing.five },
 });

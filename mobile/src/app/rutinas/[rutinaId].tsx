@@ -9,6 +9,7 @@ import * as rutinasApi from '@/api/rutinas';
 import type { Rutina } from '@/api/rutinas';
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
 import { SustituirEjercicioModal } from '@/components/entrenamiento/sustituir-ejercicio-modal';
+import { UsarEnDiaModal } from '@/components/rutinas/usar-en-dia-modal';
 import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
 import { CardShadow, Spacing } from '@/constants/theme';
@@ -24,26 +25,17 @@ export default function DetalleRutina() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rutina, setRutina] = useState<Rutina | null>(null);
-  const [miRutinaId, setMiRutinaId] = useState<string | null>(null);
   const [descripcionExpandida, setDescripcionExpandida] = useState(false);
-  const [asignando, setAsignando] = useState(false);
   const [duplicando, setDuplicando] = useState(false);
+  const [usarEnDia, setUsarEnDia] = useState(false);
   const [sustituirItem, setSustituirItem] = useState<{ id: string; nombre: string } | null>(null);
 
   const cargar = useCallback(async () => {
     setError(null);
     try {
-      const [rutinas, mia, propias] = await Promise.all([
-        rutinasApi.listarRutinas(),
-        rutinasApi.obtenerMiRutina(),
-        rutinasApi.misRutinasPersonales(),
-      ]);
-      setMiRutinaId(mia?.id ?? null);
-      setRutina(
-        mia?.id === rutinaId
-          ? mia
-          : (rutinas.find((r) => r.id === rutinaId) ?? propias.find((r) => r.id === rutinaId) ?? null),
-      );
+      // Misma versión que verá al entrenar (ajustada a su nivel, restricciones
+      // y sustituciones), para que duración y calorías coincidan.
+      setRutina(await rutinasApi.obtenerRutinaParaEntrenar(rutinaId));
     } catch (e) {
       setError(e instanceof ErrorApi ? e.message : 'No pudimos cargar esta rutina');
     } finally {
@@ -57,17 +49,9 @@ export default function DetalleRutina() {
     }, [cargar]),
   );
 
-  async function elegirYComenzar() {
+  function comenzar() {
     if (!rutina) return;
-    setAsignando(true);
-    try {
-      if (rutina.id !== miRutinaId) {
-        await rutinasApi.asignarme(rutina.id);
-      }
-      router.push({ pathname: '/entrenamiento/[rutinaId]', params: { rutinaId: rutina.id } });
-    } finally {
-      setAsignando(false);
-    }
+    router.push({ pathname: '/entrenamiento/[rutinaId]', params: { rutinaId: rutina.id } });
   }
 
   async function editarRutina() {
@@ -78,21 +62,7 @@ export default function DetalleRutina() {
     }
     setDuplicando(true);
     try {
-      const nueva = await rutinasApi.crearRutinaPersonal({
-        nombre: rutina.nombre,
-        nivel: rutina.nivel,
-        objetivo: rutina.objetivo,
-      });
-      for (const item of rutina.ejercicios) {
-        await rutinasApi.agregarEjercicioARutina(nueva.id, {
-          ejercicioId: item.ejercicio.id,
-          series: item.series ?? undefined,
-          repeticiones: item.repeticiones ?? undefined,
-          duracionSeg: item.duracionSeg ?? undefined,
-          descansoSeg: item.descansoSeg ?? undefined,
-        });
-      }
-      await rutinasApi.asignarme(nueva.id);
+      const nueva = await rutinasApi.duplicarComoPersonal(rutina.id);
       router.replace({ pathname: '/rutinas/mias/[rutinaId]', params: { rutinaId: nueva.id } });
     } finally {
       setDuplicando(false);
@@ -120,11 +90,6 @@ export default function DetalleRutina() {
     );
   }
 
-  const esMiRutina = rutina.id === miRutinaId;
-  // "Editar esta rutina" y sustituir un ejercicio no dependen de que esta sea
-  // la rutina activa hoy — una rutina propia (creada por el cliente) siempre
-  // se puede editar, esté o no asignada en este momento.
-  const esRutinaPropia = rutina.creadaPorClienteId === cliente?.id;
   const primeraFoto = rutina.imagenUrl ?? rutina.ejercicios[0]?.ejercicio.gifUrl ?? null;
 
   return (
@@ -208,13 +173,11 @@ export default function DetalleRutina() {
                     {item.series ?? 1} serie{(item.series ?? 1) > 1 ? 's' : ''}
                   </Text>
                 </View>
-                {(esRutinaPropia || esMiRutina) && (
-                  <Pressable
-                    onPress={() => setSustituirItem({ id: item.id, nombre: item.ejercicio.nombre })}
-                    hitSlop={8}>
-                    <Ionicons name="swap-horizontal-outline" size={20} color={colors.textSecondary} />
-                  </Pressable>
-                )}
+                <Pressable
+                  onPress={() => setSustituirItem({ id: item.id, nombre: item.ejercicio.nombre })}
+                  hitSlop={8}>
+                  <Ionicons name="swap-horizontal-outline" size={20} color={colors.textSecondary} />
+                </Pressable>
               </View>
             ))}
           </View>
@@ -222,19 +185,20 @@ export default function DetalleRutina() {
       </ScrollView>
 
       <View style={[styles.pieFijo, { backgroundColor: colors.background, borderColor: colors.border }]}>
-        <Pressable
-          style={[styles.botonPrincipal, { backgroundColor: colors.tint, opacity: asignando ? 0.6 : 1 }]}
-          onPress={elegirYComenzar}
-          disabled={asignando}>
-          {asignando ? (
-            <ActivityIndicator color={colors.tintForeground} />
-          ) : (
-            <Text style={[styles.botonPrincipalTexto, { color: colors.tintForeground }]}>
-              {esMiRutina ? 'Comenzar entrenamiento' : 'Elegir esta rutina'}
-            </Text>
-          )}
-        </Pressable>
+        <View style={styles.filaBotones}>
+          <Pressable
+            style={[styles.botonSecundario, { borderColor: colors.tint }]}
+            onPress={() => setUsarEnDia(true)}>
+            <Ionicons name="calendar-outline" size={18} color={colors.tint} />
+            <Text style={{ color: colors.tint, fontSize: 15, fontWeight: '800' }}>Agregar a rutina</Text>
+          </Pressable>
+          <Pressable style={[styles.botonPrincipal, { backgroundColor: colors.tint }]} onPress={comenzar}>
+            <Text style={[styles.botonPrincipalTexto, { color: colors.tintForeground }]}>Comenzar</Text>
+          </Pressable>
+        </View>
       </View>
+
+      {usarEnDia && <UsarEnDiaModal rutina={rutina} onCerrar={() => setUsarEnDia(false)} />}
 
       {sustituirItem && (
         <SustituirEjercicioModal
@@ -300,6 +264,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 8,
   },
-  botonPrincipal: { borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
+  filaBotones: { flexDirection: 'row', gap: Spacing.two },
+  botonSecundario: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 6,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  botonPrincipal: { flex: 1, borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
   botonPrincipalTexto: { fontSize: 16, fontWeight: '800' },
 });

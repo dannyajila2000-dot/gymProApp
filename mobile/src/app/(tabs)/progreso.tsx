@@ -486,6 +486,13 @@ function ModalPasos({
     progresoApi.registrarPasos(cantidad).then(onGuardado);
   });
 
+  // El modal sigue montado aunque esté oculto, así que hay que apagar el
+  // sensor al cerrarlo (guarda los pasos pendientes antes de detenerse).
+  function cerrar() {
+    if (podometro.activo) podometro.detener();
+    onCerrar();
+  }
+
   async function guardarObjetivo() {
     await progresoApi.actualizarMetaSeguimiento({ pasosObjetivo: nuevoObjetivo });
     await onGuardado();
@@ -500,12 +507,12 @@ function ModalPasos({
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onCerrar}>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={cerrar}>
       <View style={styles.modalFondo}>
         <View style={[styles.modalContenido, { backgroundColor: colors.background }]}>
           <View style={styles.filaEntreItems}>
             <Text style={[styles.seccionTitulo, { color: colors.text }]}>Pasos</Text>
-            <Pressable onPress={onCerrar}>
+            <Pressable onPress={cerrar}>
               <Ionicons name="close" size={24} color={colors.text} />
             </Pressable>
           </View>

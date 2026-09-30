@@ -1,7 +1,9 @@
 import { isRunningInExpoGo } from 'expo';
 import { Platform } from 'react-native';
 
+import * as recordatoriosApi from '@/api/recordatorios';
 import type { Recordatorio } from '@/api/recordatorios';
+import type { DiaPlan } from '@/api/rutinas';
 
 // expo-notifications lanza un error al importarse en Android dentro de Expo Go
 // (SDK 53+ removió el soporte de push ahí, y el módulo lo valida en su propio
@@ -54,7 +56,16 @@ function crearTrigger(
   };
 }
 
-export async function sincronizarNotificaciones(recordatorios: Recordatorio[]) {
+function mensajeDelDia(diaSemana: number, plan: DiaPlan[]) {
+  const rutina = plan.find((d) => d.diaSemana === diaSemana)?.rutinaNombre;
+  return rutina ? `Hoy toca: ${rutina}` : 'Tu rutina te está esperando.';
+}
+
+/**
+ * Reprograma los recordatorios. Si se pasa el plan semanal, cada aviso dice la
+ * rutina que toca ese día de la semana.
+ */
+export async function sincronizarNotificaciones(recordatorios: Recordatorio[], plan: DiaPlan[] = []) {
   if (!Notifications) return;
 
   await Notifications.cancelAllScheduledNotificationsAsync();
@@ -69,10 +80,24 @@ export async function sincronizarNotificaciones(recordatorios: Recordatorio[]) {
       await Notifications.scheduleNotificationAsync({
         content: {
           title: '¡Hora de entrenar! 💪',
-          body: 'Tu rutina te está esperando.',
+          body: mensajeDelDia(dia, plan),
         },
         trigger: crearTrigger(dia, hora, minuto),
       });
     }
   }
+}
+
+/**
+ * Mantiene los avisos al día con el plan semanal (la rutina automática rota
+ * cada semana y el usuario puede cambiarla). Se llama al abrir Inicio; no hace
+ * nada si no hay recordatorios activos o falta el permiso.
+ */
+export async function resincronizarConPlan(plan: DiaPlan[]) {
+  if (!Notifications) return;
+  const permiso = await Notifications.getPermissionsAsync();
+  if (!permiso.granted) return;
+  const recordatorios = await recordatoriosApi.listarRecordatorios();
+  if (!recordatorios.some((r) => r.activo)) return;
+  await sincronizarNotificaciones(recordatorios, plan);
 }

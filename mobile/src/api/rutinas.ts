@@ -59,6 +59,10 @@ export function obtenerMiRutina() {
   return solicitar<Rutina | null>('/rutinas/mi-rutina', { autenticado: true });
 }
 
+export function obtenerRutinaParaEntrenar(rutinaId: string) {
+  return solicitar<Rutina | null>(`/rutinas/entrenar/${rutinaId}`, { autenticado: true });
+}
+
 export function asignarme(rutinaId: string) {
   return solicitar<{ id: string }>('/rutinas/asignarme', {
     metodo: 'POST',
@@ -138,6 +142,10 @@ export function misRutinasPersonales() {
 
 export function crearRutinaPersonal(datos: { nombre: string; nivel?: string; objetivo?: string }) {
   return solicitar<Rutina>('/rutinas/mias', { metodo: 'POST', autenticado: true, cuerpo: datos });
+}
+
+export function duplicarComoPersonal(rutinaId: string) {
+  return solicitar<Rutina>(`/rutinas/duplicar/${rutinaId}`, { metodo: 'POST', autenticado: true });
 }
 
 export function actualizarRutinaPersonal(

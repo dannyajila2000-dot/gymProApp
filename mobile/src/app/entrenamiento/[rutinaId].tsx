@@ -4,7 +4,7 @@ import * as Speech from 'expo-speech';
 import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ErrorApi } from '@/api/client';
 import { useTheme } from '@/hooks/use-theme';
@@ -135,6 +135,10 @@ function Temporizador({
   );
 }
 
+function minutosDesde(inicio: number) {
+  return Math.max(1, Math.round((Date.now() - inicio) / 60000));
+}
+
 export default function Entrenamiento() {
   const colors = useTheme();
   const { cliente } = useSesion();
@@ -164,10 +168,10 @@ export default function Entrenamiento() {
   useEffect(() => {
     let cancelado = false;
     rutinasApi
-      .obtenerMiRutina()
+      .obtenerRutinaParaEntrenar(rutinaId)
       .then((mia) => {
         if (cancelado) return;
-        setRutina(mia && mia.id === rutinaId ? mia : null);
+        setRutina(mia);
         inicioRef.current = Date.now();
       })
       .catch((e) => {
@@ -185,7 +189,9 @@ export default function Entrenamiento() {
   const calentamientoActivo = cliente?.calentamientoActivo ?? true;
   const pasos = useMemo(() => {
     if (!rutina) return [];
-    return [...(calentamientoActivo ? construirPasosCalentamiento() : []), ...construirPasos(rutina)];
+    // Una rutina de calentamiento/estiramiento ya es el calentamiento: no se le antepone otro.
+    const agregarCalentamiento = calentamientoActivo && rutina.objetivo !== 'calentamiento';
+    return [...(agregarCalentamiento ? construirPasosCalentamiento() : []), ...construirPasos(rutina)];
   }, [rutina, calentamientoActivo]);
   const paso = pasos[pasoActual];
 
@@ -328,19 +334,30 @@ export default function Entrenamiento() {
 
   async function finalizar() {
     if (!rutina) return;
-    const duracionMin = Math.max(1, Math.round((Date.now() - inicioRef.current) / 60000));
-    const calorias = caloriasEstimadas(rutina);
+    const duracionMin = minutosDesde(inicioRef.current);
+    await guardarSesion(rutina, duracionMin, caloriasEstimadas(rutina));
+  }
 
+  // Recibe los valores ya calculados para que "Reintentar" guarde la misma
+  // duración y no la que sigue corriendo mientras el aviso está abierto.
+  async function guardarSesion(rutinaEntrenada: Rutina, duracionMin: number, calorias: number) {
     setGuardando(true);
     try {
       await rutinasApi.registrarSesion({
-        rutinaId: rutina.id,
+        rutinaId: rutinaEntrenada.id,
         duracionMin,
         caloriasEstimadas: calorias,
       });
+      setFinalizado({ duracionMin, caloriasEstimadas: calorias });
+    } catch {
+      // No marcamos el entrenamiento como completado si no se guardó: así el
+      // progreso y la racha no quedan desfasados sin que el usuario se entere.
+      Alert.alert('No se pudo guardar', 'Revisa tu conexión e inténtalo de nuevo para no perder tu entrenamiento.', [
+        { text: 'Salir sin guardar', style: 'destructive', onPress: () => router.back() },
+        { text: 'Reintentar', onPress: () => guardarSesion(rutinaEntrenada, duracionMin, calorias) },
+      ]);
     } finally {
       setGuardando(false);
-      setFinalizado({ duracionMin, caloriasEstimadas: calorias });
     }
   }
 

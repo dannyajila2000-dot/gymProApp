@@ -6,4 +6,5 @@ export const OBJETIVO_LABEL: Record<string, string> = {
   tren_inferior: 'tren inferior',
   cardio: 'cardio',
   core: 'core',
+  calentamiento: 'calentamiento y estiramiento',
 };

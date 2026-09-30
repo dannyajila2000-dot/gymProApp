@@ -1,6 +1,7 @@
 import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -19,11 +20,31 @@ export default function RootLayout() {
         <StatusBar style="dark" />
         <AnimatedSplashOverlay />
         <SessionProvider>
+          <SplashAlIniciarSesion />
           <RootNavigator />
         </SessionProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );
+}
+
+// Repite la bienvenida cuando el usuario inicia sesión (o se registra) con la
+// app ya abierta. Al abrir la app con sesión guardada no aplica: ahí ya se
+// mostró el splash inicial.
+function SplashAlIniciarSesion() {
+  const { cliente, isLoading } = useSesion();
+  const [habiaSesion, setHabiaSesion] = useState<boolean | null>(null);
+  const [vez, setVez] = useState(0);
+
+  // Ajuste de estado durante el render (patrón oficial de React para reaccionar
+  // a un cambio de valor sin useEffect).
+  const haySesion = !!cliente;
+  if (!isLoading && habiaSesion !== haySesion) {
+    setHabiaSesion(haySesion);
+    if (habiaSesion === false && haySesion) setVez((v) => v + 1);
+  }
+
+  return vez > 0 ? <AnimatedSplashOverlay key={vez} conSplashNativo={false} /> : null;
 }
 
 function RootNavigator() {
@@ -45,9 +66,10 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="entrenamiento/[rutinaId]" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="rutinas/[rutinaId]" />
-        <Stack.Screen name="rutinas/nueva" />
+        <Stack.Screen name="rutinas/disenar" />
+        <Stack.Screen name="rutinas/categorias" />
+        <Stack.Screen name="rutinas/historial" />
         <Stack.Screen name="rutinas/mias/[rutinaId]" />
-        <Stack.Screen name="rutinas/mi-semana" />
         <Stack.Screen name="ajustes" />
       </Stack.Protected>
 

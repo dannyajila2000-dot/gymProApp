@@ -16,6 +16,7 @@ import {
 
 import { ErrorApi } from '@/api/client';
 import * as recordatoriosApi from '@/api/recordatorios';
+import * as rutinasApi from '@/api/rutinas';
 import type { Recordatorio } from '@/api/recordatorios';
 import {
   notificacionesDisponibles,
@@ -48,7 +49,9 @@ export default function Recordatorios() {
     try {
       const datos = await recordatoriosApi.listarRecordatorios();
       setRecordatorios(datos);
-      await sincronizarNotificaciones(datos);
+      // El plan es opcional: si falla, los avisos salen con el texto genérico.
+      const plan = await rutinasApi.obtenerPlanSemana().catch(() => []);
+      await sincronizarNotificaciones(datos, plan);
     } catch (e) {
       setError(e instanceof ErrorApi ? e.message : 'No pudimos cargar tus recordatorios');
     } finally {

@@ -1,5 +1,9 @@
 import type { Rutina } from '@/api/rutinas';
 
+// Misma fórmula que backend/src/rutinas/estimaciones-rutina.util.ts (aquí se
+// necesita al instante, al editar una rutina). Si cambias una, cambia la otra;
+// el test del backend fija los valores esperados.
+
 export function duracionEstimadaMin(rutina: Rutina): number {
   const segundos = rutina.ejercicios.reduce((suma, item) => {
     const trabajo = item.duracionSeg ?? (item.repeticiones ?? 10) * 3;

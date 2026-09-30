@@ -9,8 +9,10 @@ import Svg, { Line } from 'react-native-svg';
 import * as progresoApi from '@/api/progreso';
 import * as rutinasApi from '@/api/rutinas';
 import type { DiaPlan } from '@/api/rutinas';
+import { CambiarRutinaDiaModal } from '@/components/rutinas/cambiar-rutina-dia-modal';
 import { useSesion } from '@/context/auth-context';
-import { DIAS_NOMBRE } from '@/constants/dias';
+import { resincronizarConPlan } from '@/lib/notificaciones';
+import { DIAS_NOMBRE, DIAS_NOMBRE_LARGO } from '@/constants/dias';
 import { useTheme } from '@/hooks/use-theme';
 import { CardShadow, FotoFlotanteShadow, Spacing } from '@/constants/theme';
 
@@ -29,6 +31,8 @@ export default function Inicio() {
   const [refrescando, setRefrescando] = useState(false);
   const [plan, setPlan] = useState<DiaPlan[]>([]);
   const [racha, setRacha] = useState(0);
+  const [cambiandoDia, setCambiandoDia] = useState<number | null>(null);
+  const [editandoSemana, setEditandoSemana] = useState(false);
 
   const cargar = useCallback(async () => {
     try {
@@ -37,6 +41,8 @@ export default function Inicio() {
         progresoApi.resumenDeLaSemana(),
       ]);
       setPlan(semana);
+      // Mantiene los recordatorios con la rutina que toca; un fallo no debe afectar Inicio.
+      resincronizarConPlan(semana).catch(() => {});
       setRacha(resumen.racha);
     } finally {
       setCargando(false);
@@ -50,9 +56,13 @@ export default function Inicio() {
     }, [cargar]),
   );
 
+  // Los días anteriores a hoy ya pasaron: quedan bloqueados (sin cambiar rutina).
+  const indiceHoy = plan.findIndex((d) => d.esHoy);
+  const esPasado = (indice: number) => indiceHoy !== -1 && indice < indiceHoy;
+
   function verRutinaDelDia(dia: DiaPlan) {
     if (!dia.rutinaId) {
-      router.push('/(tabs)/rutina');
+      setCambiandoDia(dia.diaSemana);
       return;
     }
     router.push({ pathname: '/rutinas/[rutinaId]', params: { rutinaId: dia.rutinaId } });
@@ -95,7 +105,50 @@ export default function Inicio() {
         )}
       </View>
 
-      <Text style={[styles.seccionTitulo, { color: colors.text }]}>Tu semana</Text>
+      <View style={styles.filaSeccion}>
+        <Text style={[styles.seccionTitulo, styles.seccionTituloEnFila, { color: colors.text }]}>Tu semana</Text>
+        <Pressable onPress={() => setEditandoSemana((v) => !v)} hitSlop={8} style={styles.botonEditarSemana}>
+          <Ionicons name={editandoSemana ? 'chevron-up' : 'calendar-outline'} size={16} color={colors.tint} />
+          <Text style={{ color: colors.tint, fontWeight: '700', fontSize: 13 }}>
+            {editandoSemana ? 'Cerrar' : 'Editar mi semana'}
+          </Text>
+        </Pressable>
+      </View>
+
+      {editandoSemana && (
+        <View style={[styles.panelSemana, CardShadow, { backgroundColor: colors.backgroundElement }]}>
+          <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>
+            Cada día tiene una rutina: la automática según tu nivel y objetivo, o la que elijas tú. Toca un día para
+            cambiarla.
+          </Text>
+          {plan.map((dia, indice) => (
+            <Pressable
+              key={dia.diaSemana}
+              disabled={esPasado(indice)}
+              onPress={() => setCambiandoDia(dia.diaSemana)}
+              style={[styles.filaEdicionDia, { borderColor: colors.border, opacity: esPasado(indice) ? 0.5 : 1 }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.text, fontWeight: '700' }}>
+                  {DIAS_NOMBRE_LARGO[dia.diaSemana]}
+                  {dia.esHoy ? ' · hoy' : ''}
+                </Text>
+                <Text
+                  style={{ color: dia.fijadaPorCliente ? colors.tint : colors.textSecondary, fontSize: 12.5, marginTop: 2 }}
+                  numberOfLines={1}>
+                  {dia.rutinaNombre
+                    ? `${dia.fijadaPorCliente ? 'Personalizada' : 'Automática'}: ${dia.rutinaNombre}`
+                    : 'Descanso'}
+                </Text>
+              </View>
+              <Ionicons
+                name={esPasado(indice) ? 'lock-closed' : 'chevron-forward'}
+                size={esPasado(indice) ? 16 : 18}
+                color={colors.textSecondary}
+              />
+            </Pressable>
+          ))}
+        </View>
+      )}
 
       <View style={styles.lineaTiempo}>
         {plan.map((dia, indice) => (
@@ -125,11 +178,17 @@ export default function Inicio() {
               dia={dia}
               foto={dia.esDiaEntrenamiento ? FOTOS_ENTRENANDO[indice % FOTOS_ENTRENANDO.length] : FOTO_DESCANSO}
               onVerRutina={() => verRutinaDelDia(dia)}
+              onCambiarRutina={() => setCambiandoDia(dia.diaSemana)}
+              pasado={esPasado(indice)}
               colors={colors}
             />
           </View>
         ))}
       </View>
+
+      {cambiandoDia !== null && (
+        <CambiarRutinaDiaModal diaSemana={cambiandoDia} onCerrar={() => setCambiandoDia(null)} onListo={cargar} />
+      )}
 
       {hoyIndice === -1 && (
         <Text style={{ color: colors.textSecondary, textAlign: 'center', marginTop: Spacing.two }}>
@@ -152,11 +211,15 @@ function DiaTarjeta({
   dia,
   foto,
   onVerRutina,
+  onCambiarRutina,
+  pasado,
   colors,
 }: {
   dia: DiaPlan;
   foto: number;
   onVerRutina: () => void;
+  onCambiarRutina: () => void;
+  pasado: boolean;
   colors: ReturnType<typeof useTheme>;
 }) {
   const destacar = dia.esHoy && !dia.completado;
@@ -164,7 +227,7 @@ function DiaTarjeta({
 
   if (!dia.esDiaEntrenamiento) {
     return (
-      <View style={[styles.tarjetaDia, CardShadow]}>
+      <View style={[styles.tarjetaDia, CardShadow, pasado && { opacity: 0.55 }]}>
         <View style={styles.tarjetaFondo}>
           <LinearGradient
             colors={[colors.backgroundElement, colors.energiaSuave]}
@@ -184,6 +247,17 @@ function DiaTarjeta({
               {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
             </Text>
             <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>¡Día de descanso!</Text>
+            {pasado ? (
+              <View style={styles.botonCambiar}>
+                <Ionicons name="lock-closed" size={13} color={colors.textSecondary} />
+                <Text style={{ color: colors.textSecondary, fontWeight: '700', fontSize: 12.5 }}>Día pasado</Text>
+              </View>
+            ) : (
+              <Pressable onPress={onCambiarRutina} hitSlop={8} style={styles.botonCambiar}>
+                <Ionicons name="add-circle-outline" size={14} color={colors.tint} />
+                <Text style={{ color: colors.tint, fontWeight: '700', fontSize: 12.5 }}>Elegir una rutina</Text>
+              </Pressable>
+            )}
           </View>
         </View>
       </View>
@@ -191,7 +265,10 @@ function DiaTarjeta({
   }
 
   return (
-    <Pressable onPress={onVerRutina} style={[styles.tarjetaDia, CardShadow]}>
+    <Pressable
+      onPress={onVerRutina}
+      disabled={pasado}
+      style={[styles.tarjetaDia, CardShadow, pasado && !dia.completado && { opacity: 0.55 }]}>
       <View style={styles.tarjetaFondo}>
         {destacar && (
           <LinearGradient
@@ -277,6 +354,22 @@ function DiaTarjeta({
               />
             </>
           )}
+
+          {pasado && !dia.completado && (
+            <View style={styles.botonCambiar}>
+              <Ionicons name="lock-closed" size={13} color={colors.textSecondary} />
+              <Text style={{ color: colors.textSecondary, fontWeight: '700', fontSize: 12.5 }}>Día pasado</Text>
+            </View>
+          )}
+
+          {!dia.completado && !pasado && (
+            <Pressable onPress={onCambiarRutina} hitSlop={8} style={styles.botonCambiar}>
+              <Ionicons name="swap-horizontal" size={14} color={destacar ? '#ffffff' : colors.tint} />
+              <Text style={{ color: destacar ? '#ffffff' : colors.tint, fontWeight: '700', fontSize: 12.5 }}>
+                {dia.fijadaPorCliente ? 'Personalizada · Cambiar' : 'Automática · Cambiar'}
+              </Text>
+            </Pressable>
+          )}
         </View>
 
         {destacar && (
@@ -311,6 +404,23 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 6,
     paddingHorizontal: 12,
+  },
+  botonCambiar: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: Spacing.two },
+  filaSeccion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: Spacing.five,
+    marginBottom: Spacing.two,
+  },
+  seccionTituloEnFila: { marginTop: 0, marginBottom: 0 },
+  botonEditarSemana: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  panelSemana: { borderRadius: 16, padding: Spacing.three, gap: Spacing.one, marginBottom: Spacing.two },
+  filaEdicionDia: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.two,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   seccionTitulo: { fontSize: 18, fontWeight: '800', marginTop: Spacing.five, marginBottom: Spacing.two },
   // paddingTop deja aire para que la foto de la primera tarjeta pueda

@@ -1,448 +1,285 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
-import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
-import { useTheme } from '@/hooks/use-theme';
-import { CardShadow, Spacing } from '@/constants/theme';
-import * as rutinasApi from '@/api/rutinas';
-import type { Rutina as RutinaModelo, SesionEntrenamiento } from '@/api/rutinas';
-import { OBJETIVO_LABEL } from '@/constants/objetivos';
+import type { Rutina } from '@/api/rutinas';
+import { RutinaFila, RutinaTarjetaCarrusel } from '@/components/rutinas/tarjetas-rutina';
+import {
+  CATEGORIA_MIS_RUTINAS,
+  CATEGORIA_PARA_TI,
+  CATEGORIAS,
+  CATEGORIAS_CARRUSEL,
+  DURACIONES,
+  ZONAS,
+} from '@/constants/categorias-rutinas';
 import { NIVEL_LABEL } from '@/constants/niveles';
-import { duracionEstimadaMin } from '@/lib/rutina-utils';
+import { Spacing } from '@/constants/theme';
+import { useCatalogoRutinas } from '@/hooks/use-catalogo-rutinas';
+import { useTheme } from '@/hooks/use-theme';
 
-export default function Rutina() {
+type Parametros = { categoria?: string; nivel?: string; duracion?: string; buscar?: string };
+
+function abrirCategorias(parametros: Parametros = {}) {
+  router.push({ pathname: '/rutinas/categorias', params: parametros });
+}
+
+export default function Descubre() {
   const colors = useTheme();
-  const [cargando, setCargando] = useState(true);
-  const [refrescando, setRefrescando] = useState(false);
-  const [miRutina, setMiRutina] = useState<RutinaModelo | null>(null);
-  const [disponibles, setDisponibles] = useState<RutinaModelo[]>([]);
-  const [propias, setPropias] = useState<RutinaModelo[]>([]);
-  const [historial, setHistorial] = useState<SesionEntrenamiento[]>([]);
-  const [asignando, setAsignando] = useState<string | null>(null);
-  const [filtroObjetivo, setFiltroObjetivo] = useState<string | null>(null);
-  const [filtroNivel, setFiltroNivel] = useState<string | null>(null);
-
-  const cargar = useCallback(async () => {
-    try {
-      const [mia, todas, mias, hist] = await Promise.all([
-        rutinasApi.obtenerMiRutina(),
-        rutinasApi.listarRutinas(),
-        rutinasApi.misRutinasPersonales(),
-        rutinasApi.obtenerHistorial(),
-      ]);
-      setMiRutina(mia);
-      setDisponibles(todas);
-      setPropias(mias);
-      setHistorial(hist.slice(0, 5));
-    } finally {
-      setCargando(false);
-      setRefrescando(false);
-    }
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      cargar();
-    }, [cargar]),
-  );
-
-  async function elegirRutina(rutinaId: string) {
-    setAsignando(rutinaId);
-    try {
-      await rutinasApi.asignarme(rutinaId);
-      await cargar();
-    } finally {
-      setAsignando(null);
-    }
-  }
+  const { width } = useWindowDimensions();
+  const { cargando, disponibles, propias, paraTi } = useCatalogoRutinas();
 
   if (cargando) {
     return (
-      <View style={[styles.contenedorCentro, { backgroundColor: colors.background }]}>
+      <View style={[styles.centro, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.tint} size="large" />
       </View>
     );
   }
 
-  const otrasRutinas = disponibles.filter((r) => r.id !== miRutina?.id);
-  const objetivosDisponibles = [...new Set(otrasRutinas.map((r) => r.objetivo))];
-  const nivelesDisponibles = [...new Set(otrasRutinas.map((r) => r.nivel))];
-  const rutinasFiltradas = otrasRutinas.filter(
-    (r) => (!filtroObjetivo || r.objetivo === filtroObjetivo) && (!filtroNivel || r.nivel === filtroNivel),
-  );
+  const anchoTarjeta = width * 0.78;
+  const anchoColumnaParaTi = width * 0.86;
+  const porObjetivo = (objetivo: string) => disponibles.filter((r) => r.objetivo === objetivo);
+  const zonasConRutinas = ZONAS.filter((z) => porObjetivo(z).length > 0);
+  const carruseles = CATEGORIAS_CARRUSEL.filter((c) => porObjetivo(c).length > 0);
+
+  // "Elegido para ti" se muestra de a 2 filas por columna, como un carrusel.
+  const columnasParaTi: Rutina[][] = [];
+  for (let i = 0; i < paraTi.length; i += 2) columnasParaTi.push(paraTi.slice(i, i + 2));
 
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.contenedor}
-      refreshControl={
-        <RefreshControl
-          refreshing={refrescando}
-          onRefresh={() => {
-            setRefrescando(true);
-            cargar();
-          }}
-          tintColor={colors.tint}
-        />
-      }>
+    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.contenedor}>
       <View style={styles.filaTitulo}>
-        <Text style={[styles.titulo, { color: colors.text }]}>Rutina</Text>
-        <Pressable onPress={() => router.push('/rutinas/mi-semana')} style={styles.filaMiSemana} hitSlop={8}>
-          <Ionicons name="calendar-outline" size={16} color={colors.tint} />
-          <Text style={{ color: colors.tint, fontWeight: '700', fontSize: 13 }}>Mi semana</Text>
+        <Text style={[styles.titulo, { color: colors.text }]}>Rutinas</Text>
+        <Pressable onPress={() => router.push('/rutinas/historial')} hitSlop={10}>
+          <Ionicons name="time-outline" size={28} color={colors.text} />
         </Pressable>
       </View>
 
-      {miRutina ? (
-        <View style={[styles.tarjetaHero, CardShadow, { backgroundColor: colors.tint }]}>
-          <View style={styles.heroFilaSuperior}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.heroNivel, { color: colors.tintForeground }]}>
-                {NIVEL_LABEL[miRutina.nivel] ?? miRutina.nivel}
-              </Text>
-              <Text style={[styles.heroTitulo, { color: colors.tintForeground }]}>{miRutina.nombre}</Text>
-              <Text style={[styles.heroSubtitulo, { color: colors.tintForeground }]}>
-                {miRutina.ejercicios.length} ejercicios · ~{duracionEstimadaMin(miRutina)} min
-              </Text>
-            </View>
-            {miRutina.ejercicios[0]?.ejercicio.gifUrl && (
-              <View style={[styles.heroFotoFondo, { borderColor: colors.tintForeground }]}>
-                <Image source={{ uri: miRutina.ejercicios[0].ejercicio.gifUrl }} style={styles.heroFoto} contentFit="cover" />
-              </View>
-            )}
-          </View>
-          <Pressable
-            style={[styles.botonIniciar, { backgroundColor: colors.tintForeground }]}
-            onPress={() =>
-              router.push({ pathname: '/entrenamiento/[rutinaId]', params: { rutinaId: miRutina.id } })
-            }>
-            <Text style={[styles.botonIniciarTexto, { color: colors.tint }]}>INICIAR ENTRENAMIENTO</Text>
-            <Ionicons name="arrow-forward" size={18} color={colors.tint} />
-          </Pressable>
-        </View>
-      ) : (
-        <View style={[styles.tarjetaVacia, CardShadow, { backgroundColor: colors.backgroundElement }]}>
-          <Ionicons name="barbell-outline" size={32} color={colors.textSecondary} />
-          <Text style={[styles.tarjetaVaciaTexto, { color: colors.textSecondary }]}>
-            Aún no tienes una rutina activa. Elige una para empezar a entrenar.
-          </Text>
-        </View>
+      <Pressable
+        onPress={() => abrirCategorias({ buscar: '1' })}
+        style={[styles.buscador, styles.margenLateral, { backgroundColor: colors.backgroundElement }]}>
+        <Ionicons name="search" size={20} color={colors.textSecondary} />
+        <Text style={{ color: colors.textSecondary, fontSize: 16 }}>Buscar rutinas</Text>
+      </Pressable>
+
+      {zonasConRutinas.length > 0 && (
+        <>
+          <Text style={[styles.seccionTitulo, styles.margenLateral, { color: colors.text }]}>Zona principal</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carrusel}>
+            {zonasConRutinas.map((zona) => {
+              const foto = porObjetivo(zona)[0];
+              const uri = foto.imagenUrl ?? foto.ejercicios[0]?.ejercicio.gifUrl ?? null;
+              return (
+                <Pressable key={zona} onPress={() => abrirCategorias({ categoria: zona })} style={styles.zona}>
+                  <View style={[styles.zonaCirculo, { backgroundColor: colors.backgroundSelected }]}>
+                    {uri ? (
+                      <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                    ) : (
+                      <Ionicons name={CATEGORIAS[zona].icono} size={32} color={colors.tint} />
+                    )}
+                  </View>
+                  <Text style={[styles.zonaNombre, { color: colors.text }]} numberOfLines={2}>
+                    {CATEGORIAS[zona].titulo}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </>
       )}
 
-      <Text style={[styles.seccionTitulo, { color: colors.text }]}>
-        {miRutina ? 'Otras rutinas' : 'Elige tu rutina'}
-      </Text>
-
-      {otrasRutinas.length > 0 && (
+      {paraTi.length > 0 && (
         <>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filaChips}>
-            <ChipFiltro
-              activo={filtroObjetivo === null}
-              texto="Todos"
-              onPress={() => setFiltroObjetivo(null)}
-              colors={colors}
-            />
-            {objetivosDisponibles.map((objetivo) => (
-              <ChipFiltro
-                key={objetivo}
-                activo={filtroObjetivo === objetivo}
-                texto={OBJETIVO_LABEL[objetivo] ?? objetivo}
-                onPress={() => setFiltroObjetivo((actual) => (actual === objetivo ? null : objetivo))}
-                colors={colors}
-              />
+          <Text style={[styles.seccionTitulo, styles.margenLateral, { color: colors.text }]}>Elegido para ti</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carrusel}>
+            {columnasParaTi.map((columna, indice) => (
+              <View key={indice} style={{ width: anchoColumnaParaTi }}>
+                {columna.map((rutina, fila) => (
+                  <RutinaFila
+                    key={rutina.id}
+                    rutina={rutina}
+                    conSeparador={fila < columna.length - 1}
+                    onPress={() => abrirCategorias({ categoria: CATEGORIA_PARA_TI })}
+                  />
+                ))}
+              </View>
             ))}
           </ScrollView>
-          {nivelesDisponibles.length > 1 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filaChips}>
-              <ChipFiltro
-                activo={filtroNivel === null}
-                texto="Todos los niveles"
-                onPress={() => setFiltroNivel(null)}
-                colors={colors}
-              />
-              {nivelesDisponibles.map((nivel) => (
-                <ChipFiltro
-                  key={nivel}
-                  activo={filtroNivel === nivel}
-                  texto={NIVEL_LABEL[nivel] ?? nivel}
-                  onPress={() => setFiltroNivel((actual) => (actual === nivel ? null : nivel))}
-                  colors={colors}
-                />
-              ))}
-            </ScrollView>
-          )}
         </>
       )}
 
-      <View style={{ gap: Spacing.two }}>
-        {rutinasFiltradas.map((rutina) => (
-          <Pressable
-            key={rutina.id}
-            onPress={() => router.push({ pathname: '/rutinas/[rutinaId]', params: { rutinaId: rutina.id } })}
-            style={[styles.tarjetaRutina, CardShadow, { backgroundColor: colors.backgroundElement }]}>
-            {rutina.ejercicios[0]?.ejercicio.gifUrl && (
-              <Image
-                source={{ uri: rutina.ejercicios[0].ejercicio.gifUrl }}
-                style={[styles.miniaturaFoto, { backgroundColor: colors.backgroundSelected }]}
-                contentFit="cover"
-              />
-            )}
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text style={[styles.tarjetaRutinaNivel, { color: colors.tint }]}>
-                {NIVEL_LABEL[rutina.nivel] ?? rutina.nivel}
-              </Text>
-              <Text style={[styles.tarjetaRutinaNombre, { color: colors.text }]}>{rutina.nombre}</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
-                {rutina.ejercicios.length} ejercicios · ~{duracionEstimadaMin(rutina)} min
-              </Text>
-            </View>
-            <Pressable
-              disabled={asignando === rutina.id}
-              onPress={() => elegirRutina(rutina.id)}
-              style={[styles.botonElegir, { borderColor: colors.tint }]}>
-              {asignando === rutina.id ? (
-                <ActivityIndicator color={colors.tint} size="small" />
-              ) : (
-                <Text style={[styles.botonElegirTexto, { color: colors.tint }]}>Elegir</Text>
-              )}
+      {carruseles.map((categoria) => (
+        <View key={categoria}>
+          <View style={[styles.filaSeccion, styles.margenLateral]}>
+            <Text style={[styles.seccionTitulo, styles.sinMargen, { color: colors.text }]}>
+              {CATEGORIAS[categoria].titulo}
+            </Text>
+            <Pressable onPress={() => abrirCategorias({ categoria })} hitSlop={8}>
+              <Text style={[styles.mas, { color: colors.tint }]}>Más</Text>
             </Pressable>
-          </Pressable>
-        ))}
-        {otrasRutinas.length === 0 && (
-          <Text style={{ color: colors.textSecondary }}>No hay más rutinas disponibles por ahora.</Text>
-        )}
-        {otrasRutinas.length > 0 && rutinasFiltradas.length === 0 && (
-          <Text style={{ color: colors.textSecondary }}>Ninguna rutina combina con este filtro.</Text>
-        )}
-      </View>
+          </View>
+          <Carrusel rutinas={porObjetivo(categoria)} ancho={anchoTarjeta} onPress={() => abrirCategorias({ categoria })} />
+        </View>
+      ))}
 
-      <Text style={[styles.seccionTitulo, { color: colors.text }]}>Diseña tu propio entrenamiento</Text>
-      <Pressable
-        onPress={() => router.push('/rutinas/nueva')}
-        style={[styles.tarjetaCrear, { backgroundColor: colors.backgroundElement, borderColor: colors.tint }]}>
-        <Ionicons name="add-circle-outline" size={22} color={colors.tint} />
-        <Text style={{ color: colors.tint, fontWeight: '700' }}>Crear una rutina nueva</Text>
-      </Pressable>
       {propias.length > 0 && (
-        <View style={{ gap: Spacing.two }}>
-          {propias.map((rutina) => (
-            <Pressable
-              key={rutina.id}
-              onPress={() => router.push({ pathname: '/rutinas/mias/[rutinaId]', params: { rutinaId: rutina.id } })}
-              style={[styles.tarjetaRutina, CardShadow, { backgroundColor: colors.backgroundElement }]}>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={[styles.tarjetaRutinaNombre, { color: colors.text }]}>{rutina.nombre}</Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{rutina.ejercicios.length} ejercicios</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+        <View>
+          <View style={[styles.filaSeccion, styles.margenLateral]}>
+            <Text style={[styles.seccionTitulo, styles.sinMargen, { color: colors.text }]}>Mis rutinas</Text>
+            <Pressable onPress={() => abrirCategorias({ categoria: CATEGORIA_MIS_RUTINAS })} hitSlop={8}>
+              <Text style={[styles.mas, { color: colors.tint }]}>Más</Text>
             </Pressable>
-          ))}
+          </View>
+          <Carrusel
+            rutinas={propias}
+            ancho={anchoTarjeta}
+            onPress={() => abrirCategorias({ categoria: CATEGORIA_MIS_RUTINAS })}
+          />
         </View>
       )}
 
-      {historial.length > 0 && (
-        <>
-          <Text style={[styles.seccionTitulo, { color: colors.text }]}>Historial reciente</Text>
-          <View style={{ gap: Spacing.one }}>
-            {historial.map((sesion) => (
-              <View key={sesion.id} style={[styles.filaHistorial, { borderColor: colors.border }]}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.text, fontWeight: '600' }}>{sesion.rutina.nombre}</Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
-                    {new Date(sesion.completadaEn).toLocaleDateString('es-ES', {
-                      day: '2-digit',
-                      month: 'short',
-                    })}
-                  </Text>
-                </View>
-                <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{sesion.duracionMin} min</Text>
-                <Text style={{ color: colors.tint, fontWeight: '700', fontSize: 12 }}>
-                  {Math.round(sesion.caloriasEstimadas)} kcal
-                </Text>
-              </View>
-            ))}
+      <Text style={[styles.seccionTitulo, styles.margenLateral, { color: colors.text }]}>Diseña entrenamientos</Text>
+      <Pressable onPress={() => router.push('/rutinas/disenar')} style={styles.margenLateral}>
+        <LinearGradient
+          colors={[colors.energia, colors.energiaOscuro]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.banner}>
+          <Ionicons name="barbell" size={120} color="rgba(255,255,255,0.18)" style={styles.bannerIcono} />
+          <Text style={styles.bannerTexto}>CREA EL TUYO</Text>
+          <View style={styles.bannerBoton}>
+            <Text style={[styles.bannerBotonTexto, { color: colors.text }]}>VAMOS</Text>
           </View>
-        </>
-      )}
+        </LinearGradient>
+      </Pressable>
+
+      <Text style={[styles.seccionTitulo, styles.margenLateral, { color: colors.text }]}>Niveles</Text>
+      <View style={[styles.filaTarjetas, styles.margenLateral]}>
+        {Object.keys(NIVEL_LABEL).map((nivel, indice) => (
+          <Pressable
+            key={nivel}
+            onPress={() => abrirCategorias({ nivel })}
+            style={[styles.tarjetaFiltro, { backgroundColor: indice === 1 ? colors.backgroundSelected : colors.energiaSuave }]}>
+            <View style={styles.barras}>
+              {[0, 1, 2].map((barra) => (
+                <View
+                  key={barra}
+                  style={[
+                    styles.barra,
+                    { height: 8 + barra * 5, backgroundColor: barra <= indice ? colors.tint : colors.border },
+                  ]}
+                />
+              ))}
+            </View>
+            <Text style={[styles.tarjetaFiltroTexto, { color: colors.text }]}>{NIVEL_LABEL[nivel]}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Text style={[styles.seccionTitulo, styles.margenLateral, { color: colors.text }]}>Duración</Text>
+      <View style={[styles.filaTarjetas, styles.margenLateral]}>
+        {Object.entries(DURACIONES).map(([clave, duracion]) => (
+          <Pressable
+            key={clave}
+            onPress={() => abrirCategorias({ duracion: clave })}
+            style={[styles.tarjetaFiltro, { backgroundColor: colors.backgroundElement }]}>
+            <Ionicons name="time-outline" size={20} color={colors.tint} />
+            <Text style={[styles.tarjetaFiltroTexto, { color: colors.text }]}>{duracion.titulo}</Text>
+          </Pressable>
+        ))}
+      </View>
 
       <Text style={[styles.creditos, { color: colors.textSecondary }]}>
-        Fotos y catálogo de ejercicios cortesía de wger.de (CC BY-SA)
+        Fotos de ejercicios: free-exercise-db (dominio público) y wger.de (CC BY-SA)
       </Text>
     </ScrollView>
   );
 }
 
-function ChipFiltro({
-  activo,
-  texto,
-  onPress,
-  colors,
-}: {
-  activo: boolean;
-  texto: string;
-  onPress: () => void;
-  colors: ReturnType<typeof useTheme>;
-}) {
+function Carrusel({ rutinas, ancho, onPress }: { rutinas: Rutina[]; ancho: number; onPress: () => void }) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.chip,
-        { backgroundColor: activo ? colors.tint : colors.backgroundElement, borderColor: colors.border },
-      ]}>
-      <Text style={{ color: activo ? colors.tintForeground : colors.textSecondary, fontSize: 13, fontWeight: '700' }}>
-        {texto}
-      </Text>
-    </Pressable>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      snapToInterval={ancho + Spacing.three}
+      decelerationRate="fast"
+      contentContainerStyle={styles.carrusel}>
+      {rutinas.map((rutina) => (
+        <RutinaTarjetaCarrusel key={rutina.id} rutina={rutina} ancho={ancho} onPress={onPress} />
+      ))}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  contenedorCentro: {
-    flex: 1,
+  centro: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  contenedor: { paddingTop: Spacing.four, paddingBottom: Spacing.six },
+  margenLateral: { marginHorizontal: Spacing.four },
+  filaTitulo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: Spacing.four,
+    marginTop: Spacing.two,
+  },
+  titulo: { fontSize: 28, fontWeight: '800' },
+  buscador: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    borderRadius: 24,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 12,
+    marginTop: Spacing.three,
+  },
+  seccionTitulo: { fontSize: 21, fontWeight: '800', marginTop: Spacing.five, marginBottom: Spacing.three },
+  sinMargen: { marginTop: 0, marginBottom: 0 },
+  filaSeccion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: Spacing.five,
+    marginBottom: Spacing.three,
+  },
+  mas: { fontSize: 16, fontWeight: '700' },
+  carrusel: { paddingHorizontal: Spacing.four, gap: Spacing.three },
+  zona: { width: 84, alignItems: 'center', gap: Spacing.two },
+  zonaCirculo: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  contenedor: {
-    padding: Spacing.four,
-    gap: Spacing.three,
-    paddingBottom: Spacing.six,
-  },
-  titulo: {
-    fontSize: 26,
-    fontWeight: '800',
-    marginTop: Spacing.two,
-  },
-  filaTitulo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  filaMiSemana: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  tarjetaHero: {
-    borderRadius: 20,
-    padding: Spacing.four,
-    gap: Spacing.three,
-  },
-  heroFilaSuperior: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.two,
-  },
-  heroFotoFondo: {
-    width: 76,
-    height: 76,
+  zonaNombre: { fontSize: 13.5, fontWeight: '600', textAlign: 'center' },
+  banner: {
+    height: 110,
     borderRadius: 20,
     overflow: 'hidden',
-    borderWidth: 2,
-  },
-  heroFoto: {
-    width: '100%',
-    height: '100%',
-  },
-  heroNivel: {
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    opacity: 0.85,
-  },
-  heroTitulo: {
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  heroSubtitulo: {
-    fontSize: 14,
-    opacity: 0.9,
-    marginBottom: Spacing.two,
-  },
-  botonIniciar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.one,
-    borderRadius: 14,
-    paddingVertical: 14,
-    marginTop: Spacing.two,
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.four,
   },
-  botonIniciarTexto: {
-    fontWeight: '800',
-    fontSize: 15,
-  },
-  tarjetaVacia: {
-    borderRadius: 20,
-    padding: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  tarjetaVaciaTexto: {
-    textAlign: 'center',
-  },
-  seccionTitulo: {
-    fontSize: 18,
-    fontWeight: '800',
-    marginTop: Spacing.two,
-  },
-  filaChips: {
-    flexDirection: 'row',
-    gap: Spacing.one,
-    paddingBottom: 4,
-  },
-  chip: {
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-  },
-  tarjetaRutina: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 18,
-    padding: Spacing.three,
-    gap: Spacing.two,
-  },
-  tarjetaCrear: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.one,
+  bannerIcono: { position: 'absolute', right: -10, bottom: -20 },
+  bannerTexto: { color: '#ffffff', fontSize: 22, fontWeight: '900' },
+  bannerBoton: { backgroundColor: '#ffffff', borderRadius: 22, paddingVertical: 12, paddingHorizontal: 22 },
+  bannerBotonTexto: { fontSize: 16, fontWeight: '900' },
+  filaTarjetas: { flexDirection: 'row', gap: Spacing.two },
+  tarjetaFiltro: {
+    flex: 1,
     borderRadius: 16,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
     paddingVertical: Spacing.three,
-  },
-  miniaturaFoto: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-  },
-  creditos: {
-    fontSize: 11,
-    textAlign: 'center',
-    marginTop: Spacing.two,
-  },
-  tarjetaRutinaNivel: {
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-  },
-  tarjetaRutinaNombre: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  botonElegir: {
-    borderWidth: 1.5,
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-  },
-  botonElegirTexto: {
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  filaHistorial: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    paddingHorizontal: Spacing.three,
     gap: Spacing.two,
-    borderBottomWidth: 1,
-    paddingVertical: Spacing.two,
+    minHeight: 80,
+    justifyContent: 'space-between',
   },
+  tarjetaFiltroTexto: { fontSize: 14, fontWeight: '700' },
+  barras: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 22 },
+  barra: { width: 5, borderRadius: 2 },
+  creditos: { fontSize: 11, textAlign: 'center', marginTop: Spacing.five, marginHorizontal: Spacing.four },
 });
