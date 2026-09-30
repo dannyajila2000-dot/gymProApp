@@ -177,8 +177,16 @@ export class ProgresoService {
       ),
     )
 
+    // La racha sigue viva si hoy todavía no entrenas: se cuenta desde ayer hasta
+    // que termine el día. Solo se corta cuando pasa un día completo sin actividad.
     let racha = 0
-    let claveCursor = fechaDeHoyEcuador()
+    const hoy = fechaDeHoyEcuador()
+    let claveCursor = hoy
+    if (!diasConActividad.has(hoy)) {
+      const ayer = new Date(`${hoy}T00:00:00.000Z`)
+      ayer.setUTCDate(ayer.getUTCDate() - 1)
+      claveCursor = ayer.toISOString().slice(0, 10)
+    }
     for (;;) {
       if (!diasConActividad.has(claveCursor)) break
       racha++

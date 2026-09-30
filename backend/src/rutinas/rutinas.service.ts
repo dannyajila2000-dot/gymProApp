@@ -6,6 +6,7 @@ import {
   fechaEcuadorDeFecha,
   inicioYFinDeLaSemanaEcuador,
 } from '../common/fecha-ecuador.util.js'
+import { caloriasEstimadasDeRutina, duracionEstimadaMin } from './estimaciones-rutina.util.js'
 
 type RutinaConEjercicios = Prisma.RutinaGetPayload<{
   include: { ejercicios: { include: { ejercicio: true } } }
@@ -13,26 +14,9 @@ type RutinaConEjercicios = Prisma.RutinaGetPayload<{
 type RutinaEjercicioConEjercicio = RutinaConEjercicios['ejercicios'][number]
 type PerfilCliente = { nivelFitness: string | null; restriccionFisica: string | null }
 
-/** Misma fórmula que `duracionEstimadaMin` en mobile/src/lib/rutina-utils.ts. */
-function duracionEstimadaMin(rutina: RutinaConEjercicios): number {
-  const segundos = rutina.ejercicios.reduce((suma, item) => {
-    const trabajo = item.duracionSeg ?? (item.repeticiones ?? 10) * 3
-    const series = item.series ?? 1
-    return suma + trabajo * series + (item.descansoSeg ?? 20) * series
-  }, 0)
-  return Math.max(1, Math.round(segundos / 60))
-}
-
-/** Misma fórmula que `caloriasEstimadas` en mobile/src/lib/rutina-utils.ts. */
-function caloriasEstimadasDeRutina(rutina: RutinaConEjercicios): number {
-  const calorias = rutina.ejercicios.reduce((suma, item) => {
-    const minutos = item.duracionSeg
-      ? (item.duracionSeg * (item.series ?? 1)) / 60
-      : ((item.repeticiones ?? 10) * (item.series ?? 1) * 3) / 60
-    return suma + minutos * (item.ejercicio.caloriasPorMinuto ?? 6)
-  }, 0)
-  return Math.round(calorias)
-}
+// Las rutinas de calentamiento/estiramiento se entrenan solas cuando el cliente
+// quiere; nunca se asignan como rutina de un día de forma automática.
+const OBJETIVO_CALENTAMIENTO = 'calentamiento'
 
 @Injectable()
 export class RutinasService {
@@ -47,30 +31,55 @@ export class RutinasService {
   }
 
   async miRutina(clienteId: string) {
-    const [asignacion, cliente] = await Promise.all([
-      this.prisma.clienteRutina.findFirst({
-        where: { clienteId, activa: true },
-        orderBy: { fechaInicio: 'desc' },
-        include: {
-          rutina: {
-            include: { ejercicios: { include: { ejercicio: true }, orderBy: { orden: 'asc' } } },
-          },
-        },
+    const asignacion = await this.prisma.clienteRutina.findFirst({
+      where: { clienteId, activa: true },
+      orderBy: { fechaInicio: 'desc' },
+      select: { rutinaId: true },
+    })
+    if (!asignacion) return null
+
+    return this.rutinaPersonalizada(clienteId, asignacion.rutinaId)
+  }
+
+  /**
+   * Rutina lista para entrenar (con restricciones, nivel y sustituciones del
+   * cliente) sin tocar su rutina activa ni su plan semanal. Solo accesible si
+   * es plantilla del gimnasio o rutina propia del cliente.
+   */
+  async rutinaParaEntrenar(clienteId: string, gimnasioId: string, rutinaId: string) {
+    const rutina = await this.prisma.rutina.findFirst({
+      where: {
+        id: rutinaId,
+        gimnasioId,
+        activa: true,
+        OR: [{ creadaPorClienteId: null }, { creadaPorClienteId: clienteId }],
+      },
+      select: { id: true },
+    })
+    if (!rutina) throw new NotFoundException('Rutina no encontrada')
+
+    return this.rutinaPersonalizada(clienteId, rutina.id)
+  }
+
+  private async rutinaPersonalizada(clienteId: string, rutinaId: string) {
+    const [rutina, cliente, sustituciones] = await Promise.all([
+      this.prisma.rutina.findUnique({
+        where: { id: rutinaId },
+        include: { ejercicios: { include: { ejercicio: true }, orderBy: { orden: 'asc' } } },
       }),
       this.prisma.cliente.findUnique({
         where: { id: clienteId },
         select: { nivelFitness: true, restriccionFisica: true },
       }),
+      this.prisma.sustitucionEjercicio.findMany({
+        where: { clienteId, rutinaEjercicio: { rutinaId } },
+        include: { ejercicioSustituto: true },
+      }),
     ])
-    if (!asignacion) return null
+    if (!rutina) return null
 
-    const sustituciones = await this.prisma.sustitucionEjercicio.findMany({
-      where: { clienteId, rutinaEjercicio: { rutinaId: asignacion.rutinaId } },
-      include: { ejercicioSustituto: true },
-    })
     const mapaSustituciones = new Map(sustituciones.map((s) => [s.rutinaEjercicioId, s.ejercicioSustituto]))
-
-    return this.personalizar(asignacion.rutina, cliente, mapaSustituciones)
+    return this.personalizar(rutina, cliente, mapaSustituciones)
   }
 
   /**
@@ -184,8 +193,8 @@ export class RutinasService {
   ) {
     const candidatas = [
       { gimnasioId, activa: true, creadaPorClienteId: null, nivel, objetivo },
-      { gimnasioId, activa: true, creadaPorClienteId: null, nivel },
-      { gimnasioId, activa: true, creadaPorClienteId: null },
+      { gimnasioId, activa: true, creadaPorClienteId: null, nivel, objetivo: { not: OBJETIVO_CALENTAMIENTO } },
+      { gimnasioId, activa: true, creadaPorClienteId: null, objetivo: { not: OBJETIVO_CALENTAMIENTO } },
     ]
 
     let rutina = null
@@ -204,8 +213,13 @@ export class RutinasService {
     gimnasioId: string,
     datos: { rutinaId: string; duracionMin: number; caloriasEstimadas: number },
   ) {
+    // Plantilla del gimnasio o rutina propia: nunca la personal de otro cliente.
     const rutina = await this.prisma.rutina.findFirst({
-      where: { id: datos.rutinaId, gimnasioId },
+      where: {
+        id: datos.rutinaId,
+        gimnasioId,
+        OR: [{ creadaPorClienteId: null }, { creadaPorClienteId: clienteId }],
+      },
     })
     if (!rutina) throw new NotFoundException('Rutina no encontrada')
 
@@ -230,9 +244,8 @@ export class RutinasService {
 
   /**
    * Un ejercicio de rutina solo es accesible para sustituir/consultar si
-   * pertenece a la rutina propia del cliente o a la que tiene asignada
-   * actualmente — nunca a la rutina (personal o no) de otro cliente del
-   * mismo gimnasio.
+   * pertenece a una rutina propia del cliente o a una plantilla activa del
+   * gimnasio — nunca a la rutina personal de otro cliente.
    */
   private async obtenerRutinaEjercicioDelCliente(clienteId: string, gimnasioId: string, rutinaEjercicioId: string) {
     const rutinaEjercicio = await this.prisma.rutinaEjercicio.findFirst({
@@ -240,12 +253,10 @@ export class RutinasService {
       include: { ejercicio: true, rutina: true },
     })
     if (!rutinaEjercicio) throw new NotFoundException('Ejercicio no encontrado')
-    if (rutinaEjercicio.rutina.creadaPorClienteId === clienteId) return rutinaEjercicio
-
-    const asignacionActiva = await this.prisma.clienteRutina.findFirst({
-      where: { clienteId, rutinaId: rutinaEjercicio.rutinaId, activa: true },
-    })
-    if (!asignacionActiva) throw new NotFoundException('Ejercicio no encontrado')
+    const { creadaPorClienteId, activa } = rutinaEjercicio.rutina
+    const esPropia = creadaPorClienteId === clienteId
+    const esPlantillaActiva = creadaPorClienteId === null && activa
+    if (!esPropia && !esPlantillaActiva) throw new NotFoundException('Ejercicio no encontrado')
 
     return rutinaEjercicio
   }
@@ -294,7 +305,39 @@ export class RutinasService {
         ...(busqueda ? { nombre: { contains: busqueda, mode: 'insensitive' } } : {}),
       },
       orderBy: { nombre: 'asc' },
-      take: 100,
+      take: 500,
+    })
+  }
+
+  /**
+   * Crea una copia personal (editable) de una rutina, tal como la ve el
+   * cliente (con sus ajustes y sustituciones), en una sola transacción: o se
+   * copia completa o no se crea nada. No cambia su plan semanal.
+   */
+  async duplicarComoPersonal(clienteId: string, gimnasioId: string, rutinaId: string) {
+    const origen = await this.rutinaParaEntrenar(clienteId, gimnasioId, rutinaId)
+    if (!origen) throw new NotFoundException('Rutina no encontrada')
+
+    return this.prisma.rutina.create({
+      data: {
+        gimnasioId,
+        creadaPorClienteId: clienteId,
+        nombre: origen.nombre,
+        nivel: origen.nivel,
+        objetivo: origen.objetivo,
+        descripcion: origen.descripcion,
+        ejercicios: {
+          create: origen.ejercicios.map((item, indice) => ({
+            ejercicioId: item.ejercicio.id,
+            orden: indice + 1,
+            series: item.series,
+            repeticiones: item.repeticiones,
+            duracionSeg: item.duracionSeg,
+            descansoSeg: item.descansoSeg,
+          })),
+        },
+      },
+      include: { ejercicios: { include: { ejercicio: true }, orderBy: { orden: 'asc' } } },
     })
   }
 
@@ -402,35 +445,48 @@ export class RutinasService {
     const { inicio } = inicioYFinDeLaSemanaEcuador(hoy)
     const fechaInicioCliente = cliente?.creadoEn ? fechaEcuadorDeFecha(cliente.creadoEn) : hoy
 
-    const [sesiones, poolRotacion, asignacionActiva, fijadasPorDia] = await Promise.all([
+    const finSemana = new Date(inicio.getTime() + 7 * 24 * 60 * 60 * 1000 - 1)
+    const [sesiones, actividades, poolRotacion, fijadasPorDia] = await Promise.all([
       this.prisma.sesionEntrenamiento.findMany({
-        where: { clienteId, completadaEn: { gte: inicio, lte: new Date(inicio.getTime() + 7 * 24 * 60 * 60 * 1000 - 1) } },
-        select: { completadaEn: true, duracionMin: true, caloriasEstimadas: true },
+        where: { clienteId, completadaEn: { gte: inicio, lte: finSemana } },
+        select: {
+          completadaEn: true,
+          duracionMin: true,
+          caloriasEstimadas: true,
+          rutina: { select: { id: true, nombre: true } },
+        },
+        orderBy: { completadaEn: 'asc' },
+      }),
+      this.prisma.actividadLibre.findMany({
+        where: { clienteId, fecha: { gte: inicio, lte: finSemana } },
+        select: { fecha: true, duracionMin: true, caloriasEstimadas: true },
       }),
       this.poolDeRotacion(clienteId, cliente?.nivelFitness ?? null),
-      this.prisma.clienteRutina.findFirst({
-        where: { clienteId, activa: true },
-        orderBy: { fechaInicio: 'desc' },
-        select: {
-          fechaInicio: true,
-          rutina: { include: { ejercicios: { include: { ejercicio: true } } } },
-        },
-      }),
       this.prisma.rutinaPorDia.findMany({
         where: { clienteId },
         include: { rutina: { include: { ejercicios: { include: { ejercicio: true } } } } },
       }),
     ])
     const rutinaFijadaPorDiaSemana = new Map(fijadasPorDia.map((f) => [f.diaSemana, f.rutina]))
-    // Si hay varias sesiones el mismo día, se queda la última (no debería pasar
-    // en el flujo normal — un solo entrenamiento completado por día).
-    const sesionPorFecha = new Map(sesiones.map((s) => [fechaEcuadorDeFecha(s.completadaEn), s]))
+    // Un día cuenta como completado con un entrenamiento o con actividad libre
+    // (igual que la racha y el resumen de Progreso). Si hubo varios, se suman.
+    const realizadoPorFecha = new Map<string, { duracionMin: number; caloriasEstimadas: number }>()
+    const sumarRealizado = (fecha: Date, duracionMin: number, caloriasEstimadas: number) => {
+      const clave = fechaEcuadorDeFecha(fecha)
+      const previo = realizadoPorFecha.get(clave) ?? { duracionMin: 0, caloriasEstimadas: 0 }
+      realizadoPorFecha.set(clave, {
+        duracionMin: previo.duracionMin + duracionMin,
+        caloriasEstimadas: previo.caloriasEstimadas + caloriasEstimadas,
+      })
+    }
+    // Rutina que realmente se hizo cada día (la última, si hubo varias).
+    const rutinaHechaPorFecha = new Map<string, { id: string; nombre: string }>()
+    for (const s of sesiones) {
+      sumarRealizado(s.completadaEn, s.duracionMin, s.caloriasEstimadas)
+      rutinaHechaPorFecha.set(fechaEcuadorDeFecha(s.completadaEn), s.rutina)
+    }
+    for (const a of actividades) sumarRealizado(a.fecha, a.duracionMin, a.caloriasEstimadas)
     const numeroSemana = Math.floor(inicio.getTime() / (7 * 24 * 60 * 60 * 1000))
-    // Si el cliente ya eligió/empezó una rutina hoy (a mano o con "Comenzar"),
-    // esa elección manda sobre la sugerencia automática — no la pisamos.
-    const rutinaElegidaHoy =
-      asignacionActiva && fechaEcuadorDeFecha(asignacionActiva.fechaInicio) === hoy ? asignacionActiva.rutina : null
-
     const dias = []
     for (let diaSemana = 0; diaSemana < 7; diaSemana++) {
       const fecha = fechaEcuadorDeFecha(new Date(inicio.getTime() + diaSemana * 24 * 60 * 60 * 1000))
@@ -441,18 +497,18 @@ export class RutinasService {
         esDiaEntrenamiento && poolRotacion.length > 0
           ? poolRotacion[(numeroSemana * diasSemanaEntrenamiento.length + posicionEnSemana) % poolRotacion.length]
           : null
-      // Prioridad: lo que el cliente eligió a mano hoy mismo > lo que fijó
-      // para este día de la semana (si no fijó nada, sigue rotando solo).
-      const rutinaDelDia =
-        fecha === hoy && rutinaElegidaHoy ? rutinaElegidaHoy : (rutinaFijada ?? sugerenciaRotacion)
-      const completado = sesionPorFecha.has(fecha)
-      const sesionDelDia = sesionPorFecha.get(fecha)
-      // Si ya se completó, se muestra lo que de verdad duró/quemó esa sesión;
+      // Lo que el cliente fijó para este día manda; si no fijó nada, la app
+      // sugiere una rutina rotando según su nivel y objetivo.
+      const rutinaDelDia = rutinaFijada ?? sugerenciaRotacion
+      const realizado = realizadoPorFecha.get(fecha)
+      const rutinaHecha = rutinaHechaPorFecha.get(fecha)
+      const completado = realizado != null
+      // Si ya se completó, se muestra lo que de verdad duró/quemó ese día;
       // si no, se muestra la estimación calculada a partir de los ejercicios
       // configurados en la rutina (misma fórmula que en el detalle de rutina).
-      const duracionMin = sesionDelDia?.duracionMin ?? (rutinaDelDia ? duracionEstimadaMin(rutinaDelDia) : null)
+      const duracionMin = realizado?.duracionMin ?? (rutinaDelDia ? duracionEstimadaMin(rutinaDelDia) : null)
       const caloriasEstimadas =
-        sesionDelDia?.caloriasEstimadas ?? (rutinaDelDia ? caloriasEstimadasDeRutina(rutinaDelDia) : null)
+        realizado?.caloriasEstimadas ?? (rutinaDelDia ? caloriasEstimadasDeRutina(rutinaDelDia) : null)
       const numeroDia =
         Math.floor((Date.parse(`${fecha}T00:00:00Z`) - Date.parse(`${fechaInicioCliente}T00:00:00Z`)) / 86400000) + 1
 
@@ -460,12 +516,14 @@ export class RutinasService {
         fecha,
         diaSemana,
         numeroDia: Math.max(1, numeroDia),
-        esDiaEntrenamiento,
+        // Un día de descanso con rutina fijada a mano también cuenta como entrenamiento.
+        esDiaEntrenamiento: esDiaEntrenamiento || rutinaFijada != null,
         completado,
         progresoPct: completado ? 100 : 0,
         esHoy: fecha === hoy,
-        rutinaId: rutinaDelDia?.id ?? null,
-        rutinaNombre: rutinaDelDia?.nombre ?? null,
+        // Un día ya entrenado muestra la rutina que se hizo, no la que saldría hoy con el catálogo actual.
+        rutinaId: rutinaHecha?.id ?? rutinaDelDia?.id ?? null,
+        rutinaNombre: rutinaHecha?.nombre ?? rutinaDelDia?.nombre ?? null,
         fijadaPorCliente: rutinaFijada != null,
         duracionMin,
         caloriasEstimadas: caloriasEstimadas != null ? Math.round(caloriasEstimadas) : null,
@@ -475,34 +533,39 @@ export class RutinasService {
   }
 
   /**
-   * Conjunto de rutinas entre las que rota el plan semanal: las plantillas
-   * del gimnasio que combinan con el nivel del cliente (o todas si ninguna
-   * combina) más sus propias rutinas personales. Se ordena de forma estable
-   * para que la rotación sea determinística entre llamadas.
+   * Conjunto de rutinas entre las que rota el plan automático: plantillas del
+   * gimnasio que combinan con el nivel y el objetivo calculado en el
+   * onboarding. Si no hay combinación exacta se relaja primero el objetivo y
+   * luego el nivel. Las rutinas personales no entran: el cliente las coloca a
+   * mano en los días que quiera. Se ordena de forma estable para que la
+   * rotación sea determinística entre llamadas.
    */
   private async poolDeRotacion(clienteId: string, nivelFitness: string | null) {
-    const conEjercicios = { ejercicios: { include: { ejercicio: true } } } as const
-    const [plantillasNivel, plantillasTodas, personales] = await Promise.all([
-      nivelFitness
-        ? this.prisma.rutina.findMany({
-            where: { creadaPorClienteId: null, activa: true, nivel: nivelFitness },
-            include: conEjercicios,
-            orderBy: { id: 'asc' },
-          })
-        : Promise.resolve([]),
+    const [plantillas, asignacionOnboarding] = await Promise.all([
       this.prisma.rutina.findMany({
-        where: { creadaPorClienteId: null, activa: true },
-        include: conEjercicios,
+        where: {
+          creadaPorClienteId: null,
+          activa: true,
+          objetivo: { not: OBJETIVO_CALENTAMIENTO },
+          ejercicios: { some: {} },
+        },
+        include: { ejercicios: { include: { ejercicio: true } } },
         orderBy: { id: 'asc' },
       }),
-      this.prisma.rutina.findMany({
-        where: { creadaPorClienteId: clienteId },
-        include: conEjercicios,
-        orderBy: { id: 'asc' },
+      this.prisma.clienteRutina.findFirst({
+        where: { clienteId, asignadaPor: 'auto-onboarding' },
+        orderBy: { fechaInicio: 'desc' },
+        select: { rutina: { select: { objetivo: true } } },
       }),
     ])
-    const plantillas = plantillasNivel.length ? plantillasNivel : plantillasTodas
-    return [...plantillas, ...personales]
+    const objetivo = asignacionOnboarding?.rutina.objetivo ?? null
+
+    const delNivel = nivelFitness ? plantillas.filter((r) => r.nivel === nivelFitness) : []
+    const nivelYObjetivo = objetivo ? delNivel.filter((r) => r.objetivo === objetivo) : []
+    if (nivelYObjetivo.length) return nivelYObjetivo
+    if (delNivel.length) return delNivel
+    const soloObjetivo = objetivo ? plantillas.filter((r) => r.objetivo === objetivo) : []
+    return soloObjetivo.length ? soloObjetivo : plantillas
   }
 
   /**

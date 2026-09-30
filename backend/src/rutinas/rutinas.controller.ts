@@ -29,6 +29,11 @@ export class RutinasController {
     return this.rutinasService.miRutina(cliente.clienteId)
   }
 
+  @Get('entrenar/:rutinaId')
+  rutinaParaEntrenar(@ClienteActual() cliente: ClienteAutenticado, @Param('rutinaId') rutinaId: string) {
+    return this.rutinasService.rutinaParaEntrenar(cliente.clienteId, cliente.gimnasioId, rutinaId)
+  }
+
   @Post('asignarme')
   asignarme(@ClienteActual() cliente: ClienteAutenticado, @Body() dto: AsignarRutinaDto) {
     return this.rutinasService.asignarme(cliente.clienteId, cliente.gimnasioId, dto.rutinaId)
@@ -106,6 +111,11 @@ export class RutinasController {
   @Get('mias')
   misRutinasPersonales(@ClienteActual() cliente: ClienteAutenticado) {
     return this.rutinasService.misRutinasPersonales(cliente.clienteId)
+  }
+
+  @Post('duplicar/:rutinaId')
+  duplicarComoPersonal(@ClienteActual() cliente: ClienteAutenticado, @Param('rutinaId') rutinaId: string) {
+    return this.rutinasService.duplicarComoPersonal(cliente.clienteId, cliente.gimnasioId, rutinaId)
   }
 
   @Post('mias')

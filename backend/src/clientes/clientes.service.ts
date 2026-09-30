@@ -111,6 +111,8 @@ export class ClientesService {
   actualizarPerfil(clienteId: string, dto: ActualizarPerfilDto) {
     return this.prisma.cliente.update({
       where: { id: clienteId },
+      // Nunca devolver el hash de la contraseña en la respuesta.
+      omit: { passwordHash: true },
       data: {
         nombres: dto.nombres,
         apellidos: dto.apellidos,
