@@ -18,16 +18,34 @@ type PerfilCliente = { nivelFitness: string | null; restriccionFisica: string | 
 // quiere; nunca se asignan como rutina de un día de forma automática.
 const OBJETIVO_CALENTAMIENTO = 'calentamiento'
 
+// Solo se muestran ejercicios con clip animado (clipUrl): sin clip se verían como un
+// muñeco genérico. Es automático y reversible: al subir el clip de un ejercicio,
+// reaparece solo. No se borra ni se marca nada en la base de datos.
+const EJERCICIO_CON_CLIP: Prisma.EjercicioWhereInput = { clipUrl: { not: null } }
+const EJERCICIOS_VISIBLES = {
+  where: { ejercicio: EJERCICIO_CON_CLIP },
+  include: { ejercicio: true },
+  orderBy: { orden: 'asc' as const },
+}
+// Una plantilla del gimnasio con menos ejercicios visibles que esto se oculta entera.
+const MIN_EJERCICIOS_VISIBLES = 3
+
+/** Plantilla: necesita al menos MIN ejercicios visibles. Rutina propia: basta con uno. */
+function esRutinaVisible(r: { creadaPorClienteId: string | null; ejercicios: unknown[] }) {
+  return r.creadaPorClienteId ? r.ejercicios.length > 0 : r.ejercicios.length >= MIN_EJERCICIOS_VISIBLES
+}
+
 @Injectable()
 export class RutinasService {
   constructor(private readonly prisma: PrismaService) {}
 
-  listarDisponibles(gimnasioId: string) {
-    return this.prisma.rutina.findMany({
+  async listarDisponibles(gimnasioId: string) {
+    const plantillas = await this.prisma.rutina.findMany({
       where: { gimnasioId, activa: true, creadaPorClienteId: null },
-      include: { ejercicios: { include: { ejercicio: true }, orderBy: { orden: 'asc' } } },
+      include: { ejercicios: EJERCICIOS_VISIBLES },
       orderBy: { creadoEn: 'desc' },
     })
+    return plantillas.filter(esRutinaVisible)
   }
 
   async miRutina(clienteId: string) {
@@ -58,14 +76,16 @@ export class RutinasService {
     })
     if (!rutina) throw new NotFoundException('Rutina no encontrada')
 
-    return this.rutinaPersonalizada(clienteId, rutina.id)
+    const lista = await this.rutinaPersonalizada(clienteId, rutina.id)
+    if (lista && !esRutinaVisible(lista)) throw new NotFoundException('Rutina no encontrada')
+    return lista
   }
 
   private async rutinaPersonalizada(clienteId: string, rutinaId: string) {
     const [rutina, cliente, sustituciones] = await Promise.all([
       this.prisma.rutina.findUnique({
         where: { id: rutinaId },
-        include: { ejercicios: { include: { ejercicio: true }, orderBy: { orden: 'asc' } } },
+        include: { ejercicios: EJERCICIOS_VISIBLES },
       }),
       this.prisma.cliente.findUnique({
         where: { id: clienteId },
@@ -108,6 +128,7 @@ export class RutinasService {
             id: { notIn: [...idsEnRutina] },
             esAltoImpacto: false,
             requiereSaltos: false,
+            ...EJERCICIO_CON_CLIP,
           },
         })
       : []
@@ -132,6 +153,8 @@ export class RutinasService {
         return this.escalarVolumen(itemFinal, cliente?.nivelFitness ?? null)
       })
       .filter((item): item is RutinaEjercicioConEjercicio => item !== null)
+      // Un sustituto sin clip tampoco se muestra.
+      .filter((item) => item.ejercicio.clipUrl !== null)
 
     return { ...rutina, ejercicios: ejerciciosPersonalizados }
   }
@@ -199,7 +222,12 @@ export class RutinasService {
 
     let rutina = null
     for (const where of candidatas) {
-      rutina = await this.prisma.rutina.findFirst({ where, orderBy: { creadoEn: 'desc' } })
+      const lista = await this.prisma.rutina.findMany({
+        where,
+        orderBy: { creadoEn: 'desc' },
+        include: { ejercicios: EJERCICIOS_VISIBLES },
+      })
+      rutina = lista.find(esRutinaVisible) ?? null
       if (rutina) break
     }
     if (!rutina) return null
@@ -274,6 +302,7 @@ export class RutinasService {
       where: {
         grupoMuscular: rutinaEjercicio.ejercicio.grupoMuscular,
         id: { not: rutinaEjercicio.ejercicioId },
+        ...EJERCICIO_CON_CLIP,
         ...(restriccion === 'impacto_bajo' ? { esAltoImpacto: false } : {}),
         ...(restriccion === 'sin_saltos' ? { requiereSaltos: false } : {}),
       },
@@ -301,6 +330,7 @@ export class RutinasService {
   catalogoEjercicios(grupoMuscular?: string, busqueda?: string) {
     return this.prisma.ejercicio.findMany({
       where: {
+        ...EJERCICIO_CON_CLIP,
         ...(grupoMuscular ? { grupoMuscular } : {}),
         ...(busqueda ? { nombre: { contains: busqueda, mode: 'insensitive' } } : {}),
       },
@@ -337,14 +367,14 @@ export class RutinasService {
           })),
         },
       },
-      include: { ejercicios: { include: { ejercicio: true }, orderBy: { orden: 'asc' } } },
+      include: { ejercicios: EJERCICIOS_VISIBLES },
     })
   }
 
   misRutinasPersonales(clienteId: string) {
     return this.prisma.rutina.findMany({
       where: { creadaPorClienteId: clienteId },
-      include: { ejercicios: { include: { ejercicio: true }, orderBy: { orden: 'asc' } } },
+      include: { ejercicios: EJERCICIOS_VISIBLES },
       orderBy: { creadoEn: 'desc' },
     })
   }
@@ -362,7 +392,7 @@ export class RutinasService {
         nivel: datos.nivel ?? 'intermedio',
         objetivo: datos.objetivo ?? 'cuerpo_completo',
       },
-      include: { ejercicios: { include: { ejercicio: true }, orderBy: { orden: 'asc' } } },
+      include: { ejercicios: EJERCICIOS_VISIBLES },
     })
   }
 
@@ -381,7 +411,7 @@ export class RutinasService {
     return this.prisma.rutina.update({
       where: { id: rutinaId },
       data: datos,
-      include: { ejercicios: { include: { ejercicio: true }, orderBy: { orden: 'asc' } } },
+      include: { ejercicios: EJERCICIOS_VISIBLES },
     })
   }
 
@@ -464,10 +494,13 @@ export class RutinasService {
       this.poolDeRotacion(clienteId, cliente?.nivelFitness ?? null),
       this.prisma.rutinaPorDia.findMany({
         where: { clienteId },
-        include: { rutina: { include: { ejercicios: { include: { ejercicio: true } } } } },
+        include: { rutina: { include: { ejercicios: EJERCICIOS_VISIBLES } } },
       }),
     ])
-    const rutinaFijadaPorDiaSemana = new Map(fijadasPorDia.map((f) => [f.diaSemana, f.rutina]))
+    // Una rutina fijada que ya no tiene ejercicios visibles se ignora (ese día vuelve a la sugerida).
+    const rutinaFijadaPorDiaSemana = new Map(
+      fijadasPorDia.filter((f) => esRutinaVisible(f.rutina)).map((f) => [f.diaSemana, f.rutina]),
+    )
     // Un día cuenta como completado con un entrenamiento o con actividad libre
     // (igual que la racha y el resumen de Progreso). Si hubo varios, se suman.
     const realizadoPorFecha = new Map<string, { duracionMin: number; caloriasEstimadas: number }>()
@@ -541,7 +574,7 @@ export class RutinasService {
    * rotación sea determinística entre llamadas.
    */
   private async poolDeRotacion(clienteId: string, nivelFitness: string | null) {
-    const [plantillas, asignacionOnboarding] = await Promise.all([
+    const [plantillasBrutas, asignacionOnboarding] = await Promise.all([
       this.prisma.rutina.findMany({
         where: {
           creadaPorClienteId: null,
@@ -549,7 +582,7 @@ export class RutinasService {
           objetivo: { not: OBJETIVO_CALENTAMIENTO },
           ejercicios: { some: {} },
         },
-        include: { ejercicios: { include: { ejercicio: true } } },
+        include: { ejercicios: EJERCICIOS_VISIBLES },
         orderBy: { id: 'asc' },
       }),
       this.prisma.clienteRutina.findFirst({
@@ -558,6 +591,7 @@ export class RutinasService {
         select: { rutina: { select: { objetivo: true } } },
       }),
     ])
+    const plantillas = plantillasBrutas.filter(esRutinaVisible)
     const objetivo = asignacionOnboarding?.rutina.objetivo ?? null
 
     const delNivel = nivelFitness ? plantillas.filter((r) => r.nivel === nivelFitness) : []
@@ -575,15 +609,23 @@ export class RutinasService {
    */
   async reordenarEjerciciosPersonal(clienteId: string, rutinaId: string, ordenIds: string[]) {
     await this.obtenerRutinaPropia(clienteId, rutinaId)
-    const actuales = await this.prisma.rutinaEjercicio.findMany({ where: { rutinaId }, select: { id: true } })
-    const idsActuales = new Set(actuales.map((e) => e.id))
+    const actuales = await this.prisma.rutinaEjercicio.findMany({
+      where: { rutinaId },
+      select: { id: true, ejercicio: { select: { clipUrl: true } } },
+      orderBy: { orden: 'asc' },
+    })
+    // El cliente solo ve (y reordena) los ejercicios con clip; los ocultos van al final, sin cambiar entre sí.
+    const visibles = actuales.filter((e) => e.ejercicio.clipUrl !== null).map((e) => e.id)
+    const ocultos = actuales.filter((e) => e.ejercicio.clipUrl === null).map((e) => e.id)
     const idsNuevos = new Set(ordenIds)
-    if (idsActuales.size !== ordenIds.length || [...idsActuales].some((id) => !idsNuevos.has(id))) {
+    if (visibles.length !== ordenIds.length || visibles.some((id) => !idsNuevos.has(id))) {
       throw new BadRequestException('El nuevo orden no coincide con los ejercicios de esta rutina')
     }
 
     await this.prisma.$transaction(
-      ordenIds.map((id, indice) => this.prisma.rutinaEjercicio.update({ where: { id }, data: { orden: indice + 1 } })),
+      [...ordenIds, ...ocultos].map((id, indice) =>
+        this.prisma.rutinaEjercicio.update({ where: { id }, data: { orden: indice + 1 } }),
+      ),
     )
   }
 
