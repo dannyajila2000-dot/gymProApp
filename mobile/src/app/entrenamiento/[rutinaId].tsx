@@ -37,11 +37,11 @@ function construirPasos(rutina: Rutina): Paso[] {
   return pasos;
 }
 
-const EJERCICIOS_CALENTAMIENTO: { nombre: string; patron: RutinaEjercicio['ejercicio']['patronMovimiento']; duracionSeg: number }[] = [
-  { nombre: 'Saltos de tijera', patron: 'salto', duracionSeg: 30 },
-  { nombre: 'Rotación de hombros', patron: 'press', duracionSeg: 20 },
-  { nombre: 'Rodillas al pecho', patron: 'abdominal', duracionSeg: 20 },
-  { nombre: 'Sentadilla suave', patron: 'sentadilla', duracionSeg: 30 },
+const EJERCICIOS_CALENTAMIENTO: { nombre: string; patron: RutinaEjercicio['ejercicio']['patronMovimiento']; duracionSeg: number; clipUrl: string }[] = [
+  { nombre: 'Saltos de tijera', patron: 'salto', duracionSeg: 30, clipUrl: 'https://efhhrzkbkouyvnrvaghc.supabase.co/storage/v1/object/public/ejercicios/calentamiento-saltos-de-tijera.webp' },
+  { nombre: 'Rotación de hombros', patron: 'press', duracionSeg: 20, clipUrl: 'https://efhhrzkbkouyvnrvaghc.supabase.co/storage/v1/object/public/ejercicios/calentamiento-rotacion-de-hombros.webp' },
+  { nombre: 'Rodillas al pecho', patron: 'abdominal', duracionSeg: 20, clipUrl: 'https://efhhrzkbkouyvnrvaghc.supabase.co/storage/v1/object/public/ejercicios/calentamiento-rodillas-al-pecho.webp' },
+  { nombre: 'Sentadilla suave', patron: 'sentadilla', duracionSeg: 30, clipUrl: 'https://efhhrzkbkouyvnrvaghc.supabase.co/storage/v1/object/public/ejercicios/calentamiento-sentadilla-suave.webp' },
 ];
 
 function construirPasosCalentamiento(): Paso[] {
@@ -64,6 +64,7 @@ function construirPasosCalentamiento(): Paso[] {
         patronMovimiento: e.patron,
         descripcion: 'Ejercicio de calentamiento para preparar el cuerpo antes de entrenar.',
         gifUrl: null,
+        clipUrl: e.clipUrl,
         caloriasPorMinuto: null,
       },
     },
@@ -475,16 +476,23 @@ export default function Entrenamiento() {
             SERIE {paso.serie} DE {paso.totalSeries}
           </Text>
 
-          <View style={[styles.fotoContenedor, CardShadow, { backgroundColor: colors.backgroundElement }]}>
-            {cliente?.preferenciaEntrenador !== 'animacion' && paso.item.ejercicio.gifUrl ? (
-              <Image source={{ uri: paso.item.ejercicio.gifUrl }} style={styles.foto} contentFit="cover" />
-            ) : (
-              <MunecoEjercicio patron={paso.item.ejercicio.patronMovimiento} color={colors.tint} size={140} />
-            )}
-            <View style={[styles.munecoInsignia, CardShadow, { backgroundColor: colors.background, borderColor: colors.background }]}>
-              <MunecoEjercicio patron={paso.item.ejercicio.patronMovimiento} color={colors.tint} size={44} />
+          {/* El clip animado (clipUrl) solo se ve aquí, durante el entrenamiento; sin clip, queda la preferencia del cliente. */}
+          {paso.item.ejercicio.clipUrl ? (
+            <View style={[styles.clipContenedor, CardShadow, { backgroundColor: colors.backgroundElement }]}>
+              <Image source={{ uri: paso.item.ejercicio.clipUrl }} style={styles.foto} contentFit="contain" />
             </View>
-          </View>
+          ) : (
+            <View style={[styles.fotoContenedor, CardShadow, { backgroundColor: colors.backgroundElement }]}>
+              {cliente?.preferenciaEntrenador !== 'animacion' && paso.item.ejercicio.gifUrl ? (
+                <Image source={{ uri: paso.item.ejercicio.gifUrl }} style={styles.foto} contentFit="cover" />
+              ) : (
+                <MunecoEjercicio patron={paso.item.ejercicio.patronMovimiento} color={colors.tint} size={140} />
+              )}
+              <View style={[styles.munecoInsignia, CardShadow, { backgroundColor: colors.background, borderColor: colors.background }]}>
+                <MunecoEjercicio patron={paso.item.ejercicio.patronMovimiento} color={colors.tint} size={44} />
+              </View>
+            </View>
+          )}
 
           <View style={styles.filaNombre}>
             <Text style={[styles.nombreEjercicio, { color: colors.text }]}>{paso.item.ejercicio.nombre}</Text>
@@ -594,6 +602,13 @@ const styles = StyleSheet.create({
   fotoContenedor: {
     width: 190,
     height: 190,
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginBottom: Spacing.two,
+  },
+  clipContenedor: {
+    width: 320,
+    height: 280,
     borderRadius: 24,
     overflow: 'hidden',
     marginBottom: Spacing.two,

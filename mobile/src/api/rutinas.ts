@@ -18,6 +18,7 @@ export interface Ejercicio {
   patronMovimiento: PatronMovimiento;
   descripcion: string | null;
   gifUrl: string | null;
+  clipUrl?: string | null;
   caloriasPorMinuto: number | null;
 }
 
