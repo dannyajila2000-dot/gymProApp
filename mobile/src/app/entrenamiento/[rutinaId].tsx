@@ -13,7 +13,6 @@ import { CardShadow, Spacing } from '@/constants/theme';
 import * as rutinasApi from '@/api/rutinas';
 import type { Rutina, RutinaEjercicio } from '@/api/rutinas';
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
-import { DetalleEjercicioModal } from '@/components/entrenamiento/detalle-ejercicio-modal';
 import { ConfirmarModal } from '@/components/entrenamiento/confirmar-modal';
 import { OverlayCompletado } from '@/components/entrenamiento/overlay-completado';
 import { obtenerPistaGuardada } from '@/lib/musica';
@@ -161,7 +160,6 @@ export default function Entrenamiento() {
   const [reintentos, setReintentos] = useState(0);
   const [enPreparacion, setEnPreparacion] = useState(cuentaAtrasSeg > 0);
   const [pausado, setPausado] = useState(false);
-  const [modalDetalle, setModalDetalle] = useState(false);
   const [confirmarSalto, setConfirmarSalto] = useState(false);
   const [mostrandoCompletado, setMostrandoCompletado] = useState(false);
   const inicioRef = useRef<number>(0);
@@ -496,9 +494,6 @@ export default function Entrenamiento() {
 
           <View style={styles.filaNombre}>
             <Text style={[styles.nombreEjercicio, { color: colors.text }]}>{paso.item.ejercicio.nombre}</Text>
-            <Pressable onPress={() => setModalDetalle(true)} hitSlop={8}>
-              <Ionicons name="information-circle-outline" size={22} color={colors.textSecondary} />
-            </Pressable>
           </View>
           <Text style={{ color: colors.textSecondary, marginBottom: Spacing.two }}>
             {paso.item.ejercicio.grupoMuscular}
@@ -556,15 +551,6 @@ export default function Entrenamiento() {
           </Pressable>
         </View>
       </View>
-
-      {paso.tipo === 'ejercicio' && (
-        <DetalleEjercicioModal
-          visible={modalDetalle}
-          onCerrar={() => setModalDetalle(false)}
-          ejercicio={paso.item.ejercicio}
-          mostrarVideo={cliente?.preferenciaEntrenador !== 'animacion'}
-        />
-      )}
 
       <ConfirmarModal
         visible={confirmarSalto}
