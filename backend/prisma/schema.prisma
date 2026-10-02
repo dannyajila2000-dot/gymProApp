@@ -75,7 +75,8 @@ model Ejercicio {
   tipoMedida        String   // "repeticiones" | "duracion"
   patronMovimiento  String   @default("sentadilla") // animación de muñeco a usar: sentadilla | press | remo | curl | salto | abdominal | plancha | pantorrilla
   descripcion       String?
-  gifUrl            String?
+  gifUrl            String?   // foto estática (listas, tarjetas)
+  clipUrl           String?   // clip animado webp/gif, solo en la pantalla de entrenamiento
   caloriasPorMinuto Float?
   esAltoImpacto     Boolean  @default(false)
   requiereSaltos    Boolean  @default(false)
