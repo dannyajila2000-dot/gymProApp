@@ -1,0 +1,20 @@
+import 'dotenv/config';
+import fs from 'node:fs';
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+const [nombre, archivo, slug] = process.argv.slice(2);
+const p = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
+const ej = await p.ejercicio.findMany({ where: { nombre } });
+if (ej.length !== 1) throw new Error('coincidencias: ' + ej.length);
+const e = ej[0];
+fs.appendFileSync('../_respaldo-gifurl.jsonl', JSON.stringify({ id: e.id, nombre, gifUrlAnterior: e.gifUrl, clipUrlAnterior: e.clipUrl }) + '\n');
+const u = process.env.SUPABASE_URL, k = process.env.SUPABASE_SERVICE_KEY;
+const path = `${slug}.webp`;
+const r = await fetch(`${u}/storage/v1/object/ejercicios/${path}`, { method: 'POST', headers: { apikey: k, Authorization: `Bearer ${k}`, 'Content-Type': 'image/webp', 'x-upsert': 'true', 'cache-control': 'max-age=31536000' }, body: fs.readFileSync(archivo) });
+console.log('subida:', r.status, await r.text());
+if (!r.ok) process.exit(1);
+const url = `${u}/storage/v1/object/public/ejercicios/${path}`;
+const head = await fetch(url, { method: 'HEAD' });
+console.log('publica:', head.status, head.headers.get('content-type'), head.headers.get('content-length'));
+if (head.ok) { await p.ejercicio.update({ where: { id: e.id }, data: { clipUrl: url } }); console.log('clipUrl actualizado ->', url); }
+await p.$disconnect();
