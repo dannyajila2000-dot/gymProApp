@@ -17,6 +17,7 @@ import * as authApi from '@/api/auth';
 import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
 import { CardShadow, Spacing } from '@/constants/theme';
+import { ContenedorTeclado } from '@/components/ui/contenedor-teclado';
 
 function formatearFecha(iso: string | null) {
   if (!iso) return 'Seleccionar';
@@ -88,7 +89,11 @@ export default function MiPerfil() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.contenedor}>
+    <ContenedorTeclado>
+    <ScrollView
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={styles.contenedor}
+      keyboardShouldPersistTaps="handled">
       <View style={[styles.tarjeta, { backgroundColor: colors.backgroundElement }]}>
         <Campo etiqueta="Nombres" valor={nombres} onCambiar={setNombres} />
         <Campo etiqueta="Apellidos" valor={apellidos} onCambiar={setApellidos} />
@@ -167,6 +172,7 @@ export default function MiPerfil() {
         </Pressable>
       </View>
     </ScrollView>
+    </ContenedorTeclado>
   );
 }
 

@@ -31,6 +31,7 @@ import { GraficaBarras } from '@/components/seguimiento/grafica-barras';
 import { GraficaLinea } from '@/components/seguimiento/grafica-linea';
 import { BarraImc } from '@/components/seguimiento/barra-imc';
 import { OBJETIVO_LABEL } from '@/constants/objetivos';
+import { ContenedorTeclado } from '@/components/ui/contenedor-teclado';
 
 const TABS = [
   { clave: 'resumen', etiqueta: 'Resumen' },
@@ -386,7 +387,7 @@ function ModalMetaDiaria({
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onCerrar}>
-      <View style={styles.modalFondo}>
+      <ContenedorTeclado style={styles.modalFondo}>
         <View style={[styles.modalContenido, { backgroundColor: colors.background }]}>
           <View style={styles.filaEntreItems}>
             <Text style={[styles.seccionTitulo, { color: colors.text }]}>Objetivo diario</Text>
@@ -444,7 +445,7 @@ function ModalMetaDiaria({
             )}
           </Pressable>
         </View>
-      </View>
+      </ContenedorTeclado>
     </Modal>
   );
 }
@@ -508,7 +509,7 @@ function ModalPasos({
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={cerrar}>
-      <View style={styles.modalFondo}>
+      <ContenedorTeclado style={styles.modalFondo}>
         <View style={[styles.modalContenido, { backgroundColor: colors.background }]}>
           <View style={styles.filaEntreItems}>
             <Text style={[styles.seccionTitulo, { color: colors.text }]}>Pasos</Text>
@@ -583,7 +584,7 @@ function ModalPasos({
             <Text style={{ color: colors.tintForeground, fontWeight: '700' }}>Guardar meta</Text>
           </Pressable>
         </View>
-      </View>
+      </ContenedorTeclado>
     </Modal>
   );
 }
@@ -638,7 +639,7 @@ function ModalActividad({
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onCerrar}>
-      <View style={styles.modalFondo}>
+      <ContenedorTeclado style={styles.modalFondo}>
         <View style={[styles.modalContenido, { backgroundColor: colors.background, maxHeight: '85%' }]}>
           <View style={styles.filaEntreItems}>
             <Text style={[styles.seccionTitulo, { color: colors.text }]}>
@@ -706,7 +707,7 @@ function ModalActividad({
             </View>
           )}
         </View>
-      </View>
+      </ContenedorTeclado>
     </Modal>
   );
 }

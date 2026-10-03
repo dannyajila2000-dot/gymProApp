@@ -3,7 +3,6 @@ import { useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -47,7 +46,7 @@ export default function Login() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.background }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      behavior="padding">
       <ScrollView contentContainerStyle={styles.contenedor} keyboardShouldPersistTaps="handled">
         <Text style={[styles.titulo, { color: colors.text }]}>Bienvenido</Text>
         <Text style={[styles.subtitulo, { color: colors.textSecondary }]}>

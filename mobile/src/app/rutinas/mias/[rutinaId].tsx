@@ -21,6 +21,7 @@ import { OBJETIVO_LABEL } from '@/constants/objetivos';
 import { NIVEL_LABEL } from '@/constants/niveles';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { ContenedorTeclado } from '@/components/ui/contenedor-teclado';
 
 const NOMBRE_AUTOMATICO = /^Nuevo entrenamiento/i;
 
@@ -365,7 +366,7 @@ export default function EditarRutinaPersonal() {
       </View>
 
       <Modal visible={dialogoNombre} transparent animationType="fade" onRequestClose={() => setDialogoNombre(false)}>
-        <View style={styles.fondoDialogo}>
+        <ContenedorTeclado style={styles.fondoDialogo}>
           <View style={[styles.dialogo, { backgroundColor: colors.background }]}>
             <Text style={[styles.dialogoTitulo, { color: colors.text }]}>Añade un nombre a tu plan</Text>
             <View style={[styles.dialogoCampo, { backgroundColor: colors.backgroundElement }]}>
@@ -392,7 +393,7 @@ export default function EditarRutinaPersonal() {
               </Pressable>
             </View>
           </View>
-        </View>
+        </ContenedorTeclado>
       </Modal>
 
       {agregarARutina && <UsarEnDiaModal rutina={rutina} onCerrar={() => setAgregarARutina(false)} />}

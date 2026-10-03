@@ -7,6 +7,7 @@ import * as feedbackApi from '@/api/feedback';
 import type { CategoriaFeedback } from '@/api/feedback';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
+import { ContenedorTeclado } from '@/components/ui/contenedor-teclado';
 
 const CATEGORIAS: { valor: CategoriaFeedback; etiqueta: string }[] = [
   { valor: 'muy_dificil', etiqueta: 'Muy difícil' },
@@ -58,7 +59,11 @@ export default function Feedback() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.contenedor}>
+    <ContenedorTeclado>
+    <ScrollView
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={styles.contenedor}
+      keyboardShouldPersistTaps="handled">
       <Text style={{ color: colors.text, fontWeight: '800', fontSize: 18 }}>
         Por favor, dinos en qué podemos mejorar
       </Text>
@@ -105,6 +110,7 @@ export default function Feedback() {
         )}
       </Pressable>
     </ScrollView>
+    </ContenedorTeclado>
   );
 }
 

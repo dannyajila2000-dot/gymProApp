@@ -8,6 +8,7 @@ import type { Ejercicio } from '@/api/rutinas';
 import { MunecoEjercicio } from '@/components/muneco-ejercicio';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { ContenedorTeclado } from '@/components/ui/contenedor-teclado';
 
 /**
  * Hoja "Añadir ejercicios": filtro por área, buscador y lista con selección.
@@ -59,7 +60,7 @@ export function AgregarEjercicioModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onCerrar}>
-      <View style={styles.fondo}>
+      <ContenedorTeclado style={styles.fondo}>
         <View style={[styles.contenido, { backgroundColor: colors.background }]}>
           <View style={styles.encabezado}>
             <Text style={[styles.titulo, { color: colors.text }]}>Añadir ejercicios</Text>
@@ -161,7 +162,7 @@ export function AgregarEjercicioModal({
             <Text style={{ color: colors.tintForeground, fontSize: 18, fontWeight: '800' }}>Cerrar</Text>
           </Pressable>
         </View>
-      </View>
+      </ContenedorTeclado>
     </Modal>
   );
 }

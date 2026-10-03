@@ -19,6 +19,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 import * as nutricionApi from '@/api/nutricion';
 import type { Comida, MetaNutricional } from '@/api/nutricion';
+import { ContenedorTeclado } from '@/components/ui/contenedor-teclado';
 
 const OPCIONES_CADA_HORAS = [1, 2, 3, 4, 6, 8];
 
@@ -254,7 +255,7 @@ export default function Nutricion() {
       </View>
 
       <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalFondo}>
+        <ContenedorTeclado style={styles.modalFondo}>
           <View style={[styles.modalContenido, { backgroundColor: colors.background }]}>
             <View style={styles.filaEntreItems}>
               <Text style={[styles.seccionTitulo, { color: colors.text }]}>Agregar comida</Text>
@@ -335,11 +336,11 @@ export default function Nutricion() {
               )}
             </Pressable>
           </View>
-        </View>
+        </ContenedorTeclado>
       </Modal>
 
       <Modal visible={modalAlarma} animationType="slide" transparent onRequestClose={() => setModalAlarma(false)}>
-        <View style={styles.modalFondo}>
+        <ContenedorTeclado style={styles.modalFondo}>
           <View style={[styles.modalContenido, { backgroundColor: colors.background }]}>
             <View style={styles.filaEntreItems}>
               <Text style={[styles.seccionTitulo, { color: colors.text }]}>Recordatorio de agua</Text>
@@ -436,7 +437,7 @@ export default function Nutricion() {
               </>
             )}
           </View>
-        </View>
+        </ContenedorTeclado>
       </Modal>
     </ScrollView>
   );
