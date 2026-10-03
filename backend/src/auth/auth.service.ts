@@ -86,7 +86,7 @@ export class AuthService {
     })
 
     const tokens = await this.emitirTokens(cliente)
-    return { cliente: this.aPerfilPublico(cliente, gimnasio), ...tokens }
+    return { cliente: this.aPerfilPublico(cliente, gimnasio, await this.pesoActualKg(cliente.id)), ...tokens }
   }
 
   async login(dto: LoginDto) {
@@ -105,7 +105,7 @@ export class AuthService {
     }
 
     const tokens = await this.emitirTokens(cliente)
-    return { cliente: this.aPerfilPublico(cliente, gimnasio), ...tokens }
+    return { cliente: this.aPerfilPublico(cliente, gimnasio, await this.pesoActualKg(cliente.id)), ...tokens }
   }
 
   async refrescar(refreshToken: string) {
@@ -157,7 +157,17 @@ export class AuthService {
       include: { gimnasio: true },
     })
     if (!cliente) throw new BadRequestException('Cliente no encontrado')
-    return this.aPerfilPublico(cliente, cliente.gimnasio)
+    return this.aPerfilPublico(cliente, cliente.gimnasio, await this.pesoActualKg(cliente.id))
+  }
+
+  /** Último peso registrado (onboarding o seguimiento): la app lo usa para ajustar las calorías estimadas. */
+  private async pesoActualKg(clienteId: string): Promise<number | null> {
+    const registro = await this.prisma.registroProgreso.findFirst({
+      where: { clienteId, pesoKg: { not: null } },
+      orderBy: { fecha: 'desc' },
+      select: { pesoKg: true },
+    })
+    return registro?.pesoKg ?? null
   }
 
   async cambiarPassword(clienteId: string, passwordActual: string, passwordNueva: string) {
@@ -196,6 +206,7 @@ export class AuthService {
       onboardingCompletado?: boolean
     },
     gimnasio: { nombre: string; codigo: string },
+    pesoActualKg: number | null,
   ) {
     return {
       id: cliente.id,
@@ -207,6 +218,7 @@ export class AuthService {
       gimnasioCodigo: gimnasio.codigo,
       telefono: cliente.telefono ?? null,
       alturaCm: cliente.alturaCm ?? null,
+      pesoActualKg,
       pesoObjetivoKg: cliente.pesoObjetivoKg ?? null,
       fechaNacimiento: cliente.fechaNacimiento ? cliente.fechaNacimiento.toISOString().slice(0, 10) : null,
       unidadPeso: cliente.unidadPeso ?? 'kg',

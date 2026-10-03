@@ -1,0 +1,782 @@
+{
+ "fecha": "2026-10-03T15:01:16.745Z",
+ "nota": "Valores anteriores a la recalibración de calorías y tiempos. Para volver atrás: restaurar caloriasPorMinuto/tipoMedida en ejercicios y repeticiones/duracionSeg en rutinaEjercicio.",
+ "ejercicios": [
+  {
+   "id": "f3783884-09fd-4704-8d24-c0ce0cbdfc27",
+   "nombre": "Abdominales en Banco Inclinado",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "3670dd98-cdd4-420b-90d1-c2e05d89d962",
+   "nombre": "Crunches negativos",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "f5ac5bb3-600a-4a5f-bc6e-1126a19d1951",
+   "nombre": "Elevaciones de Piernas en Barra",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "7699758d-1ae5-4371-885f-ca2422236676",
+   "nombre": "Gusano (inchworm)",
+   "caloriasPorMinuto": 4,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "59b6da7e-350c-4654-8068-8ba6b1100dc5",
+   "nombre": "Elevaciones de piernas tumbado",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "9804a3a6-f719-400c-b1b0-4876f3b3eaf7",
+   "nombre": "Abdominales rusas",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "19f0ad78-2fff-4f08-bc8c-0caf57128529",
+   "nombre": "Círculos de rodilla",
+   "caloriasPorMinuto": 4,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "8700a698-8ed4-4259-9516-d3a8a23752d9",
+   "nombre": "Elevaciones de Rodillas en Barra",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "ee449dfc-a029-4b8d-92da-45a74936fe76",
+   "nombre": "Abdominales en V con Balón Medicinal",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "e2d2820a-b8a5-4ab2-a1b6-fae98c420ee7",
+   "nombre": "Plancha a una mano alterna",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "6f1961fb-468c-4155-9c57-349c8e2d8fc1",
+   "nombre": "Sostenimiento Lateral Isométrico",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "bf8547db-60f8-4ea6-b66e-884f0a02cf49",
+   "nombre": "Extensión de triceps",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "b9377355-2b5d-4455-aff8-80bdf9f8fcb9",
+   "nombre": "Plancha de antebrazo",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "c6f683ab-fac3-48c8-a7f8-8fe8266ef3b3",
+   "nombre": "Abdominales",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "45db9a82-ebb9-4858-9e07-413b029561ae",
+   "nombre": "Molinos de viento",
+   "caloriasPorMinuto": 4,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "94aa268d-ad90-4a78-a21a-1b280d0756df",
+   "nombre": "Curl de bíceps con mancuerna",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "386f037d-7e52-4232-ba98-c12f96117af6",
+   "nombre": "Press Francés con Barra SZ",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "fcfd7bfa-0b5b-47db-9806-3e1c2c81e951",
+   "nombre": "Fondos entre Bancos",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "9030fcd6-d722-4da0-a1d8-9a0db8247e6a",
+   "nombre": "Remo sentado",
+   "caloriasPorMinuto": 7,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "294eadeb-54e0-4e19-b18c-74fb90c54942",
+   "nombre": "Biceps concentrado martillo con cable",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "f8ffd92e-5a1f-4483-b0ac-9712f08d4529",
+   "nombre": "Jalón al Pecho con Agarre Cerrado",
+   "caloriasPorMinuto": 7,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "af4306fd-776b-4fcc-b006-a5b18fb46e95",
+   "nombre": "Peso Muerto Convencional",
+   "caloriasPorMinuto": 7,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "afec272e-1db4-463f-b4ed-41c3ca41e61c",
+   "nombre": "Remo con mancuernas",
+   "caloriasPorMinuto": 7,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "0d05907e-3d28-4dd1-b345-0efa6a2acbf4",
+   "nombre": "Elevación lateral con mancuernas",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "c6f9eb2a-7cdc-4b25-8562-505fefdb285b",
+   "nombre": "Curl Martillo",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "3b9548b1-5f39-4d97-9b63-4c100892115e",
+   "nombre": "Dominadas con Agarre Supino",
+   "caloriasPorMinuto": 7,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "79ee9b7d-1a50-4ea9-90d8-75abadda6697",
+   "nombre": "Peso muerto en rack",
+   "caloriasPorMinuto": 7,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "9cd46fa0-b25e-4654-af66-1bd1c352a684",
+   "nombre": "Dominadas",
+   "caloriasPorMinuto": 7,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "ee3f42fa-97e1-474e-a292-79c3063e3b59",
+   "nombre": "Gemelos en prensa",
+   "caloriasPorMinuto": 4,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "a1017b3e-2127-4dfa-8db5-8d1765a302e5",
+   "nombre": "Elevación de talón de pie",
+   "caloriasPorMinuto": 4,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "b5636beb-593c-4789-ad3e-b9dabc9f2a99",
+   "nombre": "Cinta de correr",
+   "caloriasPorMinuto": 11,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "9612dae4-3813-4600-9240-b4251710fbba",
+   "nombre": "flexiones en TRX",
+   "caloriasPorMinuto": 11,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "e196330e-3718-4f5b-a58a-4297b3652c85",
+   "nombre": "Rodillas elevadas",
+   "caloriasPorMinuto": 11,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "33362695-6721-42c7-8203-351e6db52924",
+   "nombre": "Fondos en Paralelas",
+   "caloriasPorMinuto": 6,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "437dea5a-65b7-4e9d-9d21-82d12fcd4f35",
+   "nombre": "Pullover con Mancuerna",
+   "caloriasPorMinuto": 6,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "b6b2d30c-2687-4fa3-8191-c31391d194ee",
+   "nombre": "Remo en \"T\"",
+   "caloriasPorMinuto": 7,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "cf0731a1-5dcf-46d3-8873-045e0decade1",
+   "nombre": "Press de Pecho en Máquina",
+   "caloriasPorMinuto": 6,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "6640e84a-b57f-4782-ad48-23e782cfd058",
+   "nombre": "Cardio en bicicleta estática",
+   "caloriasPorMinuto": 11,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "63c14624-62e0-49e5-801e-7495123138ce",
+   "nombre": "Aperturas en máquina",
+   "caloriasPorMinuto": 6,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "2c6b3802-7f27-4e54-b96d-2a842f69b9a0",
+   "nombre": "Press de banca con mancuernas",
+   "caloriasPorMinuto": 6,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "5626f7dc-f9f1-49f5-b559-ce70d78070e9",
+   "nombre": "Cruce de Poleas para Pecho",
+   "caloriasPorMinuto": 6,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "e2a0b750-9a5f-4809-816f-b067758b58f2",
+   "nombre": "Press de Banca",
+   "caloriasPorMinuto": 6,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "940f9d69-c1ac-4694-9c1a-f17c44e2f513",
+   "nombre": "Flexiones en pino",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "1af81ad2-c29d-48ed-8b03-e693804ceb58",
+   "nombre": "Aducción de Cadera en Máquina",
+   "caloriasPorMinuto": 8,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "1f59982d-a39f-4361-b8fe-d82021cae6fe",
+   "nombre": "Polichilenas",
+   "caloriasPorMinuto": 8,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "1a976ca5-5317-487b-9b55-502af763ed58",
+   "nombre": "Sentadilla Frontal",
+   "caloriasPorMinuto": 8,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "cf97846e-a7e5-41f9-9e8b-5b30f12c4a2e",
+   "nombre": "Sentadilla con disco",
+   "caloriasPorMinuto": 8,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "d10ff90d-5360-4304-9d02-69e97d53cdfc",
+   "nombre": "Zancadas Caminando con Mancuernas",
+   "caloriasPorMinuto": 8,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "a8c1cbe0-987a-468c-b1d2-558fa0aab063",
+   "nombre": "Curl femoral",
+   "caloriasPorMinuto": 8,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "bc24f35a-ab72-4aa5-b705-9f7c0cd6bbba",
+   "nombre": "Prensa de piernas cerrada",
+   "caloriasPorMinuto": 8,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "58e0075f-5c83-4e85-8f74-e23fe7fae312",
+   "nombre": "Press de banca inclinado",
+   "caloriasPorMinuto": 6,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "cdc8b8d0-2fa8-4931-b788-0de2aa9d169b",
+   "nombre": "Curl cuadriceps",
+   "caloriasPorMinuto": 8,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "ff3a0543-12f8-4bc6-bce6-f717c88c8fb3",
+   "nombre": "Círculos de cadera de pie",
+   "caloriasPorMinuto": 4,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "73734abc-2d86-4667-8ade-cf0de6590c56",
+   "nombre": "Curl femoral sentado",
+   "caloriasPorMinuto": 8,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "1e609fa0-4a47-494c-8ace-fabda5d65923",
+   "nombre": "Círculos de tobillo",
+   "caloriasPorMinuto": 4,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "19966858-11d2-4972-93b9-b4d5d42df54e",
+   "nombre": "Jalón Alto Inclinado con Mancuernas",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "2303f34b-b873-4756-adab-08fee3b5de78",
+   "nombre": "Prensa de piernas",
+   "caloriasPorMinuto": 8,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "03e42c88-16e1-430e-ab83-11bd639cafd0",
+   "nombre": "Press militar",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "ff9991ef-1080-48a4-bbdb-36b6493e47f0",
+   "nombre": "Press de hombros con barra",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "ea5fb9b5-0a20-40f5-bfae-bda82df10909",
+   "nombre": "Press Militar mancuerna",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "0cf55c3d-edfb-42ca-92fb-aab72cdcaf7a",
+   "nombre": "Remo lateral en polea a un brazo",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "fc53e9b5-cea9-4e33-9471-bc1383b1debf",
+   "nombre": "Círculos de brazos",
+   "caloriasPorMinuto": 4,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "d2e79d89-906d-4746-9c8f-682c35a3641b",
+   "nombre": "Press de hombro con mancuernas",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "14ff2877-2501-416e-8ef3-4c6b5e2403ab",
+   "nombre": "Encogimiento de hombros",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "5c28bbcb-085f-465e-beaf-05d5bf45718e",
+   "nombre": "Círculos de hombros",
+   "caloriasPorMinuto": 4,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "03a98ac0-1ff5-4337-9821-a246b615edbd",
+   "nombre": "Curl de biceps con barra Z",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "a18eb166-9c15-47a1-9a5a-3e0b3e889199",
+   "nombre": "Elevaciones de deltoides posterior",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "bbe2c507-3af0-409a-854d-8cfdc881af78",
+   "nombre": "Elevación de gemelos sentado con mancuerna",
+   "caloriasPorMinuto": 4,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "f48711c4-7908-4a1b-b86e-cca637b5f142",
+   "nombre": "Press inclinado con mancuernas",
+   "caloriasPorMinuto": 6,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "787b36f1-f1c8-4abe-a569-59b2c38db10a",
+   "nombre": "Curl con barra",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "30e294f1-72ce-400c-b2a9-83642bb75837",
+   "nombre": "Remo Gironda",
+   "caloriasPorMinuto": 7,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "34d20ab0-7314-44e0-b32b-7fcaa8dd1671",
+   "nombre": "Apertura dinámica de pecho",
+   "caloriasPorMinuto": 4,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "50d56dca-4916-42b5-b13b-e6cce8ad71d8",
+   "nombre": "Postura del niño",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "3d5606cf-42f6-4cda-86ec-07bd0b7517a2",
+   "nombre": "Rodillas al pecho",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "c4ce562e-c8e8-40ce-80fa-a71f7442f011",
+   "nombre": "Una rodilla al pecho",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "4d90b3b8-33ab-4930-8a0a-5f63be2e5fde",
+   "nombre": "Rodilla cruzada sobre el cuerpo",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "39d914f9-c033-4659-a56b-9577df334e8e",
+   "nombre": "Estiramiento de isquiotibiales",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "54134230-2d65-4305-a4d8-54514e1f1774",
+   "nombre": "Cuello: barbilla al pecho",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "3caf872a-d73c-4c7e-b975-bda8c6efc560",
+   "nombre": "Estiramiento con brazos arriba",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "893430c3-5ddf-43c1-b527-787ece0e8e67",
+   "nombre": "Glúteo tumbado",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "caf10b15-0a96-43ac-ac9d-88419fd4ae2d",
+   "nombre": "Ingle y espalda",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "edd5779f-0da6-4f38-976e-46883df9e0c9",
+   "nombre": "Aperturas con Mancuernas",
+   "caloriasPorMinuto": 6,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "abf985d9-5b2e-48f1-9037-50c3a4259c36",
+   "nombre": "Aperturas en polea",
+   "caloriasPorMinuto": 6,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "67738017-3fcf-4bb8-94a2-4ed16e5b8e8d",
+   "nombre": "Press de Banca Declinado con Barra",
+   "caloriasPorMinuto": 6,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "43ac5e8c-d1e5-43fe-856e-d9544f08f0cb",
+   "nombre": "Estiramiento dinámico de espalda",
+   "caloriasPorMinuto": 4,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "e377616f-f8eb-45af-a995-720abcfab8e6",
+   "nombre": "Estiramiento del corredor",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "96c6fe6a-d46d-4878-a3c9-7515c65231b3",
+   "nombre": "Glúteo sentado",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "636c5662-70d4-4c85-b90f-4c989150d14e",
+   "nombre": "Estiramiento de hombro",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "98234b06-cf44-40b2-bfb5-7b266b41f742",
+   "nombre": "Estiramiento de columna",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "a1c543f8-8efd-4686-8820-a198c3d1bb35",
+   "nombre": "Flexores de cadera de pie",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "93c6c6a7-6508-46f3-ba74-04cca273c831",
+   "nombre": "Estiramiento lateral de pie",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "dbf0f0f8-4bcf-412d-8e65-3257a10db43b",
+   "nombre": "Estiramiento de tríceps",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "00ba5701-11db-4d8d-ab4d-db24848e0eac",
+   "nombre": "El mejor estiramiento del mundo",
+   "caloriasPorMinuto": 4,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "f083ace9-74c5-4ecf-be89-2c53380e2e33",
+   "nombre": "Extensiones lumbares a 45°",
+   "caloriasPorMinuto": 7,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "6dabc00c-bed2-4810-95f4-613bae705ba4",
+   "nombre": "Remo Inclinado con Barra (agarre prono)",
+   "caloriasPorMinuto": 7,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "9b3bcdab-eee7-4966-bd77-44048bbd0211",
+   "nombre": "Elevaciones frontales",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "b86060c3-9480-46d6-b2f4-fc656e5431ff",
+   "nombre": "Press de hombro con maquina",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "0dd320ee-893b-40f0-90c0-b6bceb455a8e",
+   "nombre": "Remo inclinado con agarre invertido",
+   "caloriasPorMinuto": 7,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "a68151f8-3674-4237-ade8-d4b9c018b1e9",
+   "nombre": "Cuádriceps a cuatro apoyos",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "c9ea3000-b9a0-4c86-80d6-bad3f8e91a91",
+   "nombre": "Rollout Abdominal con Barra",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "0a93da8e-ea27-4493-8d12-1357c8a3129f",
+   "nombre": "Puente de glúteos",
+   "caloriasPorMinuto": 8,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "70f6c344-37b7-49e0-abec-40b1b311b0dd",
+   "nombre": "Estiramiento del gato",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "9180cecd-7006-46f1-8621-fea055d37420",
+   "nombre": "Press de Banca con Agarre Cerrado",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "cc00e367-9db6-46f0-a9f2-170bfc24f7b2",
+   "nombre": "Hollow hold",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "247bcb85-68b1-4794-a847-7478c5398f38",
+   "nombre": "Saltos al Pecho",
+   "caloriasPorMinuto": 11,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "f4437a66-18d7-4c03-8e1e-c7701536660f",
+   "nombre": "Curl de piernas (tumbado)",
+   "caloriasPorMinuto": 8,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "5a2c3ddd-8a28-4af1-a233-7ddf5f71e032",
+   "nombre": "Curl de Muñeca con Barra (Agarre Supino)",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "5a4418aa-52f8-4382-a920-2a50236a074a",
+   "nombre": "Isquiotibiales sentado en el suelo",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "975dc0fc-6d77-4425-a92c-41bcf12f5c5d",
+   "nombre": "Curl de Bíceps en Polea",
+   "caloriasPorMinuto": 5,
+   "tipoMedida": "repeticiones"
+  },
+  {
+   "id": "92c39fa6-c002-4229-82a7-8ec21a0fcd76",
+   "nombre": "Estiramiento de gemelos de pie",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "4db572fc-69ac-4757-90db-d83a3bb71e5a",
+   "nombre": "Tocar la punta de los pies de pie",
+   "caloriasPorMinuto": 4,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "36a300ee-1e75-4d75-ab02-989bf344aa58",
+   "nombre": "Step Jack",
+   "caloriasPorMinuto": 11,
+   "tipoMedida": "duracion"
+  },
+  {
+   "id": "2d1162aa-f01e-4a27-929f-8d3bcf9ddced",
+   "nombre": "Estiramiento lateral del cuello",
+   "caloriasPorMinuto": 3,
+   "tipoMedida": "duracion"
+  }
+ ],
+ "rutinaEjercicios": [
+  {
+   "id": "57c86349-6171-4c1f-9c6c-ccaaadce518a",
+   "repeticiones": 10,
+   "duracionSeg": null,
+   "ejercicio": {
+    "nombre": "Sostenimiento Lateral Isométrico"
+   }
+  },
+  {
+   "id": "a7afb82f-aa08-4db6-a997-5219cc314240",
+   "repeticiones": 15,
+   "duracionSeg": null,
+   "ejercicio": {
+    "nombre": "Hollow hold"
+   }
+  },
+  {
+   "id": "1bcc421e-6abb-4e7c-9565-3fada090d654",
+   "repeticiones": 15,
+   "duracionSeg": null,
+   "ejercicio": {
+    "nombre": "Plancha de antebrazo"
+   }
+  },
+  {
+   "id": "f5a98642-43d0-4cca-b4b0-7a57c6a3537a",
+   "repeticiones": 8,
+   "duracionSeg": null,
+   "ejercicio": {
+    "nombre": "Polichilenas"
+   }
+  },
+  {
+   "id": "3954c2a0-538b-4fa7-846b-680bf7671971",
+   "repeticiones": 30,
+   "duracionSeg": null,
+   "ejercicio": {
+    "nombre": "Polichilenas"
+   }
+  },
+  {
+   "id": "f9f78eec-62bb-45df-8fdb-305bafd01e08",
+   "repeticiones": 30,
+   "duracionSeg": null,
+   "ejercicio": {
+    "nombre": "Plancha de antebrazo"
+   }
+  },
+  {
+   "id": "0d37c60c-5d27-4bb8-8366-b8fff7316224",
+   "repeticiones": 25,
+   "duracionSeg": null,
+   "ejercicio": {
+    "nombre": "Plancha de antebrazo"
+   }
+  },
+  {
+   "id": "99df5253-8bc8-466b-b77d-48bd5ca480b7",
+   "repeticiones": 30,
+   "duracionSeg": null,
+   "ejercicio": {
+    "nombre": "Polichilenas"
+   }
+  },
+  {
+   "id": "4eaf1108-b15d-4970-9943-3940cfc01cd4",
+   "repeticiones": 25,
+   "duracionSeg": null,
+   "ejercicio": {
+    "nombre": "Plancha de antebrazo"
+   }
+  },
+  {
+   "id": "72a90549-66b3-46ad-9546-25d3a83963f6",
+   "repeticiones": 30,
+   "duracionSeg": null,
+   "ejercicio": {
+    "nombre": "Hollow hold"
+   }
+  },
+  {
+   "id": "8b8bd2c1-ab77-4fb3-b658-0bd471a822ab",
+   "repeticiones": 30,
+   "duracionSeg": null,
+   "ejercicio": {
+    "nombre": "Sostenimiento Lateral Isométrico"
+   }
+  },
+  {
+   "id": "4dc23777-157e-45ea-b8ef-441017e3a658",
+   "repeticiones": 35,
+   "duracionSeg": null,
+   "ejercicio": {
+    "nombre": "Plancha de antebrazo"
+   }
+  }
+ ]
+}

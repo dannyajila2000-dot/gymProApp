@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { caloriasEstimadasDeRutina, duracionEstimadaMin } from './estimaciones-rutina.util.js'
+import { caloriasDeSesion, caloriasEstimadasDeRutina, duracionEstimadaMin } from './estimaciones-rutina.util.js'
 
 const rutina = {
   ejercicios: [
@@ -17,19 +17,35 @@ describe('estimaciones de rutina', () => {
     expect(duracionEstimadaMin(rutina)).toBe(7)
   })
 
-  it('calcula las calorías', () => {
-    // (36*3/60)*8 + (30*2/60)*5 = 14.4 + 5 = 19.4 -> 19
-    expect(caloriasEstimadasDeRutina(rutina)).toBe(19)
+  it('calcula las calorías sobre el bloque completo, descanso incluido', () => {
+    // (288/60)*8 + (120/60)*5 = 38.4 + 10 = 48.4 -> 48
+    expect(caloriasEstimadasDeRutina(rutina)).toBe(48)
+  })
+
+  it('escala las calorías por el peso respecto a 70 kg', () => {
+    expect(caloriasEstimadasDeRutina(rutina, 70)).toBe(48)
+    expect(caloriasEstimadasDeRutina(rutina, 105)).toBe(73) // x1.5
+    expect(caloriasEstimadasDeRutina(rutina, 0)).toBe(48) // peso inválido: sin escalar
   })
 
   it('usa valores por defecto cuando faltan datos', () => {
     const vacia = { ejercicios: [{ series: null, repeticiones: null, duracionSeg: null, descansoSeg: null, ejercicio: { caloriasPorMinuto: null } }] }
-    // 10 reps x 3 s + 20 s de descanso = 50 s -> 1 min; 30 s * 6 kcal/min = 3
+    // 10 reps x 3 s + 20 s de descanso = 50 s -> 1 min; (50/60) min * 5 kcal/min = 4.2 -> 4
     expect(duracionEstimadaMin(vacia)).toBe(1)
-    expect(caloriasEstimadasDeRutina(vacia)).toBe(3)
+    expect(caloriasEstimadasDeRutina(vacia)).toBe(4)
   })
 
   it('nunca devuelve menos de 1 minuto', () => {
     expect(duracionEstimadaMin({ ejercicios: [] })).toBe(1)
+  })
+
+  it('una sesión más corta de lo estimado gasta menos, proporcionalmente', () => {
+    // 48 kcal en 7 min estimados: a 3.5 min real, la mitad
+    expect(caloriasDeSesion(rutina, 3.5)).toBe(24)
+  })
+
+  it('una sesión demasiado larga (app en pausa) se limita a 1,5x lo estimado', () => {
+    // 7 min * 1.5 = 10.5 min -> 48/7 * 10.5 = 72
+    expect(caloriasDeSesion(rutina, 120)).toBe(72)
   })
 })

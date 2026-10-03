@@ -6,7 +6,7 @@ import {
   fechaEcuadorDeFecha,
   inicioYFinDeLaSemanaEcuador,
 } from '../common/fecha-ecuador.util.js'
-import { caloriasEstimadasDeRutina, duracionEstimadaMin } from './estimaciones-rutina.util.js'
+import { caloriasEstimadasDeRutina, duracionEstimadaMin, caloriasDeSesion } from './estimaciones-rutina.util.js'
 
 type RutinaConEjercicios = Prisma.RutinaGetPayload<{
   include: { ejercicios: { include: { ejercicio: true } } }
@@ -248,17 +248,35 @@ export class RutinasService {
         gimnasioId,
         OR: [{ creadaPorClienteId: null }, { creadaPorClienteId: clienteId }],
       },
+      include: { ejercicios: EJERCICIOS_VISIBLES },
     })
     if (!rutina) throw new NotFoundException('Rutina no encontrada')
+
+    // Las calorías las calcula el servidor con la duración real y el peso del cliente; el valor
+    // que manda la app (datos.caloriasEstimadas) solo se usa si la rutina no tiene ejercicios visibles.
+    const pesoKg = await this.pesoActualKg(clienteId)
+    const caloriasEstimadas = rutina.ejercicios.length
+      ? caloriasDeSesion(rutina, datos.duracionMin, pesoKg)
+      : datos.caloriasEstimadas
 
     return this.prisma.sesionEntrenamiento.create({
       data: {
         clienteId,
         rutinaId: datos.rutinaId,
         duracionMin: datos.duracionMin,
-        caloriasEstimadas: datos.caloriasEstimadas,
+        caloriasEstimadas,
       },
     })
+  }
+
+  /** Último peso registrado del cliente (onboarding o seguimiento), o null si nunca registró uno. */
+  private async pesoActualKg(clienteId: string): Promise<number | null> {
+    const registro = await this.prisma.registroProgreso.findFirst({
+      where: { clienteId, pesoKg: { not: null } },
+      orderBy: { fecha: 'desc' },
+      select: { pesoKg: true },
+    })
+    return registro?.pesoKg ?? null
   }
 
   historial(clienteId: string) {
@@ -476,7 +494,7 @@ export class RutinasService {
     const fechaInicioCliente = cliente?.creadoEn ? fechaEcuadorDeFecha(cliente.creadoEn) : hoy
 
     const finSemana = new Date(inicio.getTime() + 7 * 24 * 60 * 60 * 1000 - 1)
-    const [sesiones, actividades, poolRotacion, fijadasPorDia] = await Promise.all([
+    const [sesiones, actividades, poolRotacion, fijadasPorDia, pesoKg] = await Promise.all([
       this.prisma.sesionEntrenamiento.findMany({
         where: { clienteId, completadaEn: { gte: inicio, lte: finSemana } },
         select: {
@@ -496,6 +514,7 @@ export class RutinasService {
         where: { clienteId },
         include: { rutina: { include: { ejercicios: EJERCICIOS_VISIBLES } } },
       }),
+      this.pesoActualKg(clienteId),
     ])
     // Una rutina fijada que ya no tiene ejercicios visibles se ignora (ese día vuelve a la sugerida).
     const rutinaFijadaPorDiaSemana = new Map(
@@ -541,7 +560,7 @@ export class RutinasService {
       // configurados en la rutina (misma fórmula que en el detalle de rutina).
       const duracionMin = realizado?.duracionMin ?? (rutinaDelDia ? duracionEstimadaMin(rutinaDelDia) : null)
       const caloriasEstimadas =
-        realizado?.caloriasEstimadas ?? (rutinaDelDia ? caloriasEstimadasDeRutina(rutinaDelDia) : null)
+        realizado?.caloriasEstimadas ?? (rutinaDelDia ? caloriasEstimadasDeRutina(rutinaDelDia, pesoKg) : null)
       const numeroDia =
         Math.floor((Date.parse(`${fecha}T00:00:00Z`) - Date.parse(`${fechaInicioCliente}T00:00:00Z`)) / 86400000) + 1
 
