@@ -334,7 +334,7 @@ export default function Entrenamiento() {
   async function finalizar() {
     if (!rutina) return;
     const duracionMin = minutosDesde(inicioRef.current);
-    await guardarSesion(rutina, duracionMin, caloriasEstimadas(rutina));
+    await guardarSesion(rutina, duracionMin, caloriasEstimadas(rutina, cliente?.pesoActualKg));
   }
 
   // Recibe los valores ya calculados para que "Reintentar" guarde la misma
@@ -342,12 +342,13 @@ export default function Entrenamiento() {
   async function guardarSesion(rutinaEntrenada: Rutina, duracionMin: number, calorias: number) {
     setGuardando(true);
     try {
-      await rutinasApi.registrarSesion({
+      // El servidor calcula las calorías con la duración real y tu peso; la estimación local es solo un respaldo.
+      const sesion = await rutinasApi.registrarSesion({
         rutinaId: rutinaEntrenada.id,
         duracionMin,
         caloriasEstimadas: calorias,
       });
-      setFinalizado({ duracionMin, caloriasEstimadas: calorias });
+      setFinalizado({ duracionMin, caloriasEstimadas: sesion.caloriasEstimadas });
     } catch {
       // No marcamos el entrenamiento como completado si no se guardó: así el
       // progreso y la racha no quedan desfasados sin que el usuario se entere.

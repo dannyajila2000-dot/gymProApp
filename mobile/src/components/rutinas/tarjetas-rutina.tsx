@@ -4,11 +4,12 @@ import { Pressable, StyleSheet, Text, View, type ImageStyle, type StyleProp } fr
 
 import type { Rutina } from '@/api/rutinas';
 import { Spacing } from '@/constants/theme';
+import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
 import { caloriasEstimadas, duracionEstimadaMin } from '@/lib/rutina-utils';
 
-export function subtituloRutina(rutina: Rutina) {
-  return `${duracionEstimadaMin(rutina)} min · ${caloriasEstimadas(rutina).toFixed(1)} kcal`;
+export function subtituloRutina(rutina: Rutina, pesoKg?: number | null) {
+  return `${duracionEstimadaMin(rutina)} min · ${caloriasEstimadas(rutina, pesoKg)} kcal`;
 }
 
 function imagenDeRutina(rutina: Rutina) {
@@ -30,6 +31,7 @@ export function RutinaImagen({ rutina, style }: { rutina: Rutina; style?: StyleP
 
 /** Tarjeta grande de carrusel: foto redondeada con nombre y "min · kcal" debajo. */
 export function RutinaTarjetaCarrusel({ rutina, ancho, onPress }: { rutina: Rutina; ancho: number; onPress: () => void }) {
+  const { cliente } = useSesion();
   const colors = useTheme();
 
   return (
@@ -38,7 +40,7 @@ export function RutinaTarjetaCarrusel({ rutina, ancho, onPress }: { rutina: Ruti
       <Text style={[styles.tarjetaTitulo, { color: colors.text }]} numberOfLines={2}>
         {rutina.nombre}
       </Text>
-      <Text style={[styles.subtitulo, { color: colors.textSecondary }]}>{subtituloRutina(rutina)}</Text>
+      <Text style={[styles.subtitulo, { color: colors.textSecondary }]}>{subtituloRutina(rutina, cliente?.pesoActualKg)}</Text>
     </Pressable>
   );
 }
@@ -53,6 +55,7 @@ export function RutinaFila({
   onPress: () => void;
   conSeparador?: boolean;
 }) {
+  const { cliente } = useSesion();
   const colors = useTheme();
 
   return (
@@ -62,7 +65,7 @@ export function RutinaFila({
         <Text style={[styles.filaTitulo, { color: colors.text }]} numberOfLines={2}>
           {rutina.nombre}
         </Text>
-        <Text style={[styles.subtitulo, { color: colors.textSecondary }]}>{subtituloRutina(rutina)}</Text>
+        <Text style={[styles.subtitulo, { color: colors.textSecondary }]}>{subtituloRutina(rutina, cliente?.pesoActualKg)}</Text>
       </View>
     </Pressable>
   );

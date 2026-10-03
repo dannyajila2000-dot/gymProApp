@@ -118,7 +118,7 @@ export default function DetalleRutina() {
           <View style={styles.filaInfo}>
             <View style={[styles.tarjetaInfo, CardShadow, { backgroundColor: colors.backgroundElement }]}>
               <Ionicons name="flame-outline" size={20} color={colors.tint} />
-              <Text style={[styles.tarjetaInfoValor, { color: colors.text }]}>{caloriasEstimadas(rutina)}</Text>
+              <Text style={[styles.tarjetaInfoValor, { color: colors.text }]}>{caloriasEstimadas(rutina, cliente?.pesoActualKg)}</Text>
               <Text style={{ color: colors.textSecondary, fontSize: 11 }}>kcal aprox.</Text>
             </View>
             <View style={[styles.tarjetaInfo, CardShadow, { backgroundColor: colors.backgroundElement }]}>

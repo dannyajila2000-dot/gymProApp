@@ -10,6 +10,7 @@ export interface Cliente {
   gimnasioCodigo: string;
   telefono: string | null;
   alturaCm: number | null;
+  pesoActualKg: number | null;
   pesoObjetivoKg: number | null;
   fechaNacimiento: string | null;
   unidadPeso: 'kg' | 'lb';
