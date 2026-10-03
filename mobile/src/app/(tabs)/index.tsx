@@ -158,9 +158,9 @@ export default function Inicio() {
                 style={[
                   styles.marcador,
                   dia.completado
-                    ? { backgroundColor: colors.tint, borderColor: colors.tint }
+                    ? { backgroundColor: colors.tintFondo, borderColor: colors.tintFondo }
                     : dia.esHoy
-                      ? { backgroundColor: colors.background, borderColor: colors.tint }
+                      ? { backgroundColor: colors.background, borderColor: colors.tintFondo }
                       : { backgroundColor: colors.background, borderColor: colors.border },
                 ]}>
                 {dia.completado && <Ionicons name="checkmark" size={12} color={colors.tintForeground} />}
@@ -282,7 +282,7 @@ function DiaTarjeta({
           <View
             style={[
               StyleSheet.absoluteFill,
-              { backgroundColor: colors.backgroundElement, borderWidth: 1, borderColor: colors.tint },
+              { backgroundColor: colors.backgroundElement, borderWidth: 1, borderColor: colors.tintFondo },
             ]}
           />
         )}
@@ -307,19 +307,19 @@ function DiaTarjeta({
         <View style={{ paddingRight: 100 }}>
           <Text
             style={{
-              color: destacar ? '#ffffff' : colors.tint,
+              color: destacar ? colors.tintForeground : colors.tint,
               fontWeight: '700',
               fontSize: 11.5,
               opacity: destacar ? 0.85 : 0.85,
             }}>
             Día {dia.numeroDia}
           </Text>
-          <Text style={{ color: destacar ? '#ffffff' : colors.text, fontWeight: '700', fontSize: 16 }}>
+          <Text style={{ color: destacar ? colors.tintForeground : colors.text, fontWeight: '700', fontSize: 16 }}>
             {DIAS_NOMBRE[dia.diaSemana]} {dia.fecha.slice(8, 10)}
           </Text>
           <Text
             style={{
-              color: destacar ? '#ffffff' : colors.textSecondary,
+              color: destacar ? colors.tintForeground : colors.textSecondary,
               fontSize: 13.5,
               opacity: destacar ? 0.9 : 1,
             }}>
@@ -330,7 +330,7 @@ function DiaTarjeta({
             <>
               <Text
                 style={{
-                  color: destacar ? '#ffffff' : colors.textSecondary,
+                  color: destacar ? colors.tintForeground : colors.textSecondary,
                   opacity: destacar ? 0.9 : 1,
                   fontSize: 12.5,
                   fontWeight: '600',
@@ -340,7 +340,7 @@ function DiaTarjeta({
               </Text>
               <Text
                 style={{
-                  color: destacar ? '#ffffff' : colors.text,
+                  color: destacar ? colors.tintForeground : colors.text,
                   fontSize: 11.5,
                   fontWeight: '800',
                   marginTop: Spacing.two,
@@ -350,7 +350,7 @@ function DiaTarjeta({
               <BarraProgreso
                 pct={dia.progresoPct}
                 colorFondo={destacar ? 'rgba(255,255,255,0.28)' : colors.backgroundSelected}
-                colorRelleno={destacar ? '#ffffff' : colors.tint}
+                colorRelleno={destacar ? colors.tintForeground : colors.tint}
               />
             </>
           )}
@@ -364,8 +364,8 @@ function DiaTarjeta({
 
           {!dia.completado && !pasado && (
             <Pressable onPress={onCambiarRutina} hitSlop={8} style={styles.botonCambiar}>
-              <Ionicons name="swap-horizontal" size={14} color={destacar ? '#ffffff' : colors.tint} />
-              <Text style={{ color: destacar ? '#ffffff' : colors.tint, fontWeight: '700', fontSize: 12.5 }}>
+              <Ionicons name="swap-horizontal" size={14} color={destacar ? colors.tintForeground : colors.tint} />
+              <Text style={{ color: destacar ? colors.tintForeground : colors.tint, fontWeight: '700', fontSize: 12.5 }}>
                 {dia.fijadaPorCliente ? 'Personalizada · Cambiar' : 'Automática · Cambiar'}
               </Text>
             </Pressable>

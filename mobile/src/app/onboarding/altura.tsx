@@ -31,14 +31,14 @@ export default function Altura() {
       <View style={styles.toggleFila}>
         <Pressable
           onPress={() => setUnidad('cm')}
-          style={[styles.toggleBoton, { backgroundColor: unidad === 'cm' ? colors.tint : colors.backgroundElement }]}>
+          style={[styles.toggleBoton, { backgroundColor: unidad === 'cm' ? colors.tintFondo : colors.backgroundElement }]}>
           <Text style={{ color: unidad === 'cm' ? colors.tintForeground : colors.textSecondary, fontWeight: '700' }}>
             cm
           </Text>
         </Pressable>
         <Pressable
           onPress={() => setUnidad('ft')}
-          style={[styles.toggleBoton, { backgroundColor: unidad === 'ft' ? colors.tint : colors.backgroundElement }]}>
+          style={[styles.toggleBoton, { backgroundColor: unidad === 'ft' ? colors.tintFondo : colors.backgroundElement }]}>
           <Text style={{ color: unidad === 'ft' ? colors.tintForeground : colors.textSecondary, fontWeight: '700' }}>
             ft
           </Text>

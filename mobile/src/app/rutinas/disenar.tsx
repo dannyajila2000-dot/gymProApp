@@ -90,7 +90,7 @@ export default function DisenarEntrenamientos() {
       <Pressable
         onPress={crear}
         disabled={creando}
-        style={[styles.botonFlotante, { backgroundColor: colors.tint }]}
+        style={[styles.botonFlotante, { backgroundColor: colors.tintFondo }]}
         accessibilityLabel="Crear entrenamiento">
         {creando ? (
           <ActivityIndicator color={colors.tintForeground} />

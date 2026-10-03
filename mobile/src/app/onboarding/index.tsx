@@ -29,7 +29,7 @@ export default function BienvenidaOnboarding() {
 
       <Pressable
         onPress={() => router.push('/onboarding/nivel-fitness')}
-        style={[styles.boton, { backgroundColor: colors.tint }]}>
+        style={[styles.boton, { backgroundColor: colors.tintFondo }]}>
         <Text style={[styles.botonTexto, { color: colors.tintForeground }]}>Comienzo</Text>
       </Pressable>
     </View>

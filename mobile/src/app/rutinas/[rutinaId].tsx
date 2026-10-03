@@ -187,12 +187,12 @@ export default function DetalleRutina() {
       <View style={[styles.pieFijo, { backgroundColor: colors.background, borderColor: colors.border }]}>
         <View style={styles.filaBotones}>
           <Pressable
-            style={[styles.botonSecundario, { borderColor: colors.tint }]}
+            style={[styles.botonSecundario, { borderColor: colors.tintFondo }]}
             onPress={() => setUsarEnDia(true)}>
             <Ionicons name="calendar-outline" size={18} color={colors.tint} />
             <Text style={{ color: colors.tint, fontSize: 15, fontWeight: '800' }}>Agregar a rutina</Text>
           </Pressable>
-          <Pressable style={[styles.botonPrincipal, { backgroundColor: colors.tint }]} onPress={comenzar}>
+          <Pressable style={[styles.botonPrincipal, { backgroundColor: colors.tintFondo }]} onPress={comenzar}>
             <Text style={[styles.botonPrincipalTexto, { color: colors.tintForeground }]}>Comenzar</Text>
           </Pressable>
         </View>

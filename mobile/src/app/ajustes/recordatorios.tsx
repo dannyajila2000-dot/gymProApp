@@ -146,7 +146,7 @@ export default function Recordatorios() {
             <Switch
               value={recordatorio.activo}
               onValueChange={() => alternarActivo(recordatorio)}
-              trackColor={{ true: colors.tint }}
+              trackColor={{ true: colors.tintFondo }}
             />
             <Pressable onPress={() => eliminar(recordatorio.id)} style={{ marginLeft: Spacing.two }}>
               <Ionicons name="trash-outline" size={18} color={colors.danger} />
@@ -161,7 +161,7 @@ export default function Recordatorios() {
         )}
       </ScrollView>
 
-      <Pressable onPress={abrirModalNuevo} style={[styles.fab, { backgroundColor: colors.tint }]}>
+      <Pressable onPress={abrirModalNuevo} style={[styles.fab, { backgroundColor: colors.tintFondo }]}>
         <Ionicons name="add" size={26} color={colors.tintForeground} />
       </Pressable>
 
@@ -206,7 +206,7 @@ export default function Recordatorios() {
                   style={[
                     styles.diaCirculo,
                     {
-                      backgroundColor: diasSeleccionados.includes(indice) ? colors.tint : colors.backgroundElement,
+                      backgroundColor: diasSeleccionados.includes(indice) ? colors.tintFondo : colors.backgroundElement,
                     },
                   ]}>
                   <Text
@@ -225,7 +225,7 @@ export default function Recordatorios() {
               disabled={guardando || diasSeleccionados.length === 0}
               style={[
                 styles.boton,
-                { backgroundColor: colors.tint, opacity: guardando || diasSeleccionados.length === 0 ? 0.6 : 1 },
+                { backgroundColor: colors.tintFondo, opacity: guardando || diasSeleccionados.length === 0 ? 0.6 : 1 },
               ]}>
               {guardando ? (
                 <ActivityIndicator color={colors.tintForeground} />

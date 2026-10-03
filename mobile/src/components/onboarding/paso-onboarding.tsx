@@ -42,7 +42,7 @@ export function PasoOnboarding({
               key={indice}
               style={[
                 styles.segmento,
-                { backgroundColor: indice < paso ? colors.tint : colors.border },
+                { backgroundColor: indice < paso ? colors.tintFondo : colors.border },
               ]}
             />
           ))}

@@ -7,27 +7,30 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
-// El fondo blanco + azul cielo se pide siempre, sin importar el tema del
+// El fondo blanco + dorado/negro se pide siempre, sin importar el tema del
 // celular (Danny confirmó "blanco siempre" en vez de solo modo claro) —
 // por eso `dark` es una copia idéntica de `light` en vez de una paleta
 // oscura propia.
 const paleta = {
-  text: '#0F172A',
+  text: '#111111',
   background: '#ffffff',
-  backgroundElement: '#F4F7FB',
-  backgroundSelected: '#E4EEFB',
-  textSecondary: '#5B6472',
-  tint: '#0284C7',
-  tintForeground: '#ffffff',
-  border: '#E2E8F0',
+  backgroundElement: '#F8F5EC',
+  backgroundSelected: '#EFE6CC',
+  textSecondary: '#6B6454',
+  // Dorado oscuro: para texto e iconos sobre blanco (el dorado vivo no contrasta lo suficiente).
+  tint: '#8A6A12',
+  // Dorado vivo: para rellenos, bordes y controles activos; el texto encima usa tintForeground.
+  tintFondo: '#C9A227',
+  tintForeground: '#111111',
+  border: '#E8E1CC',
   danger: '#B3402E',
   info: '#0D9488',
   infoForeground: '#ffffff',
   success: '#1FA971',
-  warning: '#D9A62E',
-  energia: '#38BDF8',
-  energiaOscuro: '#0284C7',
-  energiaSuave: '#EAF6FF',
+  warning: '#D9822B',
+  energia: '#E6C24A',
+  energiaOscuro: '#C9A227',
+  energiaSuave: '#FBF3D9',
 } as const;
 
 export const Colors = {

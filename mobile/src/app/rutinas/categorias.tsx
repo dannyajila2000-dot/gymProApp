@@ -113,7 +113,7 @@ export default function Categorias() {
                   ]}>
                   {pestana.titulo}
                 </Text>
-                <View style={[styles.subrayado, { backgroundColor: activa ? colors.tint : 'transparent' }]} />
+                <View style={[styles.subrayado, { backgroundColor: activa ? colors.tintFondo : 'transparent' }]} />
               </Pressable>
             );
           })}

@@ -137,7 +137,7 @@ export default function MiPerfil() {
         <Pressable
           onPress={guardarPerfil}
           disabled={guardando}
-          style={[styles.boton, { backgroundColor: colors.tint, opacity: guardando ? 0.7 : 1 }]}>
+          style={[styles.boton, { backgroundColor: colors.tintFondo, opacity: guardando ? 0.7 : 1 }]}>
           {guardando ? (
             <ActivityIndicator color={colors.tintForeground} />
           ) : (
@@ -162,7 +162,7 @@ export default function MiPerfil() {
           disabled={cambiandoPassword || !passwordActual || !passwordNueva}
           style={[
             styles.boton,
-            { backgroundColor: colors.tint, opacity: cambiandoPassword || !passwordActual || !passwordNueva ? 0.5 : 1 },
+            { backgroundColor: colors.tintFondo, opacity: cambiandoPassword || !passwordActual || !passwordNueva ? 0.5 : 1 },
           ]}>
           {cambiandoPassword ? (
             <ActivityIndicator color={colors.tintForeground} />
@@ -219,7 +219,7 @@ function ToggleDos({
           onPress={() => onCambiar(opcion)}
           style={[
             styles.toggleBoton,
-            { backgroundColor: valor === opcion ? colors.tint : colors.background, borderColor: colors.border },
+            { backgroundColor: valor === opcion ? colors.tintFondo : colors.background, borderColor: colors.border },
           ]}>
           <Text style={{ color: valor === opcion ? colors.tintForeground : colors.text, fontWeight: '700' }}>
             {opcion}

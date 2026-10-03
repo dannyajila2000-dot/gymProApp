@@ -95,7 +95,7 @@ export default function Generando() {
             setPorcentaje(0);
             setIntentos((n) => n + 1);
           }}
-          style={[styles.botonReintentar, { borderColor: colors.tint }]}>
+          style={[styles.botonReintentar, { borderColor: colors.tintFondo }]}>
           <Text style={{ color: colors.tint, fontWeight: '700' }}>Reintentar</Text>
         </Pressable>
       </View>
@@ -119,7 +119,7 @@ export default function Generando() {
             cx={110}
             cy={110}
             r={RADIO}
-            stroke={colors.tint}
+            stroke={colors.tintFondo}
             strokeWidth={14}
             fill="none"
             strokeDasharray={CIRCUNFERENCIA}

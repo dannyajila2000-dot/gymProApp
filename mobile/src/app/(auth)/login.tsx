@@ -83,7 +83,7 @@ export default function Login() {
         <Pressable
           onPress={enviar}
           disabled={cargando}
-          style={[styles.boton, { backgroundColor: colors.tint, opacity: cargando ? 0.7 : 1 }]}>
+          style={[styles.boton, { backgroundColor: colors.tintFondo, opacity: cargando ? 0.7 : 1 }]}>
           {cargando ? (
             <ActivityIndicator color={colors.tintForeground} />
           ) : (

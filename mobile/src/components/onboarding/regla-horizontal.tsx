@@ -81,7 +81,7 @@ export function ReglaHorizontal({ valor, minimo, maximo, paso, pasoMayor, onCamb
         </ScrollView>
       )}
       <View pointerEvents="none" style={styles.indicadorWrap}>
-        <View style={[styles.indicador, { backgroundColor: colorIndicador ?? colors.tint }]} />
+        <View style={[styles.indicador, { backgroundColor: colorIndicador ?? colors.tintFondo }]} />
       </View>
     </View>
   );

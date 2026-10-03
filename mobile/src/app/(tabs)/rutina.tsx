@@ -147,7 +147,7 @@ export default function Descubre() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.banner}>
-          <Ionicons name="barbell" size={120} color="rgba(255,255,255,0.18)" style={styles.bannerIcono} />
+          <Ionicons name="barbell" size={120} color="rgba(17,17,17,0.12)" style={styles.bannerIcono} />
           <Text style={styles.bannerTexto}>CREA EL TUYO</Text>
           <View style={styles.bannerBoton}>
             <Text style={[styles.bannerBotonTexto, { color: colors.text }]}>VAMOS</Text>
@@ -168,7 +168,7 @@ export default function Descubre() {
                   key={barra}
                   style={[
                     styles.barra,
-                    { height: 8 + barra * 5, backgroundColor: barra <= indice ? colors.tint : colors.border },
+                    { height: 8 + barra * 5, backgroundColor: barra <= indice ? colors.tintFondo : colors.border },
                   ]}
                 />
               ))}
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
   },
   bannerIcono: { position: 'absolute', right: -10, bottom: -20 },
-  bannerTexto: { color: '#ffffff', fontSize: 22, fontWeight: '900' },
+  bannerTexto: { color: '#111111', fontSize: 22, fontWeight: '900' },
   bannerBoton: { backgroundColor: '#ffffff', borderRadius: 22, paddingVertical: 12, paddingHorizontal: 22 },
   bannerBotonTexto: { fontSize: 16, fontWeight: '900' },
   filaTarjetas: { flexDirection: 'row', gap: Spacing.two },

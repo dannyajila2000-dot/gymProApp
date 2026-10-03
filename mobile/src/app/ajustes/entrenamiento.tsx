@@ -109,7 +109,7 @@ export default function AjustesEntrenamiento() {
             style={[
               styles.diaCirculo,
               {
-                backgroundColor: diasEntrenamientoSemana.includes(indice) ? colors.tint : colors.backgroundElement,
+                backgroundColor: diasEntrenamientoSemana.includes(indice) ? colors.tintFondo : colors.backgroundElement,
               },
             ]}>
             <Text
@@ -130,7 +130,7 @@ export default function AjustesEntrenamiento() {
           style={[
             styles.tarjetaEntrenador,
             {
-              borderColor: preferenciaEntrenador === 'animacion' ? colors.tint : colors.border,
+              borderColor: preferenciaEntrenador === 'animacion' ? colors.tintFondo : colors.border,
               backgroundColor: colors.backgroundElement,
             },
           ]}>
@@ -142,7 +142,7 @@ export default function AjustesEntrenamiento() {
           style={[
             styles.tarjetaEntrenador,
             {
-              borderColor: preferenciaEntrenador === 'video' ? colors.tint : colors.border,
+              borderColor: preferenciaEntrenador === 'video' ? colors.tintFondo : colors.border,
               backgroundColor: colors.backgroundElement,
             },
           ]}>
@@ -167,9 +167,9 @@ export default function AjustesEntrenamiento() {
           minimumValue={0}
           maximumValue={1}
           step={0.05}
-          minimumTrackTintColor={colors.tint}
+          minimumTrackTintColor={colors.tintFondo}
           maximumTrackTintColor={colors.border}
-          thumbTintColor={colors.tint}
+          thumbTintColor={colors.tintFondo}
           onValueChange={setVolumenMusica}
           style={{ flex: 1 }}
         />
@@ -183,7 +183,7 @@ export default function AjustesEntrenamiento() {
             Baja la música mientras el entrenador habla
           </Text>
         </View>
-        <Switch value={bajarVolumenConVoz} onValueChange={setBajarVolumenConVoz} trackColor={{ true: colors.tint }} />
+        <Switch value={bajarVolumenConVoz} onValueChange={setBajarVolumenConVoz} trackColor={{ true: colors.tintFondo }} />
       </View>
 
       <Text style={[styles.tituloSeccion, { color: colors.text }]}>Antes de entrenar</Text>
@@ -194,7 +194,7 @@ export default function AjustesEntrenamiento() {
             Agrega unos minutos de calentamiento antes de cada rutina
           </Text>
         </View>
-        <Switch value={calentamientoActivo} onValueChange={setCalentamientoActivo} trackColor={{ true: colors.tint }} />
+        <Switch value={calentamientoActivo} onValueChange={setCalentamientoActivo} trackColor={{ true: colors.tintFondo }} />
       </View>
 
       <Text style={[styles.tituloSeccion, { color: colors.text }]}>Voz y cuenta atrás</Text>
@@ -205,7 +205,7 @@ export default function AjustesEntrenamiento() {
             Anuncia cada ejercicio y el descanso en voz alta
           </Text>
         </View>
-        <Switch value={guiaDeVozActiva} onValueChange={setGuiaDeVozActiva} trackColor={{ true: colors.tint }} />
+        <Switch value={guiaDeVozActiva} onValueChange={setGuiaDeVozActiva} trackColor={{ true: colors.tintFondo }} />
       </View>
 
       <View style={[styles.filaAjuste, { backgroundColor: colors.backgroundElement }]}>
@@ -237,7 +237,7 @@ export default function AjustesEntrenamiento() {
       <Pressable
         onPress={guardar}
         disabled={guardando}
-        style={[styles.boton, { backgroundColor: colors.tint, opacity: guardando ? 0.7 : 1 }]}>
+        style={[styles.boton, { backgroundColor: colors.tintFondo, opacity: guardando ? 0.7 : 1 }]}>
         {guardando ? (
           <ActivityIndicator color={colors.tintForeground} />
         ) : (

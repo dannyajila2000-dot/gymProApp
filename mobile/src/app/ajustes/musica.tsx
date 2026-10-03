@@ -73,7 +73,7 @@ export default function Musica() {
           <Pressable
             onPress={importar}
             disabled={procesando}
-            style={[styles.boton, { backgroundColor: colors.tint, opacity: procesando ? 0.7 : 1 }]}>
+            style={[styles.boton, { backgroundColor: colors.tintFondo, opacity: procesando ? 0.7 : 1 }]}>
             {procesando ? (
               <ActivityIndicator color={colors.tintForeground} />
             ) : (

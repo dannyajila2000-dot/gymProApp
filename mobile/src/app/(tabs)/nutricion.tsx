@@ -150,7 +150,7 @@ export default function Nutricion() {
         <Text style={{ color: colors.textSecondary, textAlign: 'center', paddingHorizontal: Spacing.four }}>
           {error ?? 'No pudimos cargar tu nutrición'}
         </Text>
-        <Pressable onPress={cargar} style={[styles.botonAgua, { borderColor: colors.tint }]}>
+        <Pressable onPress={cargar} style={[styles.botonAgua, { borderColor: colors.tintFondo }]}>
           <Text style={{ color: colors.tint, fontWeight: '700' }}>Reintentar</Text>
         </Pressable>
       </View>
@@ -177,7 +177,7 @@ export default function Nutricion() {
           </Text>
           <View style={[styles.barraFondo, { backgroundColor: colors.border, marginTop: Spacing.two }]}>
             <View
-              style={[styles.barraRelleno, { backgroundColor: colors.tint, width: `${progresoCalorias * 100}%` }]}
+              style={[styles.barraRelleno, { backgroundColor: colors.tintFondo, width: `${progresoCalorias * 100}%` }]}
             />
           </View>
         </View>
@@ -199,7 +199,7 @@ export default function Nutricion() {
           </View>
         </View>
         <View style={[styles.barraFondo, { backgroundColor: colors.border }]}>
-          <View style={[styles.barraRelleno, { backgroundColor: colors.tint, width: `${progresoAgua * 100}%` }]} />
+          <View style={[styles.barraRelleno, { backgroundColor: colors.tintFondo, width: `${progresoAgua * 100}%` }]} />
         </View>
         <View style={styles.filaBotonesAgua}>
           {AGUA_INCREMENTOS.map((cantidad) => (
@@ -207,7 +207,7 @@ export default function Nutricion() {
               key={cantidad}
               disabled={agregandoAgua}
               onPress={() => agregarAgua(cantidad)}
-              style={[styles.botonAgua, { borderColor: colors.tint }]}>
+              style={[styles.botonAgua, { borderColor: colors.tintFondo }]}>
               <Text style={{ color: colors.tint, fontWeight: '700' }}>+{cantidad}ml</Text>
             </Pressable>
           ))}
@@ -216,7 +216,7 @@ export default function Nutricion() {
 
       <View style={styles.filaEntreItems}>
         <Text style={[styles.seccionTitulo, { color: colors.text }]}>Comidas de hoy</Text>
-        <Pressable onPress={() => setModalVisible(true)} style={[styles.botonAgregar, { backgroundColor: colors.tint }]}>
+        <Pressable onPress={() => setModalVisible(true)} style={[styles.botonAgregar, { backgroundColor: colors.tintFondo }]}>
           <Ionicons name="add" size={18} color={colors.tintForeground} />
         </Pressable>
       </View>
@@ -272,8 +272,8 @@ export default function Nutricion() {
                   style={[
                     styles.chipTipo,
                     {
-                      backgroundColor: tipo === valor ? colors.tint : colors.backgroundElement,
-                      borderColor: colors.tint,
+                      backgroundColor: tipo === valor ? colors.tintFondo : colors.backgroundElement,
+                      borderColor: colors.tintFondo,
                     },
                   ]}>
                   <Text style={{ color: tipo === valor ? colors.tintForeground : colors.text, fontSize: 13 }}>
@@ -328,7 +328,7 @@ export default function Nutricion() {
             <Pressable
               onPress={guardarComida}
               disabled={guardando || !nombre.trim() || !calorias}
-              style={[styles.botonGuardar, { backgroundColor: colors.tint, opacity: guardando ? 0.7 : 1 }]}>
+              style={[styles.botonGuardar, { backgroundColor: colors.tintFondo, opacity: guardando ? 0.7 : 1 }]}>
               {guardando ? (
                 <ActivityIndicator color={colors.tintForeground} />
               ) : (
@@ -360,7 +360,7 @@ export default function Nutricion() {
               <View
                 style={[
                   styles.interruptor,
-                  { backgroundColor: meta.aguaAlarmaActiva ? colors.tint : colors.backgroundSelected },
+                  { backgroundColor: meta.aguaAlarmaActiva ? colors.tintFondo : colors.backgroundSelected },
                 ]}>
                 <View
                   style={[
@@ -387,8 +387,8 @@ export default function Nutricion() {
                       style={[
                         styles.chipTipo,
                         {
-                          backgroundColor: meta.aguaAlarmaCadaHoras === h ? colors.tint : colors.backgroundElement,
-                          borderColor: colors.tint,
+                          backgroundColor: meta.aguaAlarmaCadaHoras === h ? colors.tintFondo : colors.backgroundElement,
+                          borderColor: colors.tintFondo,
                         },
                       ]}>
                       <Text style={{ color: meta.aguaAlarmaCadaHoras === h ? colors.tintForeground : colors.text, fontSize: 13 }}>

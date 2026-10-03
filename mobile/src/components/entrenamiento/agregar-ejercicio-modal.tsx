@@ -143,7 +143,7 @@ export function AgregarEjercicioModal({
                     <View
                       style={[
                         styles.radio,
-                        { backgroundColor: agregado ? colors.tint : colors.border },
+                        { backgroundColor: agregado ? colors.tintFondo : colors.border },
                       ]}>
                       {agregado && <Ionicons name="checkmark" size={16} color={colors.tintForeground} />}
                     </View>
@@ -158,7 +158,7 @@ export function AgregarEjercicioModal({
             </ScrollView>
           )}
 
-          <Pressable onPress={onCerrar} style={[styles.botonCerrarGrande, { backgroundColor: colors.tint }]}>
+          <Pressable onPress={onCerrar} style={[styles.botonCerrarGrande, { backgroundColor: colors.tintFondo }]}>
             <Text style={{ color: colors.tintForeground, fontSize: 18, fontWeight: '800' }}>Cerrar</Text>
           </Pressable>
         </View>
@@ -183,7 +183,7 @@ function Chip({
       onPress={onPress}
       style={[
         styles.chip,
-        { backgroundColor: activo ? colors.tint : colors.backgroundElement, borderColor: colors.border },
+        { backgroundColor: activo ? colors.tintFondo : colors.backgroundElement, borderColor: colors.border },
       ]}>
       <Text style={{ color: activo ? colors.tintForeground : colors.textSecondary, fontSize: 12.5, fontWeight: '700' }}>
         {texto}

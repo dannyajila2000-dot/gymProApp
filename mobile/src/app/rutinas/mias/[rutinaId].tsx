@@ -280,7 +280,7 @@ export default function EditarRutinaPersonal() {
                   onPress={() => cambiarNivel(valor)}
                   style={[
                     styles.chip,
-                    { backgroundColor: rutina.nivel === valor ? colors.tint : colors.backgroundElement, borderColor: colors.border },
+                    { backgroundColor: rutina.nivel === valor ? colors.tintFondo : colors.backgroundElement, borderColor: colors.border },
                   ]}>
                   <Text
                     style={{
@@ -302,7 +302,7 @@ export default function EditarRutinaPersonal() {
                   onPress={() => cambiarObjetivo(valor)}
                   style={[
                     styles.chip,
-                    { backgroundColor: rutina.objetivo === valor ? colors.tint : colors.backgroundElement, borderColor: colors.border },
+                    { backgroundColor: rutina.objetivo === valor ? colors.tintFondo : colors.backgroundElement, borderColor: colors.border },
                   ]}>
                   <Text
                     style={{
@@ -345,7 +345,7 @@ export default function EditarRutinaPersonal() {
         <Pressable
           disabled={rutina.ejercicios.length === 0}
           onPress={() => setAgregarARutina(true)}
-          style={[styles.botonAgregarARutina, { borderColor: colors.tint, opacity: rutina.ejercicios.length === 0 ? 0.5 : 1 }]}>
+          style={[styles.botonAgregarARutina, { borderColor: colors.tintFondo, opacity: rutina.ejercicios.length === 0 ? 0.5 : 1 }]}>
           <Ionicons name="calendar-outline" size={18} color={colors.tint} />
           <Text style={{ color: colors.tint, fontSize: 15, fontWeight: '800' }}>Agregar a rutina</Text>
         </Pressable>
@@ -355,11 +355,11 @@ export default function EditarRutinaPersonal() {
             onPress={comenzar}
             style={[
               styles.botonSecundario,
-              { borderColor: colors.tint, opacity: rutina.ejercicios.length === 0 ? 0.5 : 1 },
+              { borderColor: colors.tintFondo, opacity: rutina.ejercicios.length === 0 ? 0.5 : 1 },
             ]}>
             <Text style={{ color: colors.tint, fontSize: 16, fontWeight: '800' }}>Comenzar</Text>
           </Pressable>
-          <Pressable onPress={guardar} style={[styles.botonPrincipal, { backgroundColor: colors.tint }]}>
+          <Pressable onPress={guardar} style={[styles.botonPrincipal, { backgroundColor: colors.tintFondo }]}>
             <Text style={{ color: colors.tintForeground, fontWeight: '800', fontSize: 16 }}>Guardar</Text>
           </Pressable>
         </View>

@@ -36,8 +36,8 @@ export function ConfirmarModal({
             </Pressable>
             <Pressable
               onPress={onConfirmar}
-              style={[styles.boton, { backgroundColor: destructivo ? colors.danger : colors.tint }]}>
-              <Text style={{ color: '#ffffff', fontWeight: '700' }}>{textoConfirmar}</Text>
+              style={[styles.boton, { backgroundColor: destructivo ? colors.danger : colors.tintFondo }]}>
+              <Text style={{ color: destructivo ? '#ffffff' : colors.tintForeground, fontWeight: '700' }}>{textoConfirmar}</Text>
             </Pressable>
           </View>
         </View>

@@ -9,7 +9,7 @@ const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 // Duración total de la bienvenida: entra suave, se queda visible un rato,
 // sale suave — unos 3 segundos en total, como pidió Danny.
 const DURATION = 3000;
-const COLOR_FONDO = '#0284C7';
+const COLOR_FONDO = '#C9A227';
 
 // `conSplashNativo`: true al abrir la app (hay que ocultar el splash nativo);
 // false cuando se reutiliza tras iniciar sesión (ya no hay splash nativo).
@@ -42,7 +42,7 @@ export function AnimatedSplashOverlay({ conSplashNativo = true }: { conSplashNat
   const marca = (
     <View style={styles.marca}>
       <View style={styles.iconoWrap}>
-        <Ionicons name="barbell" size={38} color="#ffffff" />
+        <Ionicons name="barbell" size={38} color="#111111" />
       </View>
       <Text style={styles.titulo}>GymPro</Text>
       <Text style={styles.subtitulo}>Powered by SPI Solutions</Text>
@@ -115,7 +115,7 @@ export function AnimatedIcon() {
       <Animated.View entering={glowKeyframe.duration(60 * 1000 * 4)} style={styles.glow} />
       <Animated.View entering={keyframe.duration(600)} style={styles.background} />
       <Animated.View style={styles.imageContainer} entering={logoKeyframe.duration(600)}>
-        <Ionicons name="barbell" size={48} color="#ffffff" />
+        <Ionicons name="barbell" size={48} color="#111111" />
       </Animated.View>
     </View>
   );
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: 34,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#111111',
     letterSpacing: 0.5,
   },
   subtitulo: {

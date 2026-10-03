@@ -38,9 +38,9 @@ export default function NivelActividad() {
           minimumValue={0}
           maximumValue={3}
           step={1}
-          minimumTrackTintColor={colors.tint}
+          minimumTrackTintColor={colors.tintFondo}
           maximumTrackTintColor={colors.border}
-          thumbTintColor={colors.tint}
+          thumbTintColor={colors.tintFondo}
           onValueChange={(valor) => actualizar({ nivelActividad: valor })}
         />
         <View style={styles.filaExtremos}>

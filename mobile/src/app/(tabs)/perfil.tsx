@@ -64,7 +64,7 @@ export default function Perfil() {
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.contenedor}
       showsVerticalScrollIndicator={false}>
-      <View style={[styles.avatar, CardShadow, { backgroundColor: colors.tint }]}>
+      <View style={[styles.avatar, CardShadow, { backgroundColor: colors.tintFondo }]}>
         <Text style={[styles.avatarTexto, { color: colors.tintForeground }]}>{iniciales}</Text>
       </View>
 

@@ -128,7 +128,7 @@ function Temporizador({
       <Text style={[styles.temporizador, { color }]}>{restante}s</Text>
       <View style={[styles.temporizadorBarraFondo, { backgroundColor: colors.border }]}>
         <View
-          style={[styles.temporizadorBarraRelleno, { backgroundColor: colors.tint, width: `${progreso * 100}%` }]}
+          style={[styles.temporizadorBarraRelleno, { backgroundColor: colors.tintFondo, width: `${progreso * 100}%` }]}
         />
       </View>
     </View>
@@ -417,7 +417,7 @@ export default function Entrenamiento() {
           </View>
         </View>
         <Pressable
-          style={[styles.botonPrincipal, { backgroundColor: colors.tint, marginTop: Spacing.four }]}
+          style={[styles.botonPrincipal, { backgroundColor: colors.tintFondo, marginTop: Spacing.four }]}
           onPress={() => router.replace('/(tabs)/rutina')}>
           <Text style={[styles.botonPrincipalTexto, { color: colors.tintForeground }]}>Volver a rutina</Text>
         </Pressable>
@@ -462,7 +462,7 @@ export default function Entrenamiento() {
       </View>
 
       <View style={[styles.barraProgreso, { backgroundColor: colors.border }]}>
-        <View style={[styles.barraProgresoRelleno, { backgroundColor: colors.tint, width: `${progreso * 100}%` }]} />
+        <View style={[styles.barraProgresoRelleno, { backgroundColor: colors.tintFondo, width: `${progreso * 100}%` }]} />
       </View>
 
       {paso.tipo === 'descanso' ? (
@@ -524,7 +524,7 @@ export default function Entrenamiento() {
         )}
 
         {!!duracionPaso && (
-          <Pressable style={[styles.botonPrincipal, { backgroundColor: colors.tint }]} onPress={alternarPausa}>
+          <Pressable style={[styles.botonPrincipal, { backgroundColor: colors.tintFondo }]} onPress={alternarPausa}>
             <Text style={[styles.botonPrincipalTexto, { color: colors.tintForeground }]}>
               {pausado ? '▶ Reanudar' : '⏸ Pausa'}
             </Text>
@@ -532,7 +532,7 @@ export default function Entrenamiento() {
         )}
         {paso.tipo === 'ejercicio' && !duracionPaso && (
           <Pressable
-            style={[styles.botonPrincipal, { backgroundColor: colors.tint }]}
+            style={[styles.botonPrincipal, { backgroundColor: colors.tintFondo }]}
             onPress={completarPaso}
             disabled={guardando}>
             <Text style={[styles.botonPrincipalTexto, { color: colors.tintForeground }]}>

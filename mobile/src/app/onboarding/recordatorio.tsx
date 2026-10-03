@@ -54,8 +54,8 @@ export default function Recordatorio() {
           style={[
             styles.checkbox,
             {
-              borderColor: !activo ? colors.tint : colors.border,
-              backgroundColor: !activo ? colors.tint : 'transparent',
+              borderColor: !activo ? colors.tintFondo : colors.border,
+              backgroundColor: !activo ? colors.tintFondo : 'transparent',
             },
           ]}
         />

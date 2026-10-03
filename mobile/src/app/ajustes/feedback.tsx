@@ -51,7 +51,7 @@ export default function Feedback() {
         </Text>
         <Pressable
           onPress={() => router.back()}
-          style={[styles.boton, { backgroundColor: colors.tint, marginTop: Spacing.four }]}>
+          style={[styles.boton, { backgroundColor: colors.tintFondo, marginTop: Spacing.four }]}>
           <Text style={{ color: colors.tintForeground, fontWeight: '700' }}>Volver</Text>
         </Pressable>
       </View>
@@ -76,7 +76,7 @@ export default function Feedback() {
             style={[
               styles.chip,
               {
-                backgroundColor: categoria === cat.valor ? colors.tint : colors.backgroundElement,
+                backgroundColor: categoria === cat.valor ? colors.tintFondo : colors.backgroundElement,
                 borderColor: colors.border,
               },
             ]}>
@@ -102,7 +102,7 @@ export default function Feedback() {
       <Pressable
         onPress={enviar}
         disabled={!categoria || enviando}
-        style={[styles.boton, { backgroundColor: colors.tint, opacity: !categoria || enviando ? 0.5 : 1 }]}>
+        style={[styles.boton, { backgroundColor: colors.tintFondo, opacity: !categoria || enviando ? 0.5 : 1 }]}>
         {enviando ? (
           <ActivityIndicator color={colors.tintForeground} />
         ) : (

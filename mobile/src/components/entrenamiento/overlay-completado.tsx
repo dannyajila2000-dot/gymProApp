@@ -56,8 +56,8 @@ export function OverlayCompletado({
   return (
     <View style={styles.fondo}>
       <Animated.View style={[styles.tarjeta, { backgroundColor: colors.background }, estiloAnimado]}>
-        <View style={[styles.circuloIcono, { backgroundColor: colors.tint }]}>
-          <Ionicons name="checkmark" size={36} color="#ffffff" />
+        <View style={[styles.circuloIcono, { backgroundColor: colors.tintFondo }]}>
+          <Ionicons name="checkmark" size={36} color={colors.tintForeground} />
         </View>
         <Text style={[styles.titulo, { color: colors.text }]}>{titulo}</Text>
         <Text style={{ color: colors.textSecondary }}>{subtitulo}</Text>

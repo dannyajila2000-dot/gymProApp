@@ -36,14 +36,14 @@ export default function PesoActual() {
       <View style={styles.toggleFila}>
         <Pressable
           onPress={() => setUnidad('kg')}
-          style={[styles.toggleBoton, { backgroundColor: unidad === 'kg' ? colors.tint : colors.backgroundElement }]}>
+          style={[styles.toggleBoton, { backgroundColor: unidad === 'kg' ? colors.tintFondo : colors.backgroundElement }]}>
           <Text style={{ color: unidad === 'kg' ? colors.tintForeground : colors.textSecondary, fontWeight: '700' }}>
             kg
           </Text>
         </Pressable>
         <Pressable
           onPress={() => setUnidad('lb')}
-          style={[styles.toggleBoton, { backgroundColor: unidad === 'lb' ? colors.tint : colors.backgroundElement }]}>
+          style={[styles.toggleBoton, { backgroundColor: unidad === 'lb' ? colors.tintFondo : colors.backgroundElement }]}>
           <Text style={{ color: unidad === 'lb' ? colors.tintForeground : colors.textSecondary, fontWeight: '700' }}>
             lb
           </Text>

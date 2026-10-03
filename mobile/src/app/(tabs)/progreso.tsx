@@ -55,7 +55,7 @@ export default function Progreso() {
             <Text style={{ color: tab === t.clave ? colors.tint : colors.textSecondary, fontWeight: '700' }}>
               {t.etiqueta}
             </Text>
-            {tab === t.clave && <View style={[styles.tabSubrayado, { backgroundColor: colors.tint }]} />}
+            {tab === t.clave && <View style={[styles.tabSubrayado, { backgroundColor: colors.tintFondo }]} />}
           </Pressable>
         ))}
       </View>
@@ -135,8 +135,8 @@ function TabResumen() {
                   style={[
                     styles.circuloDia,
                     {
-                      backgroundColor: completado ? colors.tint : colors.backgroundSelected,
-                      borderColor: esHoy ? colors.tint : 'transparent',
+                      backgroundColor: completado ? colors.tintFondo : colors.backgroundSelected,
+                      borderColor: esHoy ? colors.tintFondo : 'transparent',
                     },
                   ]}>
                   {completado && <Ionicons name="checkmark" size={14} color={colors.tintForeground} />}
@@ -259,12 +259,12 @@ function TabHoy() {
             size={130}
             progresoExterior={progresoCalorias}
             progresoInterior={progresoDuracion}
-            colorExterior={colors.tint}
+            colorExterior={colors.tintFondo}
             colorInterior={colors.info}
             colorFondo={colors.backgroundSelected}
           />
           <View style={{ gap: Spacing.two }}>
-            <LeyendaAnillo color={colors.tint} valor={`${resumen.caloriasQuemadas}/${resumen.meta.caloriasQuemarObjetivo}`} etiqueta="Kcal" />
+            <LeyendaAnillo color={colors.tintFondo} valor={`${resumen.caloriasQuemadas}/${resumen.meta.caloriasQuemarObjetivo}`} etiqueta="Kcal" />
             <LeyendaAnillo color={colors.info} valor={`${resumen.duracionMin}/${resumen.meta.duracionObjetivoMin}`} etiqueta="Minutos" />
           </View>
         </View>
@@ -276,7 +276,7 @@ function TabHoy() {
           <Text style={{ color: colors.text, fontWeight: '700', marginBottom: Spacing.two }}>Pasos</Text>
           {resumen.meta.pasosActivo ? (
             <>
-              <AnilloSimple size={90} progreso={progresoPasos} color={colors.tint} colorFondo={colors.backgroundSelected}>
+              <AnilloSimple size={90} progreso={progresoPasos} color={colors.tintFondo} colorFondo={colors.backgroundSelected}>
                 <View style={{ alignItems: 'center' }}>
                   <Ionicons name="footsteps" size={16} color={colors.tint} />
                   <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>{resumen.pasos}</Text>
@@ -289,7 +289,7 @@ function TabHoy() {
           ) : (
             <Pressable
               onPress={desbloquearPasos}
-              style={[styles.pildoraDesbloqueo, { backgroundColor: colors.tint, marginTop: Spacing.three }]}>
+              style={[styles.pildoraDesbloqueo, { backgroundColor: colors.tintFondo, marginTop: Spacing.three }]}>
               <Ionicons name="lock-closed" size={13} color={colors.tintForeground} />
               <Text style={{ color: colors.tintForeground, fontWeight: '700', fontSize: 12 }}>Desbloquear</Text>
             </Pressable>
@@ -307,7 +307,7 @@ function TabHoy() {
 
       <View style={styles.filaEntreItems}>
         <Text style={[styles.seccionTitulo, { color: colors.text }]}>Actividad libre</Text>
-        <Pressable onPress={() => setModalActividad(true)} style={[styles.botonAgregar, { backgroundColor: colors.tint }]}>
+        <Pressable onPress={() => setModalActividad(true)} style={[styles.botonAgregar, { backgroundColor: colors.tintFondo }]}>
           <Ionicons name="add" size={18} color={colors.tintForeground} />
         </Pressable>
       </View>
@@ -413,7 +413,7 @@ function ModalMetaDiaria({
                   style={[
                     styles.filaPreset,
                     {
-                      borderColor: calorias === p.calorias && minutos === p.minutos ? colors.tint : colors.border,
+                      borderColor: calorias === p.calorias && minutos === p.minutos ? colors.tintFondo : colors.border,
                       backgroundColor: colors.backgroundElement,
                     },
                   ]}>
@@ -437,7 +437,7 @@ function ModalMetaDiaria({
             </View>
           )}
 
-          <Pressable onPress={guardar} disabled={guardando} style={[styles.botonGuardar, { backgroundColor: colors.tint }]}>
+          <Pressable onPress={guardar} disabled={guardando} style={[styles.botonGuardar, { backgroundColor: colors.tintFondo }]}>
             {guardando ? (
               <ActivityIndicator color={colors.tintForeground} />
             ) : (
@@ -457,7 +457,7 @@ function ChipModo({ etiqueta, activo, onPress }: { etiqueta: string; activo: boo
       onPress={onPress}
       style={[
         styles.chipTipo,
-        { backgroundColor: activo ? colors.tint : colors.backgroundElement, borderColor: colors.tint },
+        { backgroundColor: activo ? colors.tintFondo : colors.backgroundElement, borderColor: colors.tintFondo },
       ]}>
       <Text style={{ color: activo ? colors.tintForeground : colors.text, fontSize: 13, fontWeight: '600' }}>{etiqueta}</Text>
     </Pressable>
@@ -524,7 +524,7 @@ function ModalPasos({
           <GraficaBarras
             valores={semana}
             diaActual={new Date().getDay()}
-            color={colors.tint}
+            color={colors.tintFondo}
             colorFondo={colors.backgroundSelected}
             colorTexto={colors.textSecondary}
           />
@@ -538,7 +538,7 @@ function ModalPasos({
               {podometro.activo ? (
                 <>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <View style={[styles.puntoActivo, { backgroundColor: colors.tint }]} />
+                    <View style={[styles.puntoActivo, { backgroundColor: colors.tintFondo }]} />
                     <Text style={{ color: colors.text, fontWeight: '700' }}>
                       Contando en vivo: {podometro.pasosSesion} pasos
                     </Text>
@@ -554,7 +554,7 @@ function ModalPasos({
                   </Text>
                   <Pressable
                     onPress={podometro.iniciar}
-                    style={[styles.pildoraDesbloqueo, { backgroundColor: colors.tint }]}>
+                    style={[styles.pildoraDesbloqueo, { backgroundColor: colors.tintFondo }]}>
                     <Ionicons name="walk" size={14} color={colors.tintForeground} />
                     <Text style={{ color: colors.tintForeground, fontWeight: '700', fontSize: 12 }}>Activar</Text>
                   </Pressable>
@@ -572,7 +572,7 @@ function ModalPasos({
               keyboardType="numeric"
               style={[styles.input, { flex: 1, borderColor: colors.border, color: colors.text }]}
             />
-            <Pressable onPress={agregarPasos} style={[styles.botonAgregar, { backgroundColor: colors.tint }]}>
+            <Pressable onPress={agregarPasos} style={[styles.botonAgregar, { backgroundColor: colors.tintFondo }]}>
               <Ionicons name="add" size={18} color={colors.tintForeground} />
             </Pressable>
           </View>
@@ -580,7 +580,7 @@ function ModalPasos({
           <Text style={{ color: colors.textSecondary, marginTop: Spacing.two }}>Meta diaria de pasos: {nuevoObjetivo}</Text>
           <ReglaHorizontal valor={nuevoObjetivo} minimo={1000} maximo={20000} paso={500} pasoMayor={5000} onCambiar={setNuevoObjetivo} />
 
-          <Pressable onPress={guardarObjetivo} style={[styles.botonGuardar, { backgroundColor: colors.tint }]}>
+          <Pressable onPress={guardarObjetivo} style={[styles.botonGuardar, { backgroundColor: colors.tintFondo }]}>
             <Text style={{ color: colors.tintForeground, fontWeight: '700' }}>Guardar meta</Text>
           </Pressable>
         </View>
@@ -697,7 +697,7 @@ function ModalActividad({
               <Pressable
                 onPress={guardar}
                 disabled={guardando || !duracion}
-                style={[styles.botonGuardar, { backgroundColor: colors.tint }]}>
+                style={[styles.botonGuardar, { backgroundColor: colors.tintFondo }]}>
                 {guardando ? (
                   <ActivityIndicator color={colors.tintForeground} />
                 ) : (
@@ -811,7 +811,7 @@ function TabPeso() {
         <Text style={{ color: colors.textSecondary, textAlign: 'center', paddingHorizontal: Spacing.four }}>
           {error}
         </Text>
-        <Pressable onPress={cargar} style={{ borderWidth: 1.5, borderColor: colors.tint, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 14 }}>
+        <Pressable onPress={cargar} style={{ borderWidth: 1.5, borderColor: colors.tintFondo, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 14 }}>
           <Text style={{ color: colors.tint, fontWeight: '700' }}>Reintentar</Text>
         </Pressable>
       </View>
@@ -867,7 +867,7 @@ function TabPeso() {
           <GraficaLinea
             puntos={puntosGrafica}
             metaValor={pesoObjetivo}
-            color={colors.tint}
+            color={colors.tintFondo}
             colorMeta={colors.info}
             colorTexto={colors.textSecondary}
             colorFondoTooltip="#1C1C1E"
@@ -875,7 +875,7 @@ function TabPeso() {
           />
         </View>
 
-        <Pressable onPress={() => setModalVisible(true)} style={[styles.botonGuardar, { backgroundColor: colors.tint, marginTop: Spacing.three }]}>
+        <Pressable onPress={() => setModalVisible(true)} style={[styles.botonGuardar, { backgroundColor: colors.tintFondo, marginTop: Spacing.three }]}>
           <Text style={{ color: colors.tintForeground, fontWeight: '700' }}>Registrar peso</Text>
         </Pressable>
       </View>
@@ -902,7 +902,7 @@ function TabPeso() {
           <Pressable
             onPress={recalcular}
             disabled={recalculando}
-            style={[styles.botonRecalcular, { borderColor: colors.tint, opacity: recalculando ? 0.6 : 1 }]}>
+            style={[styles.botonRecalcular, { borderColor: colors.tintFondo, opacity: recalculando ? 0.6 : 1 }]}>
             {recalculando ? (
               <ActivityIndicator color={colors.tint} size="small" />
             ) : (
@@ -988,7 +988,7 @@ function TabPeso() {
                 await guardar();
               }}
               disabled={guardando}
-              style={[styles.botonGuardar, { backgroundColor: colors.tint, opacity: guardando ? 0.7 : 1 }]}>
+              style={[styles.botonGuardar, { backgroundColor: colors.tintFondo, opacity: guardando ? 0.7 : 1 }]}>
               {guardando ? (
                 <ActivityIndicator color={colors.tintForeground} />
               ) : (

@@ -78,7 +78,7 @@ export function ReglaVertical({ valor, minimo, maximo, paso, pasoMayor, onCambia
         </ScrollView>
       )}
       <View pointerEvents="none" style={styles.indicadorWrap}>
-        <View style={[styles.indicador, { backgroundColor: colors.tint }]} />
+        <View style={[styles.indicador, { backgroundColor: colors.tintFondo }]} />
       </View>
     </View>
   );

@@ -21,7 +21,7 @@ export function TarjetaOpcion({ icono, titulo, descripcion, seleccionado, onPres
       style={[
         styles.tarjeta,
         {
-          borderColor: seleccionado ? colors.tint : colors.border,
+          borderColor: seleccionado ? colors.tintFondo : colors.border,
           backgroundColor: seleccionado ? colors.backgroundElement : colors.background,
         },
       ]}>
@@ -36,8 +36,8 @@ export function TarjetaOpcion({ icono, titulo, descripcion, seleccionado, onPres
         style={[
           styles.radio,
           {
-            borderColor: seleccionado ? colors.tint : colors.border,
-            backgroundColor: seleccionado ? colors.tint : 'transparent',
+            borderColor: seleccionado ? colors.tintFondo : colors.border,
+            backgroundColor: seleccionado ? colors.tintFondo : 'transparent',
           },
         ]}>
         {seleccionado && <Ionicons name="checkmark" size={14} color={colors.tintForeground} />}
