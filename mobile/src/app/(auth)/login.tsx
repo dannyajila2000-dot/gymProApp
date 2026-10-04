@@ -16,6 +16,9 @@ import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 
+// Para una versión de prueba se compila con EXPO_PUBLIC_REGISTRO_HABILITADO=false (ver eas.json) y no se ofrece crear cuentas.
+const REGISTRO_HABILITADO = process.env.EXPO_PUBLIC_REGISTRO_HABILITADO !== 'false';
+
 export default function Login() {
   const colors = useTheme();
   const { iniciarSesion } = useSesion();
@@ -91,12 +94,14 @@ export default function Login() {
           )}
         </Pressable>
 
-        <View style={styles.pieDePagina}>
-          <Text style={{ color: colors.textSecondary }}>¿No tienes cuenta? </Text>
-          <Link href="/(auth)/registro" replace>
-            <Text style={{ color: colors.tint, fontWeight: '700' }}>Regístrate</Text>
-          </Link>
-        </View>
+        {REGISTRO_HABILITADO && (
+          <View style={styles.pieDePagina}>
+            <Text style={{ color: colors.textSecondary }}>¿No tienes cuenta? </Text>
+            <Link href="/(auth)/registro" replace>
+              <Text style={{ color: colors.tint, fontWeight: '700' }}>Regístrate</Text>
+            </Link>
+          </View>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );

@@ -6,7 +6,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://gymproapp-y7fu.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://gymproapp-y7fu.onrender.com/api",
+        "EXPO_PUBLIC_REGISTRO_HABILITADO": "false"
       }
     }
   }
