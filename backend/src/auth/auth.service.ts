@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcrypt'
@@ -65,6 +66,12 @@ export class AuthService {
   }
 
   async registro(dto: RegistroDto) {
+    // Interruptor para cerrar las altas de cuentas (p. ej. mientras se reparte una versión de prueba):
+    // REGISTRO_HABILITADO=false en las variables de entorno. Si no existe, el registro sigue abierto.
+    if (process.env.REGISTRO_HABILITADO === 'false') {
+      throw new ForbiddenException('El registro de cuentas nuevas está deshabilitado por ahora')
+    }
+
     const gimnasio = await this.buscarGimnasioActivo(dto.codigoGimnasio)
 
     const yaExiste = await this.prisma.cliente.findUnique({
