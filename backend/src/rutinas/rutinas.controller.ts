@@ -51,7 +51,7 @@ export class RutinasController {
 
   @Get('plan-semana')
   planSemana(@ClienteActual() cliente: ClienteAutenticado) {
-    return this.rutinasService.planSemana(cliente.clienteId)
+    return this.rutinasService.planSemana(cliente.clienteId, cliente.gimnasioId)
   }
 
   @Get('dias-fijados')

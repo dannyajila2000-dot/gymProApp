@@ -479,7 +479,7 @@ export class RutinasService {
     await this.prisma.rutinaEjercicio.delete({ where: { id: rutinaEjercicioId } })
   }
 
-  async planSemana(clienteId: string) {
+  async planSemana(clienteId: string, gimnasioId: string) {
     const cliente = await this.prisma.cliente.findUnique({
       where: { id: clienteId },
       select: { diasEntrenamientoSemana: true, nivelFitness: true, creadoEn: true },
@@ -509,7 +509,7 @@ export class RutinasService {
         where: { clienteId, fecha: { gte: inicio, lte: finSemana } },
         select: { fecha: true, duracionMin: true, caloriasEstimadas: true },
       }),
-      this.poolDeRotacion(clienteId, cliente?.nivelFitness ?? null),
+      this.poolDeRotacion(clienteId, gimnasioId, cliente?.nivelFitness ?? null),
       this.prisma.rutinaPorDia.findMany({
         where: { clienteId },
         include: { rutina: { include: { ejercicios: EJERCICIOS_VISIBLES } } },
@@ -586,16 +586,18 @@ export class RutinasService {
 
   /**
    * Conjunto de rutinas entre las que rota el plan automático: plantillas del
-   * gimnasio que combinan con el nivel y el objetivo calculado en el
+   * gimnasio del cliente que combinan con el nivel y el objetivo calculado en el
    * onboarding. Si no hay combinación exacta se relaja primero el objetivo y
    * luego el nivel. Las rutinas personales no entran: el cliente las coloca a
    * mano en los días que quiera. Se ordena de forma estable para que la
    * rotación sea determinística entre llamadas.
    */
-  private async poolDeRotacion(clienteId: string, nivelFitness: string | null) {
+  private async poolDeRotacion(clienteId: string, gimnasioId: string, nivelFitness: string | null) {
     const [plantillasBrutas, asignacionOnboarding] = await Promise.all([
       this.prisma.rutina.findMany({
         where: {
+          // Solo las plantillas del gimnasio del cliente: sin esto, un gimnasio recibía las rutinas de otros.
+          gimnasioId,
           creadaPorClienteId: null,
           activa: true,
           objetivo: { not: OBJETIVO_CALENTAMIENTO },
