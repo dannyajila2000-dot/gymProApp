@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
+import { ErrorApi } from '@/api/client';
 import { listarSucursales, type Sucursal } from '@/api/clientes';
 import { PasoOnboarding } from '@/components/onboarding/paso-onboarding';
 import { TarjetaOpcion } from '@/components/onboarding/tarjeta-opcion';
@@ -32,8 +33,15 @@ export default function ElegirSucursal() {
         }
         setSucursales(lista);
       })
-      .catch(() => {
-        if (!cancelado) setError(true);
+      .catch((e) => {
+        if (cancelado) return;
+        // Un servidor que aún no conoce las sucursales (404) equivale a un gimnasio sin sucursales.
+        if (e instanceof ErrorApi && e.status === 404) {
+          actualizar({ sucursalId: null, sucursalNombre: null });
+          router.replace('/onboarding/generando');
+          return;
+        }
+        setError(true);
       });
     return () => {
       cancelado = true;
@@ -48,6 +56,15 @@ export default function ElegirSucursal() {
         <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>No pudimos cargar las sucursales. Revisa tu conexión.</Text>
         <Pressable onPress={() => { setError(false); setIntento((n) => n + 1); }} style={{ borderWidth: 1.5, borderColor: colors.tintFondo, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 24 }}>
           <Text style={{ color: colors.tint, fontWeight: '700' }}>Reintentar</Text>
+        </Pressable>
+        {/* Elegir sucursal es opcional: si no se puede cargar la lista, no debe impedir terminar el registro. */}
+        <Pressable
+          onPress={() => {
+            actualizar({ sucursalId: null, sucursalNombre: null });
+            router.replace('/onboarding/generando');
+          }}
+          style={{ paddingVertical: 12, paddingHorizontal: 24 }}>
+          <Text style={{ color: colors.textSecondary, fontWeight: '700' }}>Continuar sin elegir sucursal</Text>
         </Pressable>
       </View>
     );
