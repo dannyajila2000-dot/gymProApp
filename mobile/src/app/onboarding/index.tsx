@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { BotonOnboarding } from '@/components/onboarding/boton-onboarding';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 
@@ -31,13 +32,10 @@ export default function SinEntrenamientos() {
         Tu semana está vacía. Crea un plan hecho a tu medida en pocos minutos y empieza a entrenar hoy.
       </Text>
 
-      <Pressable
-        onPress={() => router.push('/onboarding/saludo')}
-        accessibilityRole="button"
-        style={[styles.boton, { backgroundColor: colors.tintFondo }]}>
+      <BotonOnboarding onPress={() => router.push('/onboarding/saludo')} fondo={colors.tintFondo} style={styles.boton}>
         <Ionicons name="add-circle" size={22} color={colors.tintForeground} />
         <Text style={[styles.botonTexto, { color: colors.tintForeground }]}>Crear mi plan</Text>
-      </Pressable>
+      </BotonOnboarding>
     </View>
   );
 }

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorApi } from '@/api/client';
 import { asignarme } from '@/api/rutinas';
+import { BotonOnboarding } from '@/components/onboarding/boton-onboarding';
 import { useSesion } from '@/context/auth-context';
 import { useOnboarding } from '@/context/onboarding-context';
 import { useTheme } from '@/hooks/use-theme';
@@ -106,11 +107,7 @@ export default function Recomendaciones() {
 
       {error && <Text style={{ color: colors.danger, textAlign: 'center', marginBottom: Spacing.two }}>{error}</Text>}
 
-      <Pressable
-        onPress={empezar}
-        disabled={guardando}
-        accessibilityRole="button"
-        style={[styles.boton, { backgroundColor: colors.tintFondo, opacity: guardando ? 0.6 : 1 }]}>
+      <BotonOnboarding onPress={empezar} fondo={colors.tintFondo} deshabilitado={guardando} style={styles.boton}>
         {guardando ? (
           <ActivityIndicator color={colors.tintForeground} />
         ) : (
@@ -118,7 +115,7 @@ export default function Recomendaciones() {
             {recomendaciones.length ? 'EMPEZAR CON ESTA RUTINA' : 'IR A MI INICIO'}
           </Text>
         )}
-      </Pressable>
+      </BotonOnboarding>
     </View>
   );
 }

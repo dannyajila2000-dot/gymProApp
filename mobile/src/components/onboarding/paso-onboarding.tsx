@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BotonOnboarding } from '@/components/onboarding/boton-onboarding';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 
@@ -104,20 +105,18 @@ export function PasoOnboarding({
       )}
 
       {!ocultarBoton && (
-        <Pressable
+        <BotonOnboarding
           onPress={pulsar}
-          disabled={deshabilitado || cargando}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.boton,
-            { backgroundColor: colors.text, opacity: deshabilitado || cargando ? 0.4 : ocupado || pressed ? 0.75 : 1 },
-          ]}>
+          fondo={colors.text}
+          deshabilitado={deshabilitado || cargando}
+          atenuado={ocupado}
+          style={styles.boton}>
           {cargando || ocupado ? (
             <ActivityIndicator color={colors.background} />
           ) : (
             <Text style={[styles.botonTexto, { color: colors.background }]}>{editando ? 'GUARDAR' : textoBoton}</Text>
           )}
-        </Pressable>
+        </BotonOnboarding>
       )}
     </View>
   );

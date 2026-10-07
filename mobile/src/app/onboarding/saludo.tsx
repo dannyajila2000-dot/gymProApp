@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { EntrenadorIlustracion } from '@/components/onboarding/entrenador-ilustracion';
+import { BotonOnboarding } from '@/components/onboarding/boton-onboarding';
 import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
@@ -34,12 +35,9 @@ export default function Saludo() {
         </View>
       </View>
 
-      <Pressable
-        onPress={() => router.push('/onboarding/objetivo')}
-        accessibilityRole="button"
-        style={[styles.boton, { backgroundColor: colors.tintFondo }]}>
+      <BotonOnboarding onPress={() => router.push('/onboarding/objetivo')} fondo={colors.tintFondo} style={styles.boton}>
         <Text style={[styles.botonTexto, { color: colors.tintForeground }]}>¡VAMOS!</Text>
-      </Pressable>
+      </BotonOnboarding>
     </View>
   );
 }
