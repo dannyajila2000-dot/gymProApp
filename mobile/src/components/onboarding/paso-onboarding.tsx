@@ -1,12 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import type { PropsWithChildren } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 
-const TOTAL_PASOS = 7;
+const TOTAL_PASOS = 12;
 
 interface Props {
   paso: number;
@@ -16,6 +16,8 @@ interface Props {
   cargando?: boolean;
   textoBoton?: string;
   ocultarBoton?: boolean;
+  /** Para pantallas con más contenido que alto: el contenido se desplaza y el botón queda fijo abajo. */
+  desplazable?: boolean;
 }
 
 export function PasoOnboarding({
@@ -26,9 +28,13 @@ export function PasoOnboarding({
   cargando,
   textoBoton = 'PRÓXIMO',
   ocultarBoton,
+  desplazable,
   children,
 }: PropsWithChildren<Props>) {
   const colors = useTheme();
+  // Desde el resumen se puede editar una respuesta: se abre la pantalla con ?editar=1 y al guardar vuelve al resumen.
+  const { editar } = useLocalSearchParams<{ editar?: string }>();
+  const editando = editar === '1';
 
   return (
     <View style={[styles.contenedor, { backgroundColor: colors.background }]}>
@@ -51,11 +57,17 @@ export function PasoOnboarding({
 
       <Text style={[styles.titulo, { color: colors.text }]}>{titulo}</Text>
 
-      <View style={styles.contenido}>{children}</View>
+      {desplazable ? (
+        <ScrollView style={styles.contenido} contentContainerStyle={{ paddingBottom: Spacing.three }} showsVerticalScrollIndicator={false}>
+          {children}
+        </ScrollView>
+      ) : (
+        <View style={styles.contenido}>{children}</View>
+      )}
 
       {!ocultarBoton && (
         <Pressable
-          onPress={onSiguiente}
+          onPress={editando ? () => router.back() : onSiguiente}
           disabled={deshabilitado || cargando}
           style={[
             styles.boton,
@@ -64,7 +76,7 @@ export function PasoOnboarding({
           {cargando ? (
             <ActivityIndicator color={colors.background} />
           ) : (
-            <Text style={[styles.botonTexto, { color: colors.background }]}>{textoBoton}</Text>
+            <Text style={[styles.botonTexto, { color: colors.background }]}>{editando ? 'GUARDAR' : textoBoton}</Text>
           )}
         </Pressable>
       )}

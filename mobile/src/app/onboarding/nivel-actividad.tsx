@@ -7,14 +7,9 @@ import { PasoOnboarding } from '@/components/onboarding/paso-onboarding';
 import { useOnboarding } from '@/context/onboarding-context';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
+import { NIVELES_ACTIVIDAD } from '@/lib/onboarding-opciones';
 
-const NIVELES: { icono: keyof typeof Ionicons.glyphMap; texto: string }[] = [
-  { icono: 'desktop-outline', texto: 'Paso el día en el escritorio' },
-  { icono: 'walk-outline', texto: 'Me muevo o camino durante 30 minutos' },
-  { icono: 'body-outline', texto: 'Entreno 1-2 veces por semana' },
-  { icono: 'flame', texto: 'Hago ejercicio 3 o más veces por semana' },
-];
-
+const NIVELES = NIVELES_ACTIVIDAD;
 export default function NivelActividad() {
   const colors = useTheme();
   const { respuestas, actualizar } = useOnboarding();
@@ -22,9 +17,9 @@ export default function NivelActividad() {
 
   return (
     <PasoOnboarding
-      paso={2}
+      paso={4}
       titulo="¿Cuál es tu nivel de actividad?"
-      onSiguiente={() => router.push('/onboarding/altura')}>
+      onSiguiente={() => router.push('/onboarding/frecuencia')}>
       <View style={styles.centro}>
         <View style={[styles.iconoCirculo, { backgroundColor: colors.backgroundElement }]}>
           <Ionicons name={nivel.icono} size={64} color={colors.tint} />

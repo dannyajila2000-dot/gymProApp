@@ -30,7 +30,7 @@ export default function PesoActual() {
 
   return (
     <PasoOnboarding
-      paso={4}
+      paso={8}
       titulo="¿Cuánto pesas actualmente?"
       onSiguiente={() => router.push('/onboarding/peso-objetivo')}>
       <View style={styles.toggleFila}>

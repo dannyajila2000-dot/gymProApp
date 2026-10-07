@@ -4,27 +4,27 @@ import { View } from 'react-native';
 import { PasoOnboarding } from '@/components/onboarding/paso-onboarding';
 import { TarjetaOpcion } from '@/components/onboarding/tarjeta-opcion';
 import { useOnboarding } from '@/context/onboarding-context';
-import { RESTRICCIONES } from '@/lib/onboarding-opciones';
+import { OBJETIVOS } from '@/lib/onboarding-opciones';
 
-export default function Restricciones() {
+export default function Objetivo() {
   const { respuestas, actualizar } = useOnboarding();
 
   return (
     <PasoOnboarding
-      paso={11}
-      titulo="¿Algo más que debamos cuidar?"
+      paso={1}
+      titulo="¿Cuál es tu objetivo principal?"
       desplazable
-      deshabilitado={!respuestas.restriccionFisica}
-      onSiguiente={() => router.push('/onboarding/resumen')}>
+      deshabilitado={!respuestas.objetivoPrincipal}
+      onSiguiente={() => router.push('/onboarding/nivel-fitness')}>
       <View>
-        {RESTRICCIONES.map((op) => (
+        {OBJETIVOS.map((op) => (
           <TarjetaOpcion
             key={op.valor}
             icono={op.icono}
             titulo={op.titulo}
             descripcion={op.descripcion}
-            seleccionado={respuestas.restriccionFisica === op.valor}
-            onPress={() => actualizar({ restriccionFisica: op.valor })}
+            seleccionado={respuestas.objetivoPrincipal === op.valor}
+            onPress={() => actualizar({ objetivoPrincipal: op.valor })}
           />
         ))}
       </View>

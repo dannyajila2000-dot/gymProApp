@@ -6,7 +6,6 @@ import Svg, { Circle } from 'react-native-svg';
 
 import { completarOnboarding } from '@/api/clientes';
 import { ErrorApi } from '@/api/client';
-import { useSesion } from '@/context/auth-context';
 import { useOnboarding } from '@/context/onboarding-context';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
@@ -15,15 +14,14 @@ const RADIO = 90;
 const CIRCUNFERENCIA = 2 * Math.PI * RADIO;
 
 const PASOS = [
-  'Analizando tu nivel de actividad y fitness...',
-  'Calculando tu objetivo de peso...',
-  'Eligiendo la rutina que mejor te queda...',
+  'Analizando tus respuestas y tu nivel...',
+  'Cuidando tus lesiones y tu disponibilidad...',
+  'Eligiendo las rutinas que mejor te quedan...',
 ];
 
 export default function Generando() {
   const colors = useTheme();
-  const { respuestas } = useOnboarding();
-  const { actualizarCliente } = useSesion();
+  const { respuestas, resultado, guardarResultado } = useOnboarding();
   const [porcentaje, setPorcentaje] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [intentos, setIntentos] = useState(0);
@@ -39,24 +37,39 @@ export default function Generando() {
 
     async function ejecutar() {
       try {
-        if (!respuestas.nivelFitness || !respuestas.restriccionFisica) {
-          throw new Error('Faltan datos del formulario');
+        // Si ya se envió (por ejemplo, al volver atrás hasta aquí), no se repite: duplicaría el recordatorio y el peso.
+        if (!resultado) {
+          if (!respuestas.nivelFitness || !respuestas.restriccionFisica) {
+            throw new Error('Faltan datos del formulario');
+          }
+          const enviado = await completarOnboarding({
+            nivelFitness: respuestas.nivelFitness,
+            nivelActividad: respuestas.nivelActividad,
+            alturaCm: Math.round(respuestas.alturaCm),
+            pesoActualKg: respuestas.pesoActualKg,
+            pesoObjetivoKg: respuestas.pesoObjetivoKg,
+            restriccionFisica: respuestas.restriccionFisica,
+            objetivoPrincipal: respuestas.objetivoPrincipal ?? undefined,
+            historialEntrenamiento: respuestas.historialEntrenamiento ?? undefined,
+            frecuenciaSemanal: respuestas.frecuenciaSemanal ?? undefined,
+            diasEntrenamiento: respuestas.diasEntrenamiento.length ? respuestas.diasEntrenamiento : undefined,
+            horaEntrenamiento: respuestas.horaEntrenamiento,
+            recordarme: respuestas.recordarme,
+            zonasLesion: respuestas.zonasLesion,
+            sucursalId: respuestas.sucursalId ?? undefined,
+          });
+          if (cancelado) return;
+          guardarResultado({
+            recomendaciones: enviado.recomendaciones ?? [],
+            rutinaAsignadaId: enviado.rutinaAsignada?.id ?? null,
+          });
         }
-        await completarOnboarding({
-          nivelFitness: respuestas.nivelFitness,
-          nivelActividad: respuestas.nivelActividad,
-          alturaCm: Math.round(respuestas.alturaCm),
-          pesoActualKg: respuestas.pesoActualKg,
-          pesoObjetivoKg: respuestas.pesoObjetivoKg,
-          restriccionFisica: respuestas.restriccionFisica,
-          horaRecordatorio: respuestas.horaRecordatorio ?? undefined,
-        });
-        if (cancelado) return;
         yaTermino.current = true;
         setPorcentaje(100);
-        actualizarCliente({ onboardingCompletado: true, alturaCm: respuestas.alturaCm });
+        // Aún no se marca el onboarding como completado en el teléfono: si no, la app saldría de este flujo
+        // antes de que el cliente elija su rutina. Lo hace la pantalla de recomendaciones.
         setTimeout(() => {
-          if (!cancelado) router.replace('/(tabs)');
+          if (!cancelado) router.replace('/onboarding/recomendaciones');
         }, 600);
       } catch (e) {
         if (cancelado) return;
@@ -71,17 +84,9 @@ export default function Generando() {
       cancelado = true;
       clearInterval(intervalo);
     };
-  }, [
-    intentos,
-    actualizarCliente,
-    respuestas.nivelFitness,
-    respuestas.nivelActividad,
-    respuestas.alturaCm,
-    respuestas.pesoActualKg,
-    respuestas.pesoObjetivoKg,
-    respuestas.restriccionFisica,
-    respuestas.horaRecordatorio,
-  ]);
+    // Solo debe correr al entrar y al reintentar; las respuestas ya no cambian en esta pantalla.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [intentos]);
 
   if (error) {
     return (

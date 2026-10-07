@@ -60,9 +60,9 @@ export default function PesoObjetivo() {
 
   return (
     <PasoOnboarding
-      paso={5}
+      paso={9}
       titulo="¿Cuál es tu peso objetivo?"
-      onSiguiente={() => router.push('/onboarding/restricciones')}>
+      onSiguiente={() => router.push('/onboarding/lesiones')}>
       <View style={styles.toggleFila}>
         <Pressable
           onPress={() => setUnidad('kg')}

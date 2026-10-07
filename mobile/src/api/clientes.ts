@@ -26,11 +26,39 @@ export interface DatosOnboarding {
   pesoObjetivoKg: number;
   restriccionFisica: 'ninguna' | 'impacto_bajo' | 'sin_saltos';
   horaRecordatorio?: string;
+  // Respuestas ampliadas (el servidor las acepta como opcionales).
+  objetivoPrincipal?: string;
+  historialEntrenamiento?: number;
+  frecuenciaSemanal?: number;
+  diasEntrenamiento?: number[];
+  horaEntrenamiento?: string;
+  recordarme?: boolean;
+  zonasLesion?: string[];
+  sucursalId?: string;
+}
+
+export interface RecomendacionRutina {
+  rutinaId: string;
+  nombre: string;
+  puntaje: number;
+  motivos: string[];
+  ejerciciosAdaptados: number;
 }
 
 export interface ResultadoOnboarding {
   objetivoCalculado: string;
   rutinaAsignada: { id: string; nombre: string } | null;
+  recomendaciones: RecomendacionRutina[];
+}
+
+export interface Sucursal {
+  id: string;
+  nombre: string;
+  direccion: string | null;
+}
+
+export function listarSucursales() {
+  return solicitar<Sucursal[]>('/clientes/sucursales', { autenticado: true });
 }
 
 export function completarOnboarding(datos: DatosOnboarding) {

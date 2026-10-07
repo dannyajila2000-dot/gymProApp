@@ -27,7 +27,7 @@ export default function Altura() {
   const escala = 0.55 + ((respuestas.alturaCm - MIN_CM) / (MAX_CM - MIN_CM)) * 0.85;
 
   return (
-    <PasoOnboarding paso={3} titulo="¿Cuál es tu altura?" onSiguiente={() => router.push('/onboarding/peso-actual')}>
+    <PasoOnboarding paso={7} titulo="¿Cuál es tu altura?" onSiguiente={() => router.push('/onboarding/peso-actual')}>
       <View style={styles.toggleFila}>
         <Pressable
           onPress={() => setUnidad('cm')}
