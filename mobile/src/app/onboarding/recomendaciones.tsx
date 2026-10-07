@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorApi } from '@/api/client';
 import { asignarme } from '@/api/rutinas';
@@ -13,6 +14,7 @@ import { CardShadow, Spacing } from '@/constants/theme';
 /** Última pantalla: el cliente elige cuál de las rutinas recomendadas va a entrenar. */
 export default function Recomendaciones() {
   const colors = useTheme();
+  const insets = useSafeAreaInsets();
   const { respuestas, resultado } = useOnboarding();
   const { actualizarCliente } = useSesion();
   const recomendaciones = resultado?.recomendaciones ?? [];
@@ -42,7 +44,11 @@ export default function Recomendaciones() {
   }
 
   return (
-    <View style={[styles.contenedor, { backgroundColor: colors.background }]}>
+    <View
+      style={[
+        styles.contenedor,
+        { backgroundColor: colors.background, paddingTop: Math.max(Spacing.six, insets.top + Spacing.three), paddingBottom: Spacing.three + insets.bottom },
+      ]}>
       <Text style={[styles.titulo, { color: colors.text }]}>
         {recomendaciones.length ? 'Tus mejores entrenamientos' : '¡Listo!'}
       </Text>

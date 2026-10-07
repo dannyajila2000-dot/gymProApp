@@ -1,7 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
-import type { PropsWithChildren } from 'react';
+import { useEffect, useRef, useState, type PropsWithChildren } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
@@ -35,9 +37,45 @@ export function PasoOnboarding({
   // Desde el resumen se puede editar una respuesta: se abre la pantalla con ?editar=1 y al guardar vuelve al resumen.
   const { editar } = useLocalSearchParams<{ editar?: string }>();
   const editando = editar === '1';
+  // En Android la app se dibuja bajo la barra de navegación del sistema: sin este margen, la parte baja del
+  // botón queda debajo de ella y el primer toque se pierde.
+  const insets = useSafeAreaInsets();
+
+  // Al pulsar, el botón responde al instante (se atenúa y muestra un spinner) y ignora toques repetidos
+  // mientras cambia de pantalla; así no se apilan pantallas duplicadas si se pulsa dos veces.
+  const bloqueado = useRef(false);
+  const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [ocupado, setOcupado] = useState(false);
+
+  useEffect(
+    () => () => {
+      if (temporizador.current) clearTimeout(temporizador.current);
+    },
+    [],
+  );
+
+  function pulsar() {
+    if (bloqueado.current) return;
+    bloqueado.current = true;
+    setOcupado(true);
+    if (editando) router.back();
+    else onSiguiente();
+    temporizador.current = setTimeout(() => {
+      bloqueado.current = false;
+      setOcupado(false);
+    }, 900);
+  }
 
   return (
-    <View style={[styles.contenedor, { backgroundColor: colors.background }]}>
+    <View
+      style={[
+        styles.contenedor,
+        {
+          backgroundColor: colors.background,
+          paddingTop: Math.max(Spacing.six, insets.top + Spacing.three),
+          paddingBottom: Spacing.three + insets.bottom,
+        },
+      ]}>
       <View style={styles.encabezado}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Ionicons name="arrow-back" size={26} color={colors.text} />
@@ -67,13 +105,14 @@ export function PasoOnboarding({
 
       {!ocultarBoton && (
         <Pressable
-          onPress={editando ? () => router.back() : onSiguiente}
+          onPress={pulsar}
           disabled={deshabilitado || cargando}
-          style={[
+          accessibilityRole="button"
+          style={({ pressed }) => [
             styles.boton,
-            { backgroundColor: colors.text, opacity: deshabilitado || cargando ? 0.4 : 1 },
+            { backgroundColor: colors.text, opacity: deshabilitado || cargando ? 0.4 : ocupado || pressed ? 0.75 : 1 },
           ]}>
-          {cargando ? (
+          {cargando || ocupado ? (
             <ActivityIndicator color={colors.background} />
           ) : (
             <Text style={[styles.botonTexto, { color: colors.background }]}>{editando ? 'GUARDAR' : textoBoton}</Text>
