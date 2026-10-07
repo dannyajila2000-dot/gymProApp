@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service.js'
 import { RutinasService } from '../rutinas/rutinas.service.js'
 import { OnboardingDto } from './dto/onboarding.dto.js'
 import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto.js'
+import type { PerfilRecomendacion } from '../rutinas/recomendacion.util.js'
 
 const UMBRAL_KG = 1
 // Rangos de grasa corporal aproximados y unisex: no pedimos sexo/edad en el
@@ -30,8 +31,29 @@ export class ClientesService {
     private readonly rutinasService: RutinasService,
   ) {}
 
+  /** Sedes activas del gimnasio del cliente, para que elija a cuál va. */
+  sucursales(gimnasioId: string) {
+    return this.prisma.sucursal.findMany({
+      where: { gimnasioId, activa: true },
+      select: { id: true, nombre: true, direccion: true },
+      orderBy: { nombre: 'asc' },
+    })
+  }
+
   async completarOnboarding(clienteId: string, gimnasioId: string, dto: OnboardingDto) {
-    const objetivo = calcularObjetivo(dto.pesoActualKg, dto.pesoObjetivoKg)
+    const objetivoPorPeso = calcularObjetivo(dto.pesoActualKg, dto.pesoObjetivoKg)
+
+    if (dto.sucursalId) {
+      const sucursal = await this.prisma.sucursal.findFirst({ where: { id: dto.sucursalId, gimnasioId, activa: true } })
+      if (!sucursal) throw new NotFoundException('No encontramos esa sucursal')
+    }
+    // Si el cliente eligió días, esos mandan; el recordatorio (si lo quiere) cae esos mismos días.
+    const dias = dto.diasEntrenamiento ? [...dto.diasEntrenamiento].sort((a, b) => a - b) : null
+    const horaRecordatorio = dto.horaEntrenamiento
+      ? dto.recordarme === false
+        ? null
+        : dto.horaEntrenamiento
+      : (dto.horaRecordatorio ?? null)
 
     await this.prisma.$transaction([
       this.prisma.cliente.update({
@@ -42,34 +64,67 @@ export class ClientesService {
           nivelActividad: dto.nivelActividad,
           pesoObjetivoKg: dto.pesoObjetivoKg,
           restriccionFisica: dto.restriccionFisica,
+          objetivoPrincipal: dto.objetivoPrincipal,
+          historialEntrenamiento: dto.historialEntrenamiento,
+          frecuenciaSemanal: dto.frecuenciaSemanal ?? dias?.length,
+          horaEntrenamiento: dto.horaEntrenamiento,
+          zonasLesion: dto.zonasLesion ?? [],
+          sucursalId: dto.sucursalId,
+          ...(dias ? { diasEntrenamientoSemana: dias } : {}),
           onboardingCompletado: true,
         },
       }),
       this.prisma.registroProgreso.create({
         data: { clienteId, pesoKg: dto.pesoActualKg },
       }),
-      ...(dto.horaRecordatorio
+      ...(horaRecordatorio
         ? [
             this.prisma.recordatorio.create({
-              data: { clienteId, hora: dto.horaRecordatorio, diasSemana: [0, 1, 2, 3, 4, 5, 6] },
+              data: { clienteId, hora: horaRecordatorio, diasSemana: dias ?? [0, 1, 2, 3, 4, 5, 6] },
             }),
           ]
         : []),
     ])
 
-    const rutinaAsignada = await this.rutinasService.asignarMejorParaCliente(
+    return this.recomendarYAsignar(
       clienteId,
       gimnasioId,
-      dto.nivelFitness,
-      objetivo,
+      {
+        nivelFitness: dto.nivelFitness,
+        objetivoPrincipal: dto.objetivoPrincipal,
+        objetivoPorPeso,
+        historialEntrenamiento: dto.historialEntrenamiento,
+        frecuenciaSemanal: dto.frecuenciaSemanal ?? dias?.length,
+        zonasLesion: dto.zonasLesion ?? [],
+        restriccionFisica: dto.restriccionFisica,
+      },
+      'auto-onboarding',
     )
+  }
 
-    return {
-      objetivoCalculado: objetivo,
-      rutinaAsignada: rutinaAsignada
-        ? { id: rutinaAsignada.id, nombre: rutinaAsignada.nombre }
-        : null,
+  /**
+   * Calcula las mejores rutinas del gimnasio para el perfil y deja asignada la primera (el cliente puede
+   * elegir otra de las recomendadas después). Si el gimnasio no tiene ninguna adecuada, usa la
+   * asignación anterior por nivel y objetivo.
+   */
+  private async recomendarYAsignar(clienteId: string, gimnasioId: string, perfil: PerfilRecomendacion, origen: string) {
+    const recomendaciones = await this.rutinasService.recomendarParaPerfil(perfil, gimnasioId)
+
+    let rutinaAsignada: { id: string; nombre: string } | null = null
+    if (recomendaciones.length) {
+      await this.rutinasService.asignarElegida(clienteId, recomendaciones[0].rutinaId, origen)
+      rutinaAsignada = { id: recomendaciones[0].rutinaId, nombre: recomendaciones[0].nombre }
+    } else {
+      const respaldo = await this.rutinasService.asignarMejorParaCliente(
+        clienteId,
+        gimnasioId,
+        perfil.nivelFitness,
+        perfil.objetivoPorPeso,
+      )
+      rutinaAsignada = respaldo ? { id: respaldo.id, nombre: respaldo.nombre } : null
     }
+
+    return { objetivoCalculado: perfil.objetivoPorPeso, rutinaAsignada, recomendaciones }
   }
 
   /**
@@ -91,21 +146,22 @@ export class ClientesService {
       throw new BadRequestException('Registra tu peso actual en Progreso antes de recalcular')
     }
 
-    const objetivo = calcularObjetivo(ultimoRegistro.pesoKg, cliente.pesoObjetivoKg, ultimoRegistro.grasaCorporalPct)
+    const objetivoPorPeso = calcularObjetivo(ultimoRegistro.pesoKg, cliente.pesoObjetivoKg, ultimoRegistro.grasaCorporalPct)
 
-    const rutinaAsignada = await this.rutinasService.asignarMejorParaCliente(
+    return this.recomendarYAsignar(
       clienteId,
       gimnasioId,
-      cliente.nivelFitness,
-      objetivo,
+      {
+        nivelFitness: cliente.nivelFitness,
+        objetivoPrincipal: cliente.objetivoPrincipal,
+        objetivoPorPeso,
+        historialEntrenamiento: cliente.historialEntrenamiento,
+        frecuenciaSemanal: cliente.frecuenciaSemanal,
+        zonasLesion: cliente.zonasLesion,
+        restriccionFisica: cliente.restriccionFisica,
+      },
+      'auto',
     )
-
-    return {
-      objetivoCalculado: objetivo,
-      rutinaAsignada: rutinaAsignada
-        ? { id: rutinaAsignada.id, nombre: rutinaAsignada.nombre }
-        : null,
-    }
   }
 
   actualizarPerfil(clienteId: string, dto: ActualizarPerfilDto) {

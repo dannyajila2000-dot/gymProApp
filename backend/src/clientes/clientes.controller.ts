@@ -1,4 +1,4 @@
-import { Body, Controller, Patch, Post, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common'
 import { ClientesService } from './clientes.service.js'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js'
 import { ClienteActual } from '../auth/decorators/cliente-actual.decorator.js'
@@ -10,6 +10,11 @@ import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto.js'
 @Controller('clientes')
 export class ClientesController {
   constructor(private readonly clientesService: ClientesService) {}
+
+  @Get('sucursales')
+  sucursales(@ClienteActual() cliente: ClienteAutenticado) {
+    return this.clientesService.sucursales(cliente.gimnasioId)
+  }
 
   @Post('onboarding')
   completarOnboarding(@ClienteActual() cliente: ClienteAutenticado, @Body() dto: OnboardingDto) {

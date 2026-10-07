@@ -7,12 +7,14 @@ import {
   inicioYFinDeLaSemanaEcuador,
 } from '../common/fecha-ecuador.util.js'
 import { caloriasEstimadasDeRutina, duracionEstimadaMin, caloriasDeSesion } from './estimaciones-rutina.util.js'
+import { ejercicioNoRecomendable } from './lesiones.util.js'
+import { recomendarRutinas, type PerfilRecomendacion, type Recomendacion } from './recomendacion.util.js'
 
 type RutinaConEjercicios = Prisma.RutinaGetPayload<{
   include: { ejercicios: { include: { ejercicio: true } } }
 }>
 type RutinaEjercicioConEjercicio = RutinaConEjercicios['ejercicios'][number]
-type PerfilCliente = { nivelFitness: string | null; restriccionFisica: string | null }
+type PerfilCliente = { nivelFitness: string | null; restriccionFisica: string | null; zonasLesion: string[] }
 
 // Las rutinas de calentamiento/estiramiento se entrenan solas cuando el cliente
 // quiere; nunca se asignan como rutina de un día de forma automática.
@@ -89,7 +91,7 @@ export class RutinasService {
       }),
       this.prisma.cliente.findUnique({
         where: { id: clienteId },
-        select: { nivelFitness: true, restriccionFisica: true },
+        select: { nivelFitness: true, restriccionFisica: true, zonasLesion: true },
       }),
       this.prisma.sustitucionEjercicio.findMany({
         where: { clienteId, rutinaEjercicio: { rutinaId } },
@@ -113,12 +115,13 @@ export class RutinasService {
     cliente: PerfilCliente | null,
     sustituciones: Map<string, RutinaEjercicioConEjercicio['ejercicio']> = new Map(),
   ) {
-    if (!cliente?.nivelFitness && !cliente?.restriccionFisica && sustituciones.size === 0) return rutina
+    if (!cliente?.nivelFitness && !cliente?.restriccionFisica && !cliente?.zonasLesion?.length && sustituciones.size === 0) return rutina
 
     const restriccion = cliente?.restriccionFisica ?? null
+    const zonas = cliente?.zonasLesion ?? []
     const idsEnRutina = new Set(rutina.ejercicios.map((re) => re.ejercicioId))
     const gruposConProblema = new Set(
-      rutina.ejercicios.filter((re) => this.esInseguro(re.ejercicio, restriccion)).map((re) => re.ejercicio.grupoMuscular),
+      rutina.ejercicios.filter((re) => this.esInseguro(re.ejercicio, restriccion, zonas)).map((re) => re.ejercicio.grupoMuscular),
     )
 
     const alternativas = gruposConProblema.size
@@ -132,21 +135,24 @@ export class RutinasService {
           },
         })
       : []
-    const alternativaPorGrupo = new Map<string, (typeof alternativas)[number]>()
+    // Varias alternativas por grupo muscular, y cada una se usa una sola vez: si dos ejercicios del mismo grupo
+    // se sustituyen, no deben quedar repetidos.
+    const alternativasPorGrupo = new Map<string, (typeof alternativas)[number][]>()
     for (const alternativa of alternativas) {
-      if (!alternativaPorGrupo.has(alternativa.grupoMuscular)) {
-        alternativaPorGrupo.set(alternativa.grupoMuscular, alternativa)
-      }
+      if (this.esInseguro(alternativa, restriccion, zonas)) continue
+      const lista = alternativasPorGrupo.get(alternativa.grupoMuscular) ?? []
+      lista.push(alternativa)
+      alternativasPorGrupo.set(alternativa.grupoMuscular, lista)
     }
 
     const ejerciciosPersonalizados = rutina.ejercicios
       .map((re) => {
         let itemFinal: RutinaEjercicioConEjercicio = re
         const sustituto = sustituciones.get(re.id)
-        if (sustituto && !this.esInseguro(sustituto, restriccion)) {
+        if (sustituto && !this.esInseguro(sustituto, restriccion, zonas)) {
           itemFinal = { ...re, ejercicio: sustituto, ejercicioId: sustituto.id }
-        } else if (this.esInseguro(itemFinal.ejercicio, restriccion)) {
-          const alternativa = alternativaPorGrupo.get(re.ejercicio.grupoMuscular)
+        } else if (this.esInseguro(itemFinal.ejercicio, restriccion, zonas)) {
+          const alternativa = alternativasPorGrupo.get(re.ejercicio.grupoMuscular)?.shift()
           if (!alternativa) return null
           itemFinal = { ...re, ejercicio: alternativa, ejercicioId: alternativa.id }
         }
@@ -160,12 +166,11 @@ export class RutinasService {
   }
 
   private esInseguro(
-    ejercicio: { esAltoImpacto: boolean; requiereSaltos: boolean },
+    ejercicio: { nombre: string; grupoMuscular: string; esAltoImpacto: boolean; requiereSaltos: boolean },
     restriccion: string | null,
+    zonasLesion: readonly string[] = [],
   ) {
-    if (restriccion === 'impacto_bajo') return ejercicio.esAltoImpacto
-    if (restriccion === 'sin_saltos') return ejercicio.requiereSaltos
-    return false
+    return ejercicioNoRecomendable(ejercicio, restriccion, zonasLesion)
   }
 
   private escalarVolumen(item: RutinaEjercicioConEjercicio, nivelFitness: string | null): RutinaEjercicioConEjercicio {
@@ -234,6 +239,33 @@ export class RutinasService {
 
     await this.asignar(clienteId, rutina.id, 'auto-onboarding')
     return rutina
+  }
+
+  /**
+   * Las mejores rutinas del gimnasio para un perfil (hasta 3, con el motivo de cada una). Solo se
+   * consideran plantillas visibles de ese gimnasio, es decir, con suficientes ejercicios con clip.
+   */
+  async recomendarParaPerfil(perfil: PerfilRecomendacion, gimnasioId: string, cuantas = 3): Promise<Recomendacion[]> {
+    const plantillas = await this.prisma.rutina.findMany({
+      where: { gimnasioId, activa: true, creadaPorClienteId: null },
+      include: { ejercicios: EJERCICIOS_VISIBLES },
+    })
+    return recomendarRutinas(
+      perfil,
+      plantillas.filter(esRutinaVisible).map((r) => ({
+        id: r.id,
+        nombre: r.nombre,
+        nivel: r.nivel,
+        objetivo: r.objetivo,
+        ejercicios: r.ejercicios,
+      })),
+      cuantas,
+    )
+  }
+
+  /** Deja asignada la rutina elegida como la activa del cliente (la usan el onboarding y el recálculo). */
+  async asignarElegida(clienteId: string, rutinaId: string, origen: string) {
+    return this.asignar(clienteId, rutinaId, origen)
   }
 
   async registrarSesion(
@@ -312,11 +344,12 @@ export class RutinasService {
 
     const cliente = await this.prisma.cliente.findUnique({
       where: { id: clienteId },
-      select: { restriccionFisica: true },
+      select: { restriccionFisica: true, zonasLesion: true },
     })
     const restriccion = cliente?.restriccionFisica ?? null
+    const zonas = cliente?.zonasLesion ?? []
 
-    return this.prisma.ejercicio.findMany({
+    const candidatos = await this.prisma.ejercicio.findMany({
       where: {
         grupoMuscular: rutinaEjercicio.ejercicio.grupoMuscular,
         id: { not: rutinaEjercicio.ejercicioId },
@@ -326,6 +359,7 @@ export class RutinasService {
       },
       orderBy: { nombre: 'asc' },
     })
+    return candidatos.filter((e) => !this.esInseguro(e, restriccion, zonas))
   }
 
   async sustituirEjercicio(clienteId: string, gimnasioId: string, rutinaEjercicioId: string, ejercicioId: string) {
