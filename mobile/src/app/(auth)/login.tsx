@@ -94,6 +94,13 @@ export default function Login() {
           )}
         </Pressable>
 
+        <View style={styles.pieDePagina}>
+          <Text style={{ color: colors.textSecondary }}>¿Tu gimnasio te invitó? </Text>
+          <Link href="/(auth)/activar" replace>
+            <Text style={{ color: colors.tint, fontWeight: '700' }}>Activar mi cuenta</Text>
+          </Link>
+        </View>
+
         {REGISTRO_HABILITADO && (
           <View style={styles.pieDePagina}>
             <Text style={{ color: colors.textSecondary }}>¿No tienes cuenta? </Text>

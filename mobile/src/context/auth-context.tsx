@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type PropsWithChildren } from 'react';
 
-import { establecerAccessToken } from '@/api/client';
+import { establecerAccessToken, establecerManejadorMembresiaVencida } from '@/api/client';
 import { guardar, leer, eliminar } from '@/lib/almacenamiento';
 import * as authApi from '@/api/auth';
 import type { Cliente } from '@/api/auth';
@@ -18,6 +18,10 @@ interface DatosSesion {
     password: string;
     codigoGimnasio: string;
   }) => Promise<void>;
+  /** Un socio dado de alta por su gimnasio activa su cuenta con el código de invitación. */
+  activarCuenta: (datos: { codigoGimnasio: string; email: string; codigo: string; password: string }) => Promise<void>;
+  /** Vuelve a consultar la membresía; devuelve su estado actual. */
+  actualizarMembresia: () => Promise<NonNullable<Cliente['membresia']>['estado'] | null>;
   cerrarSesion: () => Promise<void>;
   actualizarCliente: (parcial: Partial<Cliente>) => void;
 }
@@ -57,6 +61,14 @@ export function SessionProvider({ children }: PropsWithChildren) {
     restaurarSesion();
   }, []);
 
+  // Si el servidor dice que la membresía venció mientras la app está abierta, se refleja al instante.
+  useEffect(() => {
+    establecerManejadorMembresiaVencida((membresia) =>
+      setCliente((actual) => (actual ? { ...actual, membresia } : actual)),
+    );
+    return () => establecerManejadorMembresiaVencida(null);
+  }, []);
+
   async function iniciarSesion(datos: { email: string; password: string; codigoGimnasio: string }) {
     const respuesta = await authApi.login(datos);
     establecerAccessToken(respuesta.accessToken);
@@ -77,6 +89,19 @@ export function SessionProvider({ children }: PropsWithChildren) {
     setCliente(respuesta.cliente);
   }
 
+  async function activarCuenta(datos: { codigoGimnasio: string; email: string; codigo: string; password: string }) {
+    const respuesta = await authApi.activarCuenta(datos);
+    establecerAccessToken(respuesta.accessToken);
+    await guardar(CLAVE_REFRESH_TOKEN, respuesta.refreshToken);
+    setCliente(respuesta.cliente);
+  }
+
+  async function actualizarMembresia() {
+    const perfil = await authApi.actualizarMembresia();
+    setCliente((actual) => (actual ? { ...actual, ...perfil } : actual));
+    return perfil.membresia?.estado ?? null;
+  }
+
   async function salir() {
     const refreshTokenGuardado = await leer(CLAVE_REFRESH_TOKEN);
     if (refreshTokenGuardado) {
@@ -93,7 +118,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
   return (
     <AuthContext.Provider
-      value={{ cliente, isLoading, iniciarSesion, registrarse, cerrarSesion: salir, actualizarCliente }}>
+      value={{ cliente, isLoading, iniciarSesion, registrarse, activarCuenta, actualizarMembresia, cerrarSesion: salir, actualizarCliente }}>
       {children}
     </AuthContext.Provider>
   );

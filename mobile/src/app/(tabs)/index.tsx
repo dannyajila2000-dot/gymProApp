@@ -13,6 +13,7 @@ import { CambiarRutinaDiaModal } from '@/components/rutinas/cambiar-rutina-dia-m
 import { useSesion } from '@/context/auth-context';
 import { resincronizarConPlan } from '@/lib/notificaciones';
 import { DIAS_NOMBRE, DIAS_NOMBRE_LARGO } from '@/constants/dias';
+import { AvisoMembresia } from '@/components/membresia/aviso-membresia';
 import { useTheme } from '@/hooks/use-theme';
 import { CardShadow, FotoFlotanteShadow, Spacing } from '@/constants/theme';
 
@@ -92,6 +93,8 @@ export default function Inicio() {
           tintColor={colors.tint}
         />
       }>
+      <AvisoMembresia />
+
       <View style={styles.filaEncabezado}>
         <View>
           <Text style={[styles.saludo, { color: colors.text }]}>Hola, {cliente?.nombres} 👋</Text>

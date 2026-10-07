@@ -1,3 +1,5 @@
+import type { MembresiaCliente } from './auth';
+
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000/api';
 
 let accessTokenActual: string | null = null;
@@ -10,9 +12,18 @@ export class ErrorApi extends Error {
   constructor(
     public status: number,
     message: string,
+    public datos: { codigo?: string; membresia?: MembresiaCliente } | null = null,
   ) {
     super(message);
   }
+}
+
+// La app avisa a la sesión cuando el servidor dice que la membresía venció (403 MEMBRESIA_VENCIDA), para que
+// cambie a la pantalla de renovación aunque el cliente tuviera la app abierta.
+let alMembresiaVencida: ((membresia: MembresiaCliente) => void) | null = null;
+
+export function establecerManejadorMembresiaVencida(manejador: ((membresia: MembresiaCliente) => void) | null) {
+  alMembresiaVencida = manejador;
 }
 
 export async function solicitar<T>(
@@ -37,7 +48,10 @@ export async function solicitar<T>(
 
   if (!respuesta.ok) {
     const mensaje = datos?.message ?? 'Ocurrió un error inesperado';
-    throw new ErrorApi(respuesta.status, Array.isArray(mensaje) ? mensaje[0] : mensaje);
+    if (respuesta.status === 403 && datos?.codigo === 'MEMBRESIA_VENCIDA' && datos.membresia) {
+      alMembresiaVencida?.(datos.membresia);
+    }
+    throw new ErrorApi(respuesta.status, Array.isArray(mensaje) ? mensaje[0] : mensaje, datos);
   }
 
   return datos as T;

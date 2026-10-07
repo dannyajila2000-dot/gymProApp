@@ -60,9 +60,17 @@ function RootNavigator() {
     );
   }
 
+  // Con la membresía vencida (o sin ninguna) solo se ve la pantalla de renovación.
+  const estadoMembresia = cliente?.membresia?.estado;
+  const bloqueado = estadoMembresia === 'vencido' || estadoMembresia === 'sin_membresia';
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={!!cliente && cliente.onboardingCompletado}>
+      <Stack.Protected guard={!!cliente && bloqueado}>
+        <Stack.Screen name="membresia-vencida" />
+      </Stack.Protected>
+
+      <Stack.Protected guard={!!cliente && !bloqueado && cliente.onboardingCompletado}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="entrenamiento/[rutinaId]" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="rutinas/[rutinaId]" />
@@ -73,7 +81,7 @@ function RootNavigator() {
         <Stack.Screen name="ajustes" />
       </Stack.Protected>
 
-      <Stack.Protected guard={!!cliente && !cliente.onboardingCompletado}>
+      <Stack.Protected guard={!!cliente && !bloqueado && !cliente.onboardingCompletado}>
         <Stack.Screen name="onboarding" />
       </Stack.Protected>
 
