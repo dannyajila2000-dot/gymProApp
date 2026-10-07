@@ -4,6 +4,7 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { IntegracionModule } from './integracion/integracion.module.js';
 import { RutinasModule } from './rutinas/rutinas.module.js';
 import { ProgresoModule } from './progreso/progreso.module.js';
 import { NutricionModule } from './nutricion/nutricion.module.js';
@@ -15,6 +16,7 @@ import { FeedbackModule } from './feedback/feedback.module.js';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    IntegracionModule,
     AuthModule,
     RutinasModule,
     ProgresoModule,

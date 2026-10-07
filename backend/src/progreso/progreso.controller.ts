@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { ProgresoService } from './progreso.service.js'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js'
+import { MembresiaGuard } from '../integracion/membresia.guard.js'
 import { ClienteActual } from '../auth/decorators/cliente-actual.decorator.js'
 import type { ClienteAutenticado } from '../auth/decorators/cliente-actual.decorator.js'
 import { RegistrarProgresoDto } from './dto/registrar-progreso.dto.js'
@@ -12,7 +13,7 @@ import { RegistrarActividadDto } from './dto/registrar-actividad.dto.js'
 import { ConsultarFechaDto } from '../nutricion/dto/consultar-fecha.dto.js'
 import { fechaDeHoyEcuador } from '../common/fecha-ecuador.util.js'
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, MembresiaGuard)
 @Controller('progreso')
 export class ProgresoController {
   constructor(private readonly progresoService: ProgresoService) {}

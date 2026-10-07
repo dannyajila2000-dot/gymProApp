@@ -3,6 +3,7 @@ import { LimiteIntentos, LimiteIntentosGuard } from '../common/limite-intentos.g
 import { AuthService } from './auth.service.js'
 import { RegistroDto } from './dto/registro.dto.js'
 import { LoginDto } from './dto/login.dto.js'
+import { ActivarDto } from './dto/activar.dto.js'
 import { RefreshDto } from './dto/refresh.dto.js'
 import { CambiarPasswordDto } from './dto/cambiar-password.dto.js'
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js'
@@ -28,6 +29,14 @@ export class AuthController {
     return this.authService.login(dto)
   }
 
+  /** Un socio dado de alta en AdminPro activa su cuenta con el código que recibió por correo. */
+  @Post('activar')
+  @LimiteIntentos({ por: 'email', max: 8, ventanaSeg: 900 }, { por: 'ip', max: 30, ventanaSeg: 900 })
+  @HttpCode(200)
+  activar(@Body() dto: ActivarDto) {
+    return this.authService.activar(dto)
+  }
+
   @Post('refrescar')
   @LimiteIntentos({ por: 'ip', max: 120, ventanaSeg: 600 })
   @HttpCode(200)
@@ -45,6 +54,15 @@ export class AuthController {
   @Get('yo')
   yo(@ClienteActual() cliente: ClienteAutenticado) {
     return this.authService.perfil(cliente.clienteId)
+  }
+
+  /** "Ya renové": vuelve a consultar la membresía en AdminPro. No lleva el guard de membresía, para poder desbloquearse. */
+  @UseGuards(JwtAuthGuard)
+  @Post('membresia/actualizar')
+  @LimiteIntentos({ por: 'ip', max: 30, ventanaSeg: 600 })
+  @HttpCode(200)
+  actualizarMembresia(@ClienteActual() cliente: ClienteAutenticado) {
+    return this.authService.actualizarMembresia(cliente.clienteId)
   }
 
   @UseGuards(JwtAuthGuard)

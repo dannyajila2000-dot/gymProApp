@@ -32,7 +32,11 @@ export class ClientesService {
   ) {}
 
   /** Sedes activas del gimnasio del cliente, para que elija a cuál va. */
-  sucursales(gimnasioId: string) {
+  async sucursales(clienteId: string, gimnasioId: string) {
+    // Un socio enlazado con AdminPro ya tiene la sucursal que le puso el administrador: no hay nada que elegir.
+    const cliente = await this.prisma.cliente.findUnique({ where: { id: clienteId }, select: { adminClienteId: true } })
+    if (cliente?.adminClienteId) return []
+
     return this.prisma.sucursal.findMany({
       where: { gimnasioId, activa: true },
       select: { id: true, nombre: true, direccion: true },

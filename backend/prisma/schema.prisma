@@ -7,11 +7,14 @@ datasource db {
 }
 
 model Gimnasio {
-  id       String   @id @default(uuid())
-  nombre   String
-  codigo   String   @unique
-  activo   Boolean  @default(true)
-  creadoEn DateTime @default(now())
+  id             String   @id @default(uuid())
+  nombre         String
+  codigo         String   @unique
+  activo         Boolean  @default(true)
+  creadoEn       DateTime @default(now())
+  /// Si es true, las cuentas de socios las da de alta el administrador en AdminPro (el socio las activa con un
+  /// código de invitación) y el registro libre queda cerrado para este gimnasio.
+  adminIntegrado Boolean  @default(false)
 
   clientes   Cliente[]
   rutinas    Rutina[]
@@ -23,13 +26,15 @@ model Gimnasio {
 /// Sede de un gimnasio. El cliente elige a cuál va durante el onboarding; si el gimnasio tiene una sola
 /// (o ninguna), esa pregunta no se hace.
 model Sucursal {
-  id         String   @id @default(uuid())
-  gimnasioId String
-  gimnasio   Gimnasio @relation(fields: [gimnasioId], references: [id], onDelete: Cascade)
-  nombre     String
-  direccion  String?
-  activa     Boolean  @default(true)
-  creadoEn   DateTime @default(now())
+  id              String   @id @default(uuid())
+  gimnasioId      String
+  gimnasio        Gimnasio @relation(fields: [gimnasioId], references: [id], onDelete: Cascade)
+  nombre          String
+  direccion       String?
+  activa          Boolean  @default(true)
+  creadoEn        DateTime @default(now())
+  /// Id de la sucursal en AdminPro, cuando la sede viene de allá.
+  adminSucursalId String?  @unique
 
   clientes Cliente[]
 
@@ -58,6 +63,12 @@ model Cliente {
   horaEntrenamiento       String? // "HH:mm"
   zonasLesion             String[]  @default([]) // "cuello" | "hombro" | "codo" | "muneca" | "espalda_baja" | "cadera" | "rodilla" | "tobillo"
   sucursalId              String?
+  // Enlace con AdminPro: el socio lo da de alta el administrador y la membresía se consulta allá.
+  adminClienteId          String?   @unique
+  membresiaEstado         String? // "activo" | "por_vencer" | "vencido" | "sin_membresia"
+  membresiaPlan           String?
+  membresiaVenceEn        DateTime?
+  membresiaSincronizadaEn DateTime?
   sucursal                Sucursal? @relation(fields: [sucursalId], references: [id], onDelete: SetNull)
   fechaNacimiento         DateTime?
   unidadPeso              String    @default("kg") // "kg" | "lb"

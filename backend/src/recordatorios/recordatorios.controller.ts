@@ -1,12 +1,13 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common'
 import { RecordatoriosService } from './recordatorios.service.js'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js'
+import { MembresiaGuard } from '../integracion/membresia.guard.js'
 import { ClienteActual } from '../auth/decorators/cliente-actual.decorator.js'
 import type { ClienteAutenticado } from '../auth/decorators/cliente-actual.decorator.js'
 import { CrearRecordatorioDto } from './dto/crear-recordatorio.dto.js'
 import { ActualizarRecordatorioDto } from './dto/actualizar-recordatorio.dto.js'
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, MembresiaGuard)
 @Controller('recordatorios')
 export class RecordatoriosController {
   constructor(private readonly recordatoriosService: RecordatoriosService) {}

@@ -1,11 +1,12 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common'
 import { FeedbackService } from './feedback.service.js'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js'
+import { MembresiaGuard } from '../integracion/membresia.guard.js'
 import { ClienteActual } from '../auth/decorators/cliente-actual.decorator.js'
 import type { ClienteAutenticado } from '../auth/decorators/cliente-actual.decorator.js'
 import { CrearFeedbackDto } from './dto/crear-feedback.dto.js'
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, MembresiaGuard)
 @Controller('feedback')
 export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}

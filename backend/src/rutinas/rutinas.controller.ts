@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { RutinasService } from './rutinas.service.js'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js'
+import { MembresiaGuard } from '../integracion/membresia.guard.js'
 import { ClienteActual } from '../auth/decorators/cliente-actual.decorator.js'
 import type { ClienteAutenticado } from '../auth/decorators/cliente-actual.decorator.js'
 import { AsignarRutinaDto } from './dto/asignar-rutina.dto.js'
@@ -14,7 +15,7 @@ import { ActualizarEjercicioRutinaDto } from './dto/actualizar-ejercicio-rutina.
 import { ReordenarEjerciciosDto } from './dto/reordenar-ejercicios.dto.js'
 import { FijarRutinaDiaDto } from './dto/fijar-rutina-dia.dto.js'
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, MembresiaGuard)
 @Controller('rutinas')
 export class RutinasController {
   constructor(private readonly rutinasService: RutinasService) {}

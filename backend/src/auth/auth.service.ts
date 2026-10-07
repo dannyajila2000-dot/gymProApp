@@ -2,6 +2,8 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
+  ServiceUnavailableException,
   NotFoundException,
   UnauthorizedException,
   ForbiddenException,
@@ -12,6 +14,10 @@ import { randomUUID } from 'crypto'
 import { PrismaService } from '../prisma/prisma.service.js'
 import { RegistroDto } from './dto/registro.dto.js'
 import { LoginDto } from './dto/login.dto.js'
+import { ActivarDto } from './dto/activar.dto.js'
+import { AdminProClient, AdminProNoDisponible, AdminProRechazo } from '../integracion/adminpro.client.js'
+import { MembresiaService } from '../integracion/membresia.service.js'
+import { resumenMembresia } from '../integracion/membresia.util.js'
 
 interface PayloadAcceso {
   sub: string
@@ -23,9 +29,13 @@ const RONDAS_BCRYPT = 12
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name)
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
+    private readonly adminpro: AdminProClient,
+    private readonly membresias: MembresiaService,
   ) {}
 
   private async buscarGimnasioActivo(codigo: string) {
@@ -73,6 +83,11 @@ export class AuthService {
     }
 
     const gimnasio = await this.buscarGimnasioActivo(dto.codigoGimnasio)
+    if (gimnasio.adminIntegrado) {
+      throw new ForbiddenException(
+        'Tu gimnasio da de alta a sus socios. Pídeles que te inviten a la app y usa "Activar mi cuenta".',
+      )
+    }
 
     const yaExiste = await this.prisma.cliente.findUnique({
       where: { gimnasioId_email: { gimnasioId: gimnasio.id, email: dto.email } },
@@ -99,8 +114,8 @@ export class AuthService {
   async login(dto: LoginDto) {
     const gimnasio = await this.buscarGimnasioActivo(dto.codigoGimnasio)
 
-    const cliente = await this.prisma.cliente.findUnique({
-      where: { gimnasioId_email: { gimnasioId: gimnasio.id, email: dto.email } },
+    let cliente = await this.prisma.cliente.findFirst({
+      where: { gimnasioId: gimnasio.id, email: { equals: dto.email.trim(), mode: 'insensitive' } },
     })
     if (!cliente || !cliente.activo) {
       throw new UnauthorizedException('Correo o contraseña incorrectos')
@@ -111,8 +126,103 @@ export class AuthService {
       throw new UnauthorizedException('Correo o contraseña incorrectos')
     }
 
+    // Socios enlazados con AdminPro: se refresca la membresía (si AdminPro no responde, queda la última conocida).
+    // Si ya la dieron de baja allá, el socio queda inactivo y no entra.
+    if (await this.membresias.sincronizar(cliente.id, { cacheMs: 0 })) {
+      cliente = await this.prisma.cliente.findUniqueOrThrow({ where: { id: cliente.id } })
+      if (!cliente.activo) throw new UnauthorizedException('Tu cuenta está desactivada. Habla con tu gimnasio.')
+    }
+
     const tokens = await this.emitirTokens(cliente)
     return { cliente: this.aPerfilPublico(cliente, gimnasio, await this.pesoActualKg(cliente.id)), ...tokens }
+  }
+
+  /**
+   * Activa la cuenta de un socio que el administrador dio de alta en AdminPro. El socio escribe el código del gimnasio, su
+   * correo, el código de 6 dígitos que le llegó y la contraseña que quiere usar. Se verifica contra AdminPro, se crea la
+   * cuenta enlazada (con su sucursal y su membresía) y queda con sesión iniciada.
+   */
+  async activar(dto: ActivarDto) {
+    const gimnasio = await this.buscarGimnasioActivo(dto.codigoGimnasio)
+    if (!gimnasio.adminIntegrado || !this.adminpro.disponible()) {
+      throw new BadRequestException('Tu gimnasio todavía no tiene disponible la activación de cuentas')
+    }
+
+    const correo = dto.email.trim().toLowerCase()
+    const yaTieneCuenta = await this.prisma.cliente.findFirst({
+      where: { gimnasioId: gimnasio.id, email: { equals: correo, mode: 'insensitive' } },
+      select: { id: true },
+    })
+    if (yaTieneCuenta) {
+      throw new ConflictException('Ya activaste tu cuenta. Inicia sesión con tu correo y tu contraseña.')
+    }
+
+    let ficha
+    try {
+      ficha = await this.adminpro.validarActivacion(correo, dto.codigo)
+    } catch (e) {
+      if (e instanceof AdminProRechazo) {
+        if (e.status === 401) {
+          throw new BadRequestException('La activación no está configurada correctamente. Avisa a tu gimnasio.')
+        }
+        throw new BadRequestException(e.message)
+      }
+      if (e instanceof AdminProNoDisponible) {
+        throw new ServiceUnavailableException('No pudimos comunicarnos con tu gimnasio. Inténtalo de nuevo en un momento.')
+      }
+      throw e
+    }
+    if (!ficha.activo) throw new BadRequestException('Tu cuenta de socio está inactiva. Habla con tu gimnasio.')
+
+    // La cuenta de este socio ya pudo haberse creado con otro correo.
+    const enlazado = await this.prisma.cliente.findUnique({ where: { adminClienteId: ficha.clienteId }, select: { id: true } })
+    if (enlazado) throw new ConflictException('Esta cuenta de socio ya está activada. Inicia sesión.')
+
+    // La sucursal del socio viene de AdminPro: se crea o se actualiza aquí.
+    let sucursalId: string | null = null
+    if (ficha.sucursal) {
+      const sucursal = await this.prisma.sucursal.upsert({
+        where: { adminSucursalId: ficha.sucursal.id },
+        create: { gimnasioId: gimnasio.id, nombre: ficha.sucursal.nombre, adminSucursalId: ficha.sucursal.id },
+        update: { nombre: ficha.sucursal.nombre },
+      })
+      sucursalId = sucursal.id
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, RONDAS_BCRYPT)
+    const cliente = await this.prisma.cliente.create({
+      data: {
+        gimnasioId: gimnasio.id,
+        nombres: ficha.nombres,
+        apellidos: ficha.apellidos,
+        email: correo,
+        telefono: ficha.telefono ?? undefined,
+        passwordHash,
+        adminClienteId: ficha.clienteId,
+        sucursalId,
+        membresiaEstado: ficha.membresia.estado,
+        membresiaPlan: ficha.membresia.plan,
+        membresiaVenceEn: ficha.membresia.fechaVencimiento ? new Date(ficha.membresia.fechaVencimiento) : null,
+        membresiaSincronizadaEn: new Date(),
+      },
+    })
+
+    // Anula el código en AdminPro. Si esto falla la cuenta ya existe: el código vence solo y no se puede reutilizar
+    // porque el correo ya tiene cuenta aquí.
+    try {
+      await this.adminpro.confirmarActivacion(ficha.clienteId)
+    } catch (e) {
+      this.logger.warn(`No se pudo confirmar la activación en AdminPro (${ficha.clienteId}): ${(e as Error).message}`)
+    }
+
+    const tokens = await this.emitirTokens(cliente)
+    return { cliente: this.aPerfilPublico(cliente, gimnasio, null), ...tokens }
+  }
+
+  /** Vuelve a preguntar a AdminPro por la membresía (por ejemplo, después de renovar) y devuelve el perfil al día. */
+  async actualizarMembresia(clienteId: string) {
+    await this.membresias.sincronizar(clienteId, { cacheMs: 0 })
+    return this.perfil(clienteId)
   }
 
   async refrescar(refreshToken: string) {
@@ -159,6 +269,7 @@ export class AuthService {
   }
 
   async perfil(clienteId: string) {
+    await this.membresias.sincronizar(clienteId)
     const cliente = await this.prisma.cliente.findUnique({
       where: { id: clienteId },
       include: { gimnasio: true },
@@ -199,6 +310,9 @@ export class AuthService {
       telefono?: string | null
       alturaCm?: number | null
       pesoObjetivoKg?: number | null
+      adminClienteId?: string | null
+      membresiaPlan?: string | null
+      membresiaVenceEn?: Date | null
       fechaNacimiento?: Date | null
       unidadPeso?: string
       unidadAltura?: string
@@ -227,6 +341,8 @@ export class AuthService {
       alturaCm: cliente.alturaCm ?? null,
       pesoActualKg,
       pesoObjetivoKg: cliente.pesoObjetivoKg ?? null,
+      // Solo los socios enlazados con AdminPro tienen membresía; el resto, null.
+      membresia: cliente.adminClienteId ? resumenMembresia(cliente.membresiaVenceEn ?? null, cliente.membresiaPlan ?? null) : null,
       fechaNacimiento: cliente.fechaNacimiento ? cliente.fechaNacimiento.toISOString().slice(0, 10) : null,
       unidadPeso: cliente.unidadPeso ?? 'kg',
       unidadAltura: cliente.unidadAltura ?? 'cm',
