@@ -14,19 +14,32 @@ export function TarjetaMembresia() {
   const { cliente } = useSesion();
   const membresia = cliente?.membresia;
   if (!membresia?.venceEn) return null;
-  return <TarjetaMembresiaVista plan={membresia.plan} venceEn={membresia.venceEn} />;
+  return <TarjetaMembresiaVista plan={membresia.plan} venceEn={membresia.venceEn} duracionDias={membresia.duracionDias} />;
 }
 
 /** La tarjeta en sí, sin leer la sesión. */
-export function TarjetaMembresiaVista({ plan: nombrePlan, venceEn, ahora }: { plan: string | null; venceEn: string; ahora?: number }) {
+export function TarjetaMembresiaVista({
+  plan: nombrePlan,
+  venceEn,
+  duracionDias,
+  ahora,
+}: {
+  plan: string | null;
+  venceEn: string;
+  duracionDias?: number | null;
+  ahora?: number;
+}) {
   const colors = useTheme();
 
   // Se calcula aquí con la fecha de vencimiento y no con `diasRestantes` del servidor, que queda viejo si la app
   // lleva días abierta.
   const dias = diasHastaVencimiento(venceEn, ahora);
-  const porVencer = dias <= 7;
   const vencida = dias < 0;
-  const color = vencida ? colors.danger : porVencer ? colors.warning : colors.tint;
+  // Mismo criterio de color que el panel de AdminPro, según la parte del plan que queda: menos del 20 % rojo,
+  // menos del 50 % ámbar, y verde si queda más. Sin la duración del plan se asume uno de 30 días.
+  const restante = vencida ? 0 : dias / (duracionDias && duracionDias > 0 ? duracionDias : 30);
+  const color = restante < 0.2 ? colors.danger : restante < 0.5 ? colors.warning : colors.success;
+  const destacada = restante < 0.5;
 
   const numero = vencida ? '0' : String(dias);
   const unidad = vencida ? 'Vencida' : dias === 0 ? 'Vence hoy' : dias === 1 ? 'día restante' : 'días restantes';
@@ -39,7 +52,7 @@ export function TarjetaMembresiaVista({ plan: nombrePlan, venceEn, ahora }: { pl
       style={[
         styles.tarjeta,
         CardShadow,
-        { backgroundColor: porVencer ? colors.backgroundSelected : colors.backgroundElement },
+        { backgroundColor: destacada ? colors.backgroundSelected : colors.backgroundElement },
       ]}>
       <View style={[styles.icono, { backgroundColor: colors.background }]}>
         <Ionicons name="ribbon-outline" size={24} color={color} />

@@ -7,6 +7,8 @@ export type MembresiaAdmin = {
   plan: string | null
   fechaVencimiento: string | null
   diasRestantes: number | null
+  /** Duración del plan en días (para el color según lo que queda). Puede faltar si AdminPro es una versión anterior. */
+  duracionDias?: number | null
 }
 
 export type FichaSocioAdmin = {

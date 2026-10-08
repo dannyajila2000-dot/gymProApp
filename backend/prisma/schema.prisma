@@ -67,6 +67,7 @@ model Cliente {
   adminClienteId          String?   @unique
   membresiaEstado         String? // "activo" | "por_vencer" | "vencido" | "sin_membresia"
   membresiaPlan           String?
+  membresiaDuracionDias   Int?
   membresiaVenceEn        DateTime?
   membresiaSincronizadaEn DateTime?
   sucursal                Sucursal? @relation(fields: [sucursalId], references: [id], onDelete: SetNull)

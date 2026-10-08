@@ -202,6 +202,7 @@ export class AuthService {
         sucursalId,
         membresiaEstado: ficha.membresia.estado,
         membresiaPlan: ficha.membresia.plan,
+        membresiaDuracionDias: ficha.membresia.duracionDias ?? null,
         membresiaVenceEn: ficha.membresia.fechaVencimiento ? new Date(ficha.membresia.fechaVencimiento) : null,
         membresiaSincronizadaEn: new Date(),
       },
@@ -312,6 +313,7 @@ export class AuthService {
       pesoObjetivoKg?: number | null
       adminClienteId?: string | null
       membresiaPlan?: string | null
+      membresiaDuracionDias?: number | null
       membresiaVenceEn?: Date | null
       fechaNacimiento?: Date | null
       unidadPeso?: string
@@ -342,7 +344,7 @@ export class AuthService {
       pesoActualKg,
       pesoObjetivoKg: cliente.pesoObjetivoKg ?? null,
       // Solo los socios enlazados con AdminPro tienen membresía; el resto, null.
-      membresia: cliente.adminClienteId ? resumenMembresia(cliente.membresiaVenceEn ?? null, cliente.membresiaPlan ?? null) : null,
+      membresia: cliente.adminClienteId ? resumenMembresia(cliente.membresiaVenceEn ?? null, cliente.membresiaPlan ?? null, undefined, cliente.membresiaDuracionDias ?? null) : null,
       fechaNacimiento: cliente.fechaNacimiento ? cliente.fechaNacimiento.toISOString().slice(0, 10) : null,
       unidadPeso: cliente.unidadPeso ?? 'kg',
       unidadAltura: cliente.unidadAltura ?? 'cm',

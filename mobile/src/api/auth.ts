@@ -6,6 +6,7 @@ export interface MembresiaCliente {
   plan: string | null;
   venceEn: string | null;
   diasRestantes: number | null;
+  duracionDias: number | null;
 }
 
 export interface Cliente {

@@ -23,6 +23,7 @@ export class MembresiaService {
         activo: ficha.activo,
         membresiaEstado: ficha.membresia.estado,
         membresiaPlan: ficha.membresia.plan,
+        membresiaDuracionDias: ficha.membresia.duracionDias ?? null,
         membresiaVenceEn: ficha.membresia.fechaVencimiento ? new Date(ficha.membresia.fechaVencimiento) : null,
         membresiaSincronizadaEn: new Date(),
       },

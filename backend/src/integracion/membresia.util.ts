@@ -11,6 +11,8 @@ export type ResumenMembresia = {
   plan: string | null
   venceEn: string | null
   diasRestantes: number | null
+  /** Duración del plan en días; la app la usa para elegir el color (verde / ámbar / rojo). */
+  duracionDias: number | null
 }
 
 /**
@@ -27,11 +29,11 @@ export function diasHastaVencimiento(venceEn: Date, hoy = fechaDeHoyEcuador()): 
  * Estado de la membresía calculado con la fecha de vencimiento guardada. Se recalcula en cada uso (no se confía en
  * el estado que se guardó al sincronizar) para que una membresía que vence hoy se bloquee sin esperar otra consulta.
  */
-export function resumenMembresia(venceEn: Date | null, plan: string | null, hoy?: string): ResumenMembresia {
-  if (!venceEn) return { estado: 'sin_membresia', plan, venceEn: null, diasRestantes: null }
+export function resumenMembresia(venceEn: Date | null, plan: string | null, hoy?: string, duracionDias: number | null = null): ResumenMembresia {
+  if (!venceEn) return { estado: 'sin_membresia', plan, venceEn: null, diasRestantes: null, duracionDias }
   const dias = diasHastaVencimiento(venceEn, hoy)
   const estado: EstadoMembresia = dias < 0 ? 'vencido' : dias <= UMBRAL_POR_VENCER_DIAS ? 'por_vencer' : 'activo'
-  return { estado, plan, venceEn: venceEn.toISOString(), diasRestantes: dias }
+  return { estado, plan, venceEn: venceEn.toISOString(), diasRestantes: dias, duracionDias }
 }
 
 /** Con la membresía vencida, o sin ninguna, la app no se puede usar. */
