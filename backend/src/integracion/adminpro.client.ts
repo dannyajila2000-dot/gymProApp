@@ -18,7 +18,7 @@ export type FichaSocioAdmin = {
   email: string | null
   telefono: string | null
   activo: boolean
-  sucursal: { id: string; nombre: string } | null
+  sucursal: { id: string; nombre: string; direccion?: string | null } | null
   membresia: MembresiaAdmin
 }
 
@@ -101,6 +101,16 @@ export class AdminProClient {
 
   confirmarActivacion(clienteId: string) {
     return this.pedir<{ ok: boolean }>('POST', '/integracion/activar/confirmar', TIMEOUT_ACTIVACION_MS, { clienteId })
+  }
+
+  /** Peso y estatura que el socio registró: quedan en su ficha de mediciones en AdminPro. */
+  enviarMedicion(clienteId: string, medicion: { origenId: string; fecha: string; peso: number; talla: number }) {
+    return this.pedir<{ ok: boolean }>(
+      'POST',
+      `/integracion/socios/${encodeURIComponent(clienteId)}/mediciones`,
+      TIMEOUT_REFRESCO_MS,
+      medicion,
+    )
   }
 
   estadoSocio(clienteId: string, timeoutMs = TIMEOUT_REFRESCO_MS) {

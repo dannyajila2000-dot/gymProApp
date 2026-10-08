@@ -233,6 +233,8 @@ model RegistroProgreso {
   medidas          Json? // { pecho, cintura, brazos, piernas, ... }
   fotoUrl          String?
   creadoEn         DateTime @default(now())
+  /// Cuándo llegó este peso a AdminPro (solo socios enlazados). Null = pendiente de enviar.
+  adminSincronizadoEn DateTime?
 
   @@map("registros_progreso")
 }

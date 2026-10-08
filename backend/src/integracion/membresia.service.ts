@@ -14,11 +14,31 @@ export class MembresiaService {
     private readonly adminpro: AdminProClient,
   ) {}
 
-  /** Guarda en el socio lo que AdminPro dice de él. */
-  aplicarFicha(clienteId: string, ficha: FichaSocioAdmin) {
+  /** Crea o actualiza la sucursal que viene de AdminPro (nombre y dirección) y devuelve su id local. */
+  async sucursalDeFicha(gimnasioId: string, sucursal: NonNullable<FichaSocioAdmin['sucursal']>): Promise<string> {
+    const datos = { nombre: sucursal.nombre, direccion: sucursal.direccion ?? null }
+    const local = await this.prisma.sucursal.upsert({
+      where: { adminSucursalId: sucursal.id },
+      create: { gimnasioId, adminSucursalId: sucursal.id, ...datos },
+      update: datos,
+    })
+    return local.id
+  }
+
+  /**
+   * Guarda en el socio lo que AdminPro dice de él. AdminPro manda en su nombre, teléfono y sucursal (el correo no se
+   * toca: es con el que inicia sesión), y en la membresía.
+   */
+  async aplicarFicha(clienteId: string, ficha: FichaSocioAdmin) {
+    const actual = await this.prisma.cliente.findUnique({ where: { id: clienteId }, select: { gimnasioId: true } })
+    const sucursalId = actual && ficha.sucursal ? await this.sucursalDeFicha(actual.gimnasioId, ficha.sucursal) : undefined
     return this.prisma.cliente.update({
       where: { id: clienteId },
       data: {
+        nombres: ficha.nombres || undefined,
+        apellidos: ficha.apellidos || undefined,
+        telefono: ficha.telefono,
+        sucursalId,
         // Si en AdminPro dieron de baja al socio, aquí también deja de poder entrar.
         activo: ficha.activo,
         membresiaEstado: ficha.membresia.estado,

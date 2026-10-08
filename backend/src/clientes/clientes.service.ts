@@ -1,5 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service.js'
+import { MedicionesAdminService } from '../integracion/mediciones-admin.service.js'
 import { RutinasService } from '../rutinas/rutinas.service.js'
 import { OnboardingDto } from './dto/onboarding.dto.js'
 import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto.js'
@@ -29,6 +30,7 @@ export class ClientesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly rutinasService: RutinasService,
+    @Optional() private readonly medicionesAdmin?: MedicionesAdminService,
   ) {}
 
   /** Sedes activas del gimnasio del cliente, para que elija a cuál va. */
@@ -89,6 +91,9 @@ export class ClientesService {
           ]
         : []),
     ])
+
+    // El peso y la estatura del onboarding también llegan a la ficha del socio en AdminPro.
+    void this.medicionesAdmin?.enviarPendientes(clienteId)
 
     return this.recomendarYAsignar(
       clienteId,
@@ -168,15 +173,18 @@ export class ClientesService {
     )
   }
 
-  actualizarPerfil(clienteId: string, dto: ActualizarPerfilDto) {
+  async actualizarPerfil(clienteId: string, dto: ActualizarPerfilDto) {
+    // En los socios enlazados con AdminPro, el nombre y el teléfono los manda el gimnasio: aquí no se editan.
+    const enlazado = await this.prisma.cliente.findUnique({ where: { id: clienteId }, select: { adminClienteId: true } })
+    const delGimnasio = !!enlazado?.adminClienteId
     return this.prisma.cliente.update({
       where: { id: clienteId },
       // Nunca devolver el hash de la contraseña en la respuesta.
       omit: { passwordHash: true },
       data: {
-        nombres: dto.nombres,
-        apellidos: dto.apellidos,
-        telefono: dto.telefono,
+        nombres: delGimnasio ? undefined : dto.nombres,
+        apellidos: delGimnasio ? undefined : dto.apellidos,
+        telefono: delGimnasio ? undefined : dto.telefono,
         fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : undefined,
         unidadPeso: dto.unidadPeso,
         unidadAltura: dto.unidadAltura,

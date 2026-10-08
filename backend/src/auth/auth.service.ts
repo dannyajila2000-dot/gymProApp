@@ -179,15 +179,7 @@ export class AuthService {
     if (enlazado) throw new ConflictException('Esta cuenta de socio ya está activada. Inicia sesión.')
 
     // La sucursal del socio viene de AdminPro: se crea o se actualiza aquí.
-    let sucursalId: string | null = null
-    if (ficha.sucursal) {
-      const sucursal = await this.prisma.sucursal.upsert({
-        where: { adminSucursalId: ficha.sucursal.id },
-        create: { gimnasioId: gimnasio.id, nombre: ficha.sucursal.nombre, adminSucursalId: ficha.sucursal.id },
-        update: { nombre: ficha.sucursal.nombre },
-      })
-      sucursalId = sucursal.id
-    }
+    const sucursalId = ficha.sucursal ? await this.membresias.sucursalDeFicha(gimnasio.id, ficha.sucursal) : null
 
     const passwordHash = await bcrypt.hash(dto.password, RONDAS_BCRYPT)
     const cliente = await this.prisma.cliente.create({

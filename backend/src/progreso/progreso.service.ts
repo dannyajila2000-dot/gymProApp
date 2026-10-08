@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Optional } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service.js'
+import { MedicionesAdminService } from '../integracion/mediciones-admin.service.js'
 import {
   fechaDeHoyEcuador,
   fechaEcuadorDeFecha,
@@ -9,7 +10,10 @@ import {
 
 @Injectable()
 export class ProgresoService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly medicionesAdmin?: MedicionesAdminService,
+  ) {}
 
   listar(clienteId: string) {
     return this.prisma.registroProgreso.findMany({
@@ -18,11 +22,11 @@ export class ProgresoService {
     })
   }
 
-  registrar(
+  async registrar(
     clienteId: string,
     datos: { pesoKg?: number; grasaCorporalPct?: number; medidas?: Record<string, number>; fotoUrl?: string },
   ) {
-    return this.prisma.registroProgreso.create({
+    const registro = await this.prisma.registroProgreso.create({
       data: {
         clienteId,
         pesoKg: datos.pesoKg,
@@ -31,6 +35,9 @@ export class ProgresoService {
         fotoUrl: datos.fotoUrl,
       },
     })
+    // Si es un socio enlazado, el peso también llega a su ficha en AdminPro (sin hacer esperar al socio).
+    void this.medicionesAdmin?.enviarPendientes(clienteId)
+    return registro
   }
 
   async actualizarAltura(clienteId: string, alturaCm: number) {
@@ -38,6 +45,8 @@ export class ProgresoService {
       where: { id: clienteId },
       data: { alturaCm },
     })
+    // Con la estatura ya se pueden enviar los pesos que estaban esperándola.
+    void this.medicionesAdmin?.enviarPendientes(clienteId)
     return { alturaCm: cliente.alturaCm }
   }
 
