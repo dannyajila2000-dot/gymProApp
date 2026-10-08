@@ -108,7 +108,9 @@ export default function Inicio() {
         )}
       </View>
 
-      <TarjetaMembresia />
+      <View style={{ marginVertical: Spacing.three }}>
+        <TarjetaMembresia />
+      </View>
 
       <View style={styles.filaSeccion}>
         <Text style={[styles.seccionTitulo, styles.seccionTituloEnFila, { color: colors.text }]}>Tu semana</Text>
