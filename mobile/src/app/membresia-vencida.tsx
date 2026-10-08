@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { BotonOnboarding } from '@/components/onboarding/boton-onboarding';
 import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
+import { fechaLarga } from '@/lib/membresia';
 import { Spacing } from '@/constants/theme';
 
 /**
@@ -49,7 +50,7 @@ export default function MembresiaVencida() {
         {sinMembresia
           ? 'Consulta en tu gimnasio para activar tu plan y volver a entrenar.'
           : `${membresia?.plan ? `Tu plan ${membresia.plan} ` : 'Tu plan '}venció${
-              membresia?.venceEn ? ` el ${new Date(membresia.venceEn).toLocaleDateString('es-EC', { timeZone: 'UTC' })}` : ''
+              membresia?.venceEn ? ` el ${fechaLarga(membresia.venceEn)}` : ''
             }. Renuévalo en tu gimnasio para seguir entrenando.`}
       </Text>
 

@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 
+import { TarjetaMembresia } from '@/components/membresia/tarjeta-membresia';
 import { useSesion } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
 import { CardShadow, Spacing } from '@/constants/theme';
@@ -72,6 +73,10 @@ export default function Perfil() {
         {cliente?.nombres} {cliente?.apellidos}
       </Text>
       <Text style={{ color: colors.textSecondary }}>{cliente?.email}</Text>
+
+      <View style={{ alignSelf: 'stretch', marginTop: Spacing.three }}>
+        <TarjetaMembresia />
+      </View>
 
       <View style={[styles.tarjeta, CardShadow, { backgroundColor: colors.backgroundElement }]}>
         <Fila etiqueta="Gimnasio" valor={cliente?.gimnasio ?? '—'} />

@@ -13,7 +13,7 @@ import { CambiarRutinaDiaModal } from '@/components/rutinas/cambiar-rutina-dia-m
 import { useSesion } from '@/context/auth-context';
 import { resincronizarConPlan } from '@/lib/notificaciones';
 import { DIAS_NOMBRE, DIAS_NOMBRE_LARGO } from '@/constants/dias';
-import { AvisoMembresia } from '@/components/membresia/aviso-membresia';
+import { TarjetaMembresia } from '@/components/membresia/tarjeta-membresia';
 import { useTheme } from '@/hooks/use-theme';
 import { CardShadow, FotoFlotanteShadow, Spacing } from '@/constants/theme';
 
@@ -26,7 +26,7 @@ const FOTO_DESCANSO = require('@/assets/images/dashboard/dia-descanso-recorte.pn
 
 export default function Inicio() {
   const colors = useTheme();
-  const { cliente } = useSesion();
+  const { cliente, actualizarMembresia } = useSesion();
 
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
@@ -89,11 +89,13 @@ export default function Inicio() {
           onRefresh={() => {
             setRefrescando(true);
             cargar();
+            // Al deslizar para actualizar también se vuelve a consultar la membresía (si falla, se queda la anterior).
+            actualizarMembresia().catch(() => {});
           }}
           tintColor={colors.tint}
         />
       }>
-      <AvisoMembresia />
+      <TarjetaMembresia />
 
       <View style={styles.filaEncabezado}>
         <View>
