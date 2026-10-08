@@ -14,11 +14,12 @@ export type ResumenMembresia = {
 }
 
 /**
- * Días que faltan hasta el vencimiento (0 = vence hoy, negativo = ya venció). El vencimiento se toma por su
- * fecha UTC, igual que en AdminPro, donde se guarda a medianoche; "hoy" es el día en Ecuador.
+ * Días que faltan hasta el vencimiento (0 = vence hoy, negativo = ya venció). AdminPro guarda el vencimiento como
+ * un instante exacto (hora de la renovación + los días del plan), así que se pasa a la fecha de Ecuador (UTC-5)
+ * antes de contar; con la fecha UTC, una renovación de noche en Ecuador ya cae al día siguiente y suma un día de más.
  */
 export function diasHastaVencimiento(venceEn: Date, hoy = fechaDeHoyEcuador()): number {
-  const vence = venceEn.toISOString().slice(0, 10)
+  const vence = new Date(venceEn.getTime() - 5 * 3_600_000).toISOString().slice(0, 10)
   return Math.round((Date.parse(`${vence}T00:00:00Z`) - Date.parse(`${hoy}T00:00:00Z`)) / 86_400_000)
 }
 

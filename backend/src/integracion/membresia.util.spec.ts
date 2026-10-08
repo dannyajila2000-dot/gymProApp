@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import { bloqueaAcceso, diasHastaVencimiento, resumenMembresia } from './membresia.util.js'
 
-const fecha = (iso: string) => new Date(`${iso}T00:00:00.000Z`)
+// Mediodía en Ecuador de ese día (el vencimiento real lleva la hora de la renovación).
+const fecha = (iso: string) => new Date(`${iso}T12:00:00.000-05:00`)
 
 describe('membresía del socio', () => {
   it('sin fecha de vencimiento es "sin_membresia"', () => {
@@ -33,9 +34,11 @@ describe('membresía del socio', () => {
     expect(bloqueaAcceso('por_vencer')).toBe(false)
   })
 
-  it('cuenta los días por la fecha UTC del vencimiento (como AdminPro) y no se corre por la zona horaria', () => {
-    // Medianoche UTC del 15: en Ecuador (UTC-5) sería la tarde del 14, pero el vencimiento sigue siendo "el 15".
-    expect(diasHastaVencimiento(new Date('2026-10-15T00:00:00.000Z'), '2026-10-10')).toBe(5)
+  it('cuenta los días por la fecha de Ecuador del vencimiento y no por la UTC', () => {
+    // Renovación del 7 de oct a las 20:53 en Ecuador (01:53Z del 8) con plan de 30 días: vence el 6 de nov en
+    // Ecuador (01:53Z del 7). Por fecha UTC daría 31 días; en Ecuador son 30.
+    expect(diasHastaVencimiento(new Date('2026-11-07T01:53:04.799Z'), '2026-10-07')).toBe(30)
     expect(diasHastaVencimiento(new Date('2026-10-15T05:00:00.000Z'), '2026-10-10')).toBe(5)
+    expect(diasHastaVencimiento(new Date('2026-10-15T04:59:00.000Z'), '2026-10-10')).toBe(4)
   })
 })

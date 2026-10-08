@@ -95,8 +95,6 @@ export default function Inicio() {
           tintColor={colors.tint}
         />
       }>
-      <TarjetaMembresia />
-
       <View style={styles.filaEncabezado}>
         <View>
           <Text style={[styles.saludo, { color: colors.text }]}>Hola, {cliente?.nombres} 👋</Text>
@@ -109,6 +107,8 @@ export default function Inicio() {
           </View>
         )}
       </View>
+
+      <TarjetaMembresia />
 
       <View style={styles.filaSeccion}>
         <Text style={[styles.seccionTitulo, styles.seccionTituloEnFila, { color: colors.text }]}>Tu semana</Text>
