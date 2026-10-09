@@ -22,7 +22,7 @@ export class RutinasController {
 
   @Get()
   listarDisponibles(@ClienteActual() cliente: ClienteAutenticado) {
-    return this.rutinasService.listarDisponibles(cliente.gimnasioId)
+    return this.rutinasService.listarDisponibles(cliente.clienteId, cliente.gimnasioId)
   }
 
   @Get('mi-rutina')

@@ -41,13 +41,51 @@ function esRutinaVisible(r: { creadaPorClienteId: string | null; ejercicios: unk
 export class RutinasService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listarDisponibles(gimnasioId: string) {
+  async listarDisponibles(clienteId: string, gimnasioId: string) {
     const plantillas = await this.prisma.rutina.findMany({
       where: { gimnasioId, activa: true, creadaPorClienteId: null },
       include: { ejercicios: EJERCICIOS_VISIBLES },
       orderBy: { creadoEn: 'desc' },
     })
-    return plantillas.filter(esRutinaVisible)
+    return this.abriblesParaCliente(clienteId, plantillas.filter(esRutinaVisible))
+  }
+
+  /**
+   * De estas plantillas, las que ESTE cliente puede abrir: con su restricción o lesión aplicada todavía le quedan
+   * ejercicios suficientes. Sin este filtro, el catálogo, el plan semanal o la asignación automática podían ofrecer
+   * una rutina que luego respondía "Rutina no encontrada". Se devuelven las plantillas originales (solo filtradas).
+   */
+  private async abriblesParaCliente<T extends RutinaConEjercicios>(clienteId: string, plantillas: T[]): Promise<T[]> {
+    if (!plantillas.length) return []
+    const [cliente, sustituciones] = await Promise.all([
+      this.prisma.cliente.findUnique({
+        where: { id: clienteId },
+        select: { nivelFitness: true, restriccionFisica: true, zonasLesion: true },
+      }),
+      this.prisma.sustitucionEjercicio.findMany({
+        where: { clienteId },
+        include: { ejercicioSustituto: true, rutinaEjercicio: { select: { rutinaId: true } } },
+      }),
+    ])
+    // Los sustitutos que el cliente eligió también cuentan, igual que al abrir la rutina.
+    const porRutina = new Map<string, Map<string, RutinaEjercicioConEjercicio['ejercicio']>>()
+    for (const s of sustituciones) {
+      const mapa = porRutina.get(s.rutinaEjercicio.rutinaId) ?? new Map()
+      mapa.set(s.rutinaEjercicioId, s.ejercicioSustituto)
+      porRutina.set(s.rutinaEjercicio.rutinaId, mapa)
+    }
+    return this.filtrarPorPerfil(plantillas, cliente, porRutina)
+  }
+
+  private async filtrarPorPerfil<T extends RutinaConEjercicios>(
+    plantillas: T[],
+    perfil: PerfilCliente | null,
+    sustitucionesPorRutina: Map<string, Map<string, RutinaEjercicioConEjercicio['ejercicio']>> = new Map(),
+  ): Promise<T[]> {
+    const adaptadas = await Promise.all(
+      plantillas.map((r) => this.personalizar(r, perfil, sustitucionesPorRutina.get(r.id) ?? new Map())),
+    )
+    return plantillas.filter((_, i) => esRutinaVisible(adaptadas[i]))
   }
 
   async miRutina(clienteId: string) {
@@ -232,7 +270,8 @@ export class RutinasService {
         orderBy: { creadoEn: 'desc' },
         include: { ejercicios: EJERCICIOS_VISIBLES },
       })
-      rutina = lista.find(esRutinaVisible) ?? null
+      const abribles = await this.abriblesParaCliente(clienteId, lista.filter(esRutinaVisible))
+      rutina = abribles[0] ?? null
       if (rutina) break
     }
     if (!rutina) return null
@@ -250,9 +289,14 @@ export class RutinasService {
       where: { gimnasioId, activa: true, creadaPorClienteId: null },
       include: { ejercicios: EJERCICIOS_VISIBLES },
     })
+    const abribles = await this.filtrarPorPerfil(plantillas.filter(esRutinaVisible), {
+      nivelFitness: perfil.nivelFitness,
+      restriccionFisica: perfil.restriccionFisica,
+      zonasLesion: [...perfil.zonasLesion],
+    })
     return recomendarRutinas(
       perfil,
-      plantillas.filter(esRutinaVisible).map((r) => ({
+      abribles.map((r) => ({
         id: r.id,
         nombre: r.nombre,
         nivel: r.nivel,
@@ -646,7 +690,7 @@ export class RutinasService {
         select: { rutina: { select: { objetivo: true } } },
       }),
     ])
-    const plantillas = plantillasBrutas.filter(esRutinaVisible)
+    const plantillas = await this.abriblesParaCliente(clienteId, plantillasBrutas.filter(esRutinaVisible))
     const objetivo = asignacionOnboarding?.rutina.objetivo ?? null
 
     const delNivel = nivelFitness ? plantillas.filter((r) => r.nivel === nivelFitness) : []
