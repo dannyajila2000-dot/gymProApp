@@ -203,7 +203,7 @@ export class AuthService {
     // Anula el código en AdminPro. Si esto falla la cuenta ya existe: el código vence solo y no se puede reutilizar
     // porque el correo ya tiene cuenta aquí.
     try {
-      await this.adminpro.confirmarActivacion(ficha.clienteId)
+      await this.adminpro.confirmarActivacion(ficha.clienteId, dto.codigo)
     } catch (e) {
       this.logger.warn(`No se pudo confirmar la activación en AdminPro (${ficha.clienteId}): ${(e as Error).message}`)
     }
@@ -214,7 +214,6 @@ export class AuthService {
 
   /** Vuelve a preguntar a AdminPro por la membresía (por ejemplo, después de renovar) y devuelve el perfil al día. */
   async actualizarMembresia(clienteId: string) {
-    await this.membresias.sincronizar(clienteId, { cacheMs: 0 })
     return this.perfil(clienteId)
   }
 
@@ -262,7 +261,9 @@ export class AuthService {
   }
 
   async perfil(clienteId: string) {
-    await this.membresias.sincronizar(clienteId)
+    // Siempre en vivo: `/auth/yo` solo se llama al abrir la app o al pedir refrescar, así que no
+    // vale la pena confiar en el caché de 5 minutos y arriesgarse a mostrar una membresía vieja.
+    await this.membresias.sincronizar(clienteId, { cacheMs: 0 })
     const cliente = await this.prisma.cliente.findUnique({
       where: { id: clienteId },
       include: { gimnasio: true },

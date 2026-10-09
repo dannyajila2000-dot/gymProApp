@@ -99,8 +99,11 @@ export class AdminProClient {
     return this.pedir<FichaSocioAdmin>('POST', '/integracion/activar', TIMEOUT_ACTIVACION_MS, { email, codigo })
   }
 
-  confirmarActivacion(clienteId: string) {
-    return this.pedir<{ ok: boolean }>('POST', '/integracion/activar/confirmar', TIMEOUT_ACTIVACION_MS, { clienteId })
+  confirmarActivacion(clienteId: string, codigo: string) {
+    return this.pedir<{ ok: boolean }>('POST', '/integracion/activar/confirmar', TIMEOUT_ACTIVACION_MS, {
+      clienteId,
+      codigo,
+    })
   }
 
   /** Peso y estatura que el socio registró: quedan en su ficha de mediciones en AdminPro. */
